@@ -1,5 +1,14 @@
 using UnityEngine;
 
+public enum GameState
+{
+    MainMenu,
+    InGame,
+    Paused,
+    GameOver,
+    Victory
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -35,13 +44,15 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         // Initialize managers
+        PlayerManager   = playerManager;
+
         MapManager      = GetComponent<MapManager>();
-        StageManager    = GetComponent<StageManager>();
         SoundManager    = GetComponent<SoundManager>();
         UIManager       = GetComponent<UIManager>();
         DataManager     = GetComponent<DataManager>();
         SaveManager     = GetComponent<SaveManager>();
         InputManager    = GetComponent<InputManager>();
+        StageManager    = GetComponentInChildren<StageManager>();
     }
 
     void Update()
