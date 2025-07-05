@@ -15,7 +15,7 @@ public class PlayerManager : MonoBehaviour
     public PlayerMovement PlayerMovement { get; private set; }
     public PlayerAttack PlayerAttack { get; private set; }
 
-    public PlayerState CurrentState { get; private set; } = PlayerState.Idle;
+    public static PlayerState CurrentState = PlayerState.Idle;
     Animator anim;
 
     private void Awake()
