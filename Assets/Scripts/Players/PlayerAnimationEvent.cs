@@ -17,7 +17,9 @@ public class PlayerAnimationEvent : MonoBehaviour
         newBeam.rotation = castingPosition.rotation;
 
         Rigidbody rb = newBeam.GetComponent<Rigidbody>();
-        Vector3 flyingDir = (PlayerAttack.CurrentTarget.transform.position - newBeam.position).normalized;
-        rb.linearVelocity = flyingDir * PlayerAttack.projectileSpeed;
+        Vector3 flyingDir = (PlayerAttack.CurrentTarget.transform.position - newBeam.position);
+        flyingDir.y = 0;
+
+        rb.linearVelocity = flyingDir.normalized * PlayerAttack.projectileSpeed;
     }
 }

@@ -38,9 +38,6 @@ public class PlayerManager : MonoBehaviour
 
     public void ChangePlayerState(PlayerState _newState, float animSpeed = 1f) 
     {
-        if (CurrentState == _newState)
-            return;
-
         UpdateAnimation(_newState, animSpeed);
 
         CurrentState = _newState;

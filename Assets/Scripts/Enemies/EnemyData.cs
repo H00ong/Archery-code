@@ -1,14 +1,14 @@
 using UnityEngine;
 
-public class EnemyData : MonoBehaviour
+[System.Serializable]
+public class EnemyData
 {
-    void Start()
-    {
-        
-    }
+    public string enemyName;
+    public float moveSpeed;
+}
 
-    void Update()
-    {
-        
-    }
+[System.Serializable]
+public class EnemyDataList
+{
+    public EnemyData[] enemies;
 }
