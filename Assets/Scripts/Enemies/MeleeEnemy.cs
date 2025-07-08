@@ -2,13 +2,23 @@ using UnityEngine;
 
 public class MeleeEnemy : Enemy
 {
+    private bool attackMoveTrigger = false;
     [SerializeField] float defaultAttackRange;
-
-    [SerializeField] PlayerManager Player;
+    [SerializeField] float defaultAttackMoveSpeed = 2f;
+    Vector3 attackMoveDir = Vector3.zero;
 
     protected override void Start()
     {
         base.Start();
+
+        if (!debugMode) 
+        {
+            if (enemyData != null)
+            {
+                defaultAttackRange = enemyData.attackRange;
+                defaultAttackMoveSpeed = enemyData.attackMoveSpeed;
+            }
+        }
 
         CurrentState = EnemyState.Idle;
     }
@@ -20,9 +30,10 @@ public class MeleeEnemy : Enemy
         if (CurrentState == EnemyState.Idle)
             return;
 
-        Move();
-        AttackCheck();
         AttackEndTrigged();
+        AttackCheck();
+        Move();
+        AttackMove();
     }
 
     void Move()
@@ -39,21 +50,37 @@ public class MeleeEnemy : Enemy
             return;
         }
 
-        Vector3 dir = Player.transform.position - transform.position;
-        dir.y = 0;
-
-        rb.linearVelocity = dir.normalized * defaultMoveSpeed;
+        Vector3 dir = Utils.GetDirectionVector(player.transform, transform);
+        transform.position += dir * defaultMoveSpeed * Time.deltaTime;
 
         transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
     }
 
+    void AttackMove() 
+    {
+        if (attackMoveTrigger) 
+        {
+            transform.position += attackMoveDir * defaultAttackMoveSpeed * Time.deltaTime;
+        }
+    }
+
     void AttackCheck() 
     {
-        if (Vector3.Distance(Player.transform.position, transform.position) < defaultAttackRange 
+        if (Vector3.Distance(player.transform.position, transform.position) < defaultAttackRange 
             && CurrentState == EnemyState.Move) 
         {
             EnemyManager.ChangeState(this, anim, EnemyState.Attack);
         }
+    }
+
+    public void AttackMoveTrigger(bool active) 
+    {
+        attackMoveTrigger = active;
+
+        if (active)
+            attackMoveDir = Utils.GetDirectionVector(player.transform, transform);
+        else 
+            attackMoveDir = Vector3.zero;
     }
 
     void AttackEndTrigged() 

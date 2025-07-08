@@ -33,6 +33,17 @@ public class GameManager : MonoBehaviour
         { 
             Instance = this;
             DontDestroyOnLoad(gameObject); // Keep this instance across scenes
+            
+            // Initialize managers
+            PlayerManager = playerManager;
+
+            MapManager = GetComponent<MapManager>();
+            SoundManager = GetComponent<SoundManager>();
+            UIManager = GetComponent<UIManager>();
+            DataManager = GetComponent<DataManager>();
+            SaveManager = GetComponent<SaveManager>();
+            InputManager = GetComponent<InputManager>();
+            StageManager = GetComponentInChildren<StageManager>();
         }
         else 
         {
@@ -43,16 +54,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // Initialize managers
-        PlayerManager   = playerManager;
-
-        MapManager      = GetComponent<MapManager>();
-        SoundManager    = GetComponent<SoundManager>();
-        UIManager       = GetComponent<UIManager>();
-        DataManager     = GetComponent<DataManager>();
-        SaveManager     = GetComponent<SaveManager>();
-        InputManager    = GetComponent<InputManager>();
-        StageManager    = GetComponentInChildren<StageManager>();
+        
     }
 
     void Update()

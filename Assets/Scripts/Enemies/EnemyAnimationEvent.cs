@@ -13,4 +13,18 @@ public class EnemyAnimationEvent : MonoBehaviour
     {
         enemy.AnimationTrigger();
     }
+
+    void AttackMoveTriggerActive() 
+    { 
+        MeleeEnemy meleeEnemy = GetComponentInParent<MeleeEnemy>();
+
+        meleeEnemy?.AttackMoveTrigger(true);
+    }
+
+    void AttackMoveTriggerDeactive()
+    {
+        MeleeEnemy meleeEnemy = GetComponentInParent<MeleeEnemy>();
+
+        meleeEnemy?.AttackMoveTrigger(false);
+    }
 }

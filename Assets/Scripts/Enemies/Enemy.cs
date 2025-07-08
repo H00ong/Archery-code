@@ -5,7 +5,8 @@ public enum EnemyState
     Idle,
     Attack,
     Move,
-    Dead
+    Dead,
+    Hurt
 }
 
 public enum EnemyType
@@ -19,18 +20,25 @@ public enum EnemyName
 {
     Slime,
     TurtleShell,
+    Skeleton_Minion,
 }
 
 public abstract class Enemy : MonoBehaviour
 {
+    [Header("Enemy Info")]
     public EnemyType EnemyType;
     public EnemyState CurrentState;
     [SerializeField] protected EnemyName enemyName;
+    [SerializeField] protected bool debugMode = true;
+    protected EnemyData enemyData = null;
+
+    [Space]
 
     [Header("Default Info")]
     [SerializeField] protected float defaultIdleTime = 1f;
     [SerializeField] protected float defaultMoveTime = 4f;
     [SerializeField] protected float defaultMoveSpeed = 1f; // 나중에 EnemyData에서 읽어와야함.
+    [SerializeField] protected float defaultAttackSpeed = 1f;
     
     protected float idleTimer;
     protected float moveTimer;
@@ -41,13 +49,31 @@ public abstract class Enemy : MonoBehaviour
     protected Animator anim;
     protected Rigidbody rb;
 
+    protected PlayerManager player;
+
     protected virtual void Start()
     {
         // defaultIdleTime = GameManager.Instance.DataManager.GetEnemyData();
         anim = GetComponentInChildren<Animator>();
         rb   = GetComponent<Rigidbody>();
 
-        defaultMoveSpeed = DataManager.Instance.GetEnemyData(enemyName.ToString()).moveSpeed;
+        if (player == null)
+            player = FindAnyObjectByType<PlayerManager>();
+
+        if (!debugMode)
+        {
+            enemyData = GameManager.Instance.DataManager.GetEnemyData(enemyName.ToString());
+
+            if (enemyData != null)
+            {
+                defaultIdleTime = enemyData.idleTime;
+                defaultMoveTime = enemyData.moveTime;
+                defaultMoveSpeed = enemyData.moveSpeed;
+                defaultAttackSpeed = enemyData.attackSpeed;
+
+                anim.SetFloat("AttackSpeed", defaultAttackSpeed);
+            }
+        }
     }
 
     protected virtual void Update()
