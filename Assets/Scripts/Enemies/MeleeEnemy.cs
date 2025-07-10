@@ -5,7 +5,6 @@ public class MeleeEnemy : Enemy
     private bool attackMoveTrigger = false;
     [SerializeField] float defaultAttackRange;
     [SerializeField] float defaultAttackMoveSpeed = 2f;
-    Vector3 attackMoveDir = Vector3.zero;
 
     protected override void Start()
     {
@@ -30,11 +29,13 @@ public class MeleeEnemy : Enemy
         if (CurrentState == EnemyState.Idle)
             return;
 
-        AttackEndTrigged();
+        AttackEndTriggered();
         AttackCheck();
         Move();
         AttackMove();
     }
+
+    #region Melee Enemy Actions
 
     void Move()
     {
@@ -60,7 +61,7 @@ public class MeleeEnemy : Enemy
     {
         if (attackMoveTrigger) 
         {
-            transform.position += attackMoveDir * defaultAttackMoveSpeed * Time.deltaTime;
+            transform.position += transform.forward * defaultAttackMoveSpeed * Time.deltaTime;
         }
     }
 
@@ -69,29 +70,27 @@ public class MeleeEnemy : Enemy
         if (Vector3.Distance(player.transform.position, transform.position) < defaultAttackRange 
             && CurrentState == EnemyState.Move) 
         {
+            transform.rotation = Quaternion.LookRotation(Utils.GetDirectionVector(player.transform, transform), Vector3.up);
             EnemyManager.ChangeState(this, anim, EnemyState.Attack);
         }
     }
 
-    public void AttackMoveTrigger(bool active) 
-    {
-        attackMoveTrigger = active;
 
-        if (active)
-            attackMoveDir = Utils.GetDirectionVector(player.transform, transform);
-        else 
-            attackMoveDir = Vector3.zero;
-    }
-
-    void AttackEndTrigged() 
+    void AttackEndTriggered() 
     {
-        if (attackTrigged) 
+        if (attackTriggered) 
         {
-            attackTrigged = false;
+            attackTriggered = false;
 
             EnemyManager.ChangeState(this, anim, EnemyState.Move);
         }
     }
+
+    #endregion
+
+    #region Animation Events
+    public void AttackMoveTrigger(bool active) => attackMoveTrigger = active;
+    #endregion
 
     private void OnDrawGizmos()
     {

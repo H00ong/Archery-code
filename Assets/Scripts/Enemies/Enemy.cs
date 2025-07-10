@@ -21,6 +21,7 @@ public enum EnemyName
     Slime,
     TurtleShell,
     Skeleton_Minion,
+    MeleeGolem,
 }
 
 public abstract class Enemy : MonoBehaviour
@@ -44,10 +45,9 @@ public abstract class Enemy : MonoBehaviour
     protected float moveTimer;
 
     protected bool moveTrigger = false;
-    protected bool attackTrigged = false;
+    protected bool attackTriggered = false;
 
     protected Animator anim;
-    protected Rigidbody rb;
 
     protected PlayerManager player;
 
@@ -55,7 +55,6 @@ public abstract class Enemy : MonoBehaviour
     {
         // defaultIdleTime = GameManager.Instance.DataManager.GetEnemyData();
         anim = GetComponentInChildren<Animator>();
-        rb   = GetComponent<Rigidbody>();
 
         if (player == null)
             player = FindAnyObjectByType<PlayerManager>();
@@ -74,6 +73,8 @@ public abstract class Enemy : MonoBehaviour
                 anim.SetFloat("AttackSpeed", defaultAttackSpeed);
             }
         }
+        
+        anim.SetFloat("AttackSpeed", defaultAttackSpeed);
     }
 
     protected virtual void Update()
@@ -90,5 +91,5 @@ public abstract class Enemy : MonoBehaviour
         }
     }
 
-    public void AnimationTrigger() => attackTrigged = true;
+    public void AnimationTrigger() => attackTriggered = true;
 }
