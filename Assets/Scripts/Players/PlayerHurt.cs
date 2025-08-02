@@ -1,0 +1,52 @@
+using UnityEngine;
+
+public class PlayerHurt : MonoBehaviour
+{
+    PlayerHeatlh playerHealth;
+    string enemyTag = "Enemy";
+
+    private void Start()
+    {
+        playerHealth = GetComponent<PlayerHeatlh>();
+
+        playerHealth.InitializeHealth();
+    }
+
+    public void GetHit(float _damage)
+    {
+        if (PlayerManager.IsPlayerDead)
+            return;
+
+        // 데미지 감소 로직
+
+        playerHealth.TakeDamage(_damage);
+
+        if (playerHealth.IsDead()) 
+        {
+            GameManager.Instance.PlayerManager.ChangePlayerState(PlayerState.Dead);
+        }
+        else
+        {
+            // 피격 효과
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (PlayerManager.IsPlayerDead)
+            return;
+
+        // 충돌한 오브젝트가 적의 공격인지 확인
+
+        if (Utils.CompareTag(collision, enemyTag)) 
+        {
+            float damage = 0f;
+
+            Enemy enemy = collision.gameObject.GetComponentInParent<Enemy>();
+            damage = enemy.GetAttackDamage();
+
+            GetHit(damage);
+        }
+    }
+
+}

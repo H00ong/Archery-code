@@ -9,17 +9,30 @@ public class EnemyManager : MonoBehaviour
 
     void Start()
     {
+        FindAllEnemies();
+    }
+
+    public static void FindAllEnemies()
+    {
         Enemy[] allEnemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
 
-        foreach (Enemy enemy in allEnemies) 
+        foreach (Enemy enemy in allEnemies)
         {
             enemies.Add(enemy);
         }
     }
 
-    void Update()
+    public static void ClearAllEnemies()
     {
-        
+        foreach (Enemy enemy in enemies)
+        {
+            if (enemy != null)
+            {
+                Destroy(enemy.gameObject);
+            }
+        }
+
+        enemies.Clear();
     }
 
     public static void ChangeState(Enemy _enemy, Animator _anim, EnemyState _newState) 

@@ -5,7 +5,6 @@ public enum PlayerState
     Idle,
     Move,
     Attack,
-    Hurt,
     Dead
 }
 
@@ -14,8 +13,11 @@ public class PlayerManager : MonoBehaviour
     public PlayerData PlayerData { get; private set; }
     public PlayerMovement PlayerMovement { get; private set; }
     public PlayerAttack PlayerAttack { get; private set; }
+    public PlayerHeatlh PlayerHeatlh { get; private set; }
+    
 
     public static PlayerState CurrentState = PlayerState.Idle;
+    public static bool IsPlayerDead => CurrentState == PlayerState.Dead;
     Animator anim;
 
     private void Awake()
@@ -29,6 +31,7 @@ public class PlayerManager : MonoBehaviour
         PlayerData = GetComponent<PlayerData>();
         PlayerMovement = GetComponent<PlayerMovement>();
         PlayerAttack = GetComponent<PlayerAttack>();
+        PlayerHeatlh = GetComponent<PlayerHeatlh>();
     }   
 
     void Update()

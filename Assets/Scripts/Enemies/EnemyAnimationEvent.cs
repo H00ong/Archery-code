@@ -3,6 +3,7 @@ using UnityEngine;
 public class EnemyAnimationEvent : MonoBehaviour
 {
     Enemy enemy;
+    [SerializeField] Transform[] shootingPos;
 
     private void Start()
     {
@@ -11,7 +12,12 @@ public class EnemyAnimationEvent : MonoBehaviour
 
     void AnimationTrigger() 
     {
-        enemy.AnimationTrigger();
+        enemy.AttackTrigger();
+    }
+
+    void HurtTrigger() 
+    {
+        enemy.HurtTrigger();
     }
 
     void AttackMoveTriggerActive() 
@@ -26,5 +32,23 @@ public class EnemyAnimationEvent : MonoBehaviour
         MeleeEnemy meleeEnemy = GetComponentInParent<MeleeEnemy>();
 
         meleeEnemy?.AttackMoveTrigger(false);
+    }
+
+    void Shoot() 
+    {
+        if(shootingPos == null)
+            return;
+
+        RangedEnemy rangedEnemy = GetComponentInParent<RangedEnemy>();
+
+        foreach (Transform pos in shootingPos)
+        {
+            rangedEnemy?.Shoot(pos);
+        }
+    }
+
+    void Die() 
+    {
+        enemy.Die();
     }
 }

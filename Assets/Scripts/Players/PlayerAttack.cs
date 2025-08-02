@@ -2,11 +2,14 @@ using UnityEngine;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Player Attack Speed Info")]
+    [Header("Player Attack Info")]
+    [SerializeField] GameObject magicBeam;
     public static float playerAttackSpeed;
     [SerializeField] float defaultAttackSpeed;
+    [SerializeField] float defaltProjectileLifetime = 10f; // Time after which the projectile will be destroyed if not used
+    public int playerDamage = 50; // Default player damage, can be modified later
 
-    [Header("Player Projectile Speed Info")]
+    [Header("Player Projectile Info")]
     public static float projectileSpeed;
     [SerializeField] float defaultProjectileSpeed;
 
@@ -14,14 +17,27 @@ public class PlayerAttack : MonoBehaviour
 
     private void Start()
     {
-        SetPlayerDefaultAttackSpeed();
-        SetDefaultProjectileSpeed();
+        DefaultSetting();
     }
 
-    public void Attack() 
+    public void Attack()
+    {
+        Enemy target = GetEenemyTarget();
+
+        if (target != null)
+        {
+            CurrentTarget = target;
+            transform.rotation = Quaternion.LookRotation(target.transform.position - transform.position);
+        }
+    }
+
+    private Enemy GetEenemyTarget()
     {
         Enemy target = null;
         float minDistance = float.MaxValue;
+
+        if (EnemyManager.enemies.Count <= 0)
+            return null;
 
         foreach (Enemy enemy in EnemyManager.enemies)
         {
@@ -34,21 +50,22 @@ public class PlayerAttack : MonoBehaviour
             }
         }
 
-        if (target != null) 
-        {
-            CurrentTarget = target;
-            transform.rotation = Quaternion.LookRotation(target.transform.position - transform.position, Vector3.up);
-        }
+        return target;
     }
 
-    public void SetPlayerDefaultAttackSpeed() 
+    public void Shoot(Vector3 _shootingPoint)
     {
-        // defaultAttackSpeed = GameManager.Instance.DataManager.GetPlayerData().attackSpeed;
+        GameObject go = GameManager.Instance.StageManager.PoolManager.GetObject(magicBeam);
+
+        Vector3 projectileDir = Utils.GetDirectionVector(CurrentTarget.transform.position, _shootingPoint);
+
+        Projectile_Player newProjectile = go.GetComponent<Projectile_Player>();
+        newProjectile.SetupProjectile(_shootingPoint, projectileDir, projectileSpeed, playerDamage, defaltProjectileLifetime);
+    }
+
+    void DefaultSetting()
+    {
         playerAttackSpeed = defaultAttackSpeed;
-    }
-
-    public void SetDefaultProjectileSpeed() 
-    {
         projectileSpeed = defaultProjectileSpeed;
     }
 }
