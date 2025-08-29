@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Required Managers")]
+    [SerializeField] PlayerManager playerManager;
     [Header("Player Movement Info")]
     [SerializeField] float defaultMoveSpeed = 5f;
     [SerializeField] float sphereCastRadius = 0.5f;
@@ -23,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
     public void Move(Vector2 _moveInput)
     {
-        GameManager.Instance.PlayerManager.ChangePlayerState(PlayerState.Move);
+        playerManager.ChangePlayerState(PlayerState.Move);
 
         Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
         transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
@@ -41,4 +43,11 @@ public class PlayerMovement : MonoBehaviour
 
         Gizmos.DrawWireSphere(transform.position + transform.up + transform.forward * 1 / 2, sphereCastRadius);
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+    }
+#endif
 }

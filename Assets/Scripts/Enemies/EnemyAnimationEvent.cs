@@ -1,54 +1,51 @@
+using Game.Enemies;
 using UnityEngine;
 
 public class EnemyAnimationEvent : MonoBehaviour
 {
-    Enemy enemy;
-    [SerializeField] Transform[] shootingPos;
+    [SerializeField] EnemyController enemy;
 
     private void Start()
     {
-        enemy = GetComponentInParent<Enemy>();
+        
     }
 
-    void AnimationTrigger() 
+    void AttackTrigger()
     {
-        enemy.AttackTrigger();
+        enemy.SetAttackTrigger(true);
     }
 
     void HurtTrigger() 
     {
-        enemy.HurtTrigger();
+        enemy.SetHurtTrigger(true);
     }
 
     void AttackMoveTriggerActive() 
-    { 
-        MeleeEnemy meleeEnemy = GetComponentInParent<MeleeEnemy>();
-
-        meleeEnemy?.AttackMoveTrigger(true);
+    {
+        enemy.SetAttackMoveTrigger(true);
     }
 
     void AttackMoveTriggerDeactive()
     {
-        MeleeEnemy meleeEnemy = GetComponentInParent<MeleeEnemy>();
-
-        meleeEnemy?.AttackMoveTrigger(false);
+        enemy.SetAttackMoveTrigger(false);
     }
 
-    void Shoot() 
+    public void Ability(string _tag) 
     {
-        if(shootingPos == null)
-            return;
+        var tag = EnemyTagUtil.ParseTagsToMask(_tag);
 
-        RangedEnemy rangedEnemy = GetComponentInParent<RangedEnemy>();
-
-        foreach (Transform pos in shootingPos)
-        {
-            rangedEnemy?.Shoot(pos);
-        }
+        enemy.Ability(tag);
     }
 
     void Die() 
     {
         enemy.Die();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (enemy == null) enemy = GetComponentInParent<EnemyController>();
+    }
+#endif
 }

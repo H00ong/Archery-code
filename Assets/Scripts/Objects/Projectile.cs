@@ -1,12 +1,15 @@
+using System.Collections;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    [SerializeField] protected PoolManager poolManager;
     protected Rigidbody rb;
     protected Collider cd;
 
     protected float lifetimeTimer = 0f;
     protected float lifetime;
+    protected bool spawned = false;
 
     public int damage { get; protected set; } = 1;
 
@@ -19,7 +22,7 @@ public class Projectile : MonoBehaviour
 
     protected virtual void Update()
     {
-        if (gameObject.activeSelf) 
+        if (spawned) 
         {
             lifetimeTimer += Time.deltaTime;
 
@@ -32,7 +35,12 @@ public class Projectile : MonoBehaviour
 
     public virtual void SetupProjectile(Vector3 _pos, Vector3 _dir, float _speed, int _damage, float _lifetime)
     {
+        spawned = true;
+
+        gameObject.SetActive(true);
+
         rb = GetComponent<Rigidbody>();
+        if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
 
         transform.position = _pos;
         transform.rotation = Quaternion.LookRotation(_dir);
@@ -43,7 +51,9 @@ public class Projectile : MonoBehaviour
 
     protected void Terminate()
     {
+        spawned = false;
         lifetimeTimer = 0f;
-        GameManager.Instance.StageManager.PoolManager.ReturnObject(gameObject);
+        poolManager.ReturnObject(gameObject);
     }
+
 }

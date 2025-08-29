@@ -6,7 +6,7 @@ public abstract class Health : MonoBehaviour, IDamageable
     protected int currentHealth;
     protected bool isLive = true;
 
-    public void InitializeHealth()
+    public void InitializeHealth(int maxHealth = 100)
     {
         currentHealth = maxHealth;
         isLive = true;

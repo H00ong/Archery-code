@@ -1,7 +1,24 @@
+using System;
 using UnityEngine;
 
 public static class Utils
 {
+    public static Component GetOrAddComponent(this GameObject obj, Type type)
+    {
+        var comp = obj.GetComponent(type);
+        if (comp == null) comp = obj.AddComponent(type);
+        return comp;
+    }
+
+    public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
+    {
+        var comp = obj.GetComponent<T>();
+        if (comp == null)
+            comp = obj.AddComponent<T>();
+        return comp;
+    }
+
+
     public static Vector3 GetDirectionVector(Vector3 _dest, Vector3 _source) 
     {
         Vector3 dir = _dest - _source;
@@ -28,7 +45,7 @@ public static class Utils
         return _object.transform.root.CompareTag(_tag);
     }
 
-    public static bool CompareTag(Collider _object, string _tag)
+    public static bool CompareRootTag(Collider _object, string _tag)
     {
         return _object.transform.root.CompareTag(_tag);
     }

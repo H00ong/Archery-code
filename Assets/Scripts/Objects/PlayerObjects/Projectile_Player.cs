@@ -4,9 +4,10 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Projectile_Player : Projectile
 {
-    string enemyTag = "Enemy";
-    string obstacleTag = "Obstacle";
-    string playerProjectileTag = "PlayerProjectile";
+    readonly string enemyTag = "Enemy";
+    readonly string obstacleTag = "Obstacle";
+    readonly string floorTag = "Floor";
+    readonly string playerProjectileTag = "PlayerProjectile";
 
     protected override void Start()
     {
@@ -27,9 +28,9 @@ public class Projectile_Player : Projectile
 
     private void OnTriggerEnter(Collider other)
     {
-        if (Utils.CompareTag(other, enemyTag))
+        if (other.GetComponentInParent<EnemyController>() != null)
         {
-            Enemy enemy = other.GetComponentInParent<Enemy>();
+            EnemyController enemy = other.GetComponentInParent<EnemyController>();
 
             if (enemy != null)
             {
@@ -37,7 +38,11 @@ public class Projectile_Player : Projectile
                 Terminate();
             }
         }
-        else if (Utils.CompareTag(other, obstacleTag))
+        else if (other.CompareTag(obstacleTag))
+        {
+            Terminate();
+        }
+        else if (other.CompareTag(floorTag)) 
         {
             Terminate();
         }

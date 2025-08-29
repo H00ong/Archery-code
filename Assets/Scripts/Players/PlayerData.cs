@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-using NUnit.Framework;
 using UnityEngine;
 
 public class PlayerData : MonoBehaviour

@@ -2,23 +2,26 @@ using UnityEngine;
 
 public class StageManager : MonoBehaviour
 {
-    public EnemyManager EnemyManager { get; private set; }
-    public PoolManager PoolManager { get; private set; }
+    [Header("Required Managers")]
+    [SerializeField] MapManager mapManager;
 
-    void Start()
+    public static int currentStageIndex = 1;
+
+    private void Start()
     {
-        EnemyManager = GetComponent<EnemyManager>();
-        PoolManager = GetComponent<PoolManager>();
-        // EnemyManager.EnemyData = GameManager.Instance.DataManager.GetEnemyData();
+        UpdateStage();
     }
 
-    void Update()
-    {
-        
+    public void UpdateStage() 
+    {   
+        mapManager.GetNewMap();
+        mapManager.SpawnEnemy();
     }
 
-    public void LoadStage(int StageIndex)
+#if UNITY_EDITOR
+    private void OnValidate()
     {
-        
+        if (!mapManager) mapManager = FindAnyObjectByType<MapManager>();
     }
+#endif
 }

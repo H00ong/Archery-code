@@ -1,13 +1,5 @@
 using UnityEngine;
 
-public enum GameState
-{
-    MainMenu,
-    InGame,
-    Paused,
-    GameOver,
-    Victory
-}
 
 public class GameManager : MonoBehaviour
 {
@@ -15,14 +7,14 @@ public class GameManager : MonoBehaviour
 
     #region Managers
     [SerializeField] PlayerManager playerManager;
-    public MapManager MapManager { get; private set; }
-    public StageManager StageManager { get; private set; }
-    public SoundManager SoundManager { get; private set; }
-    public UIManager UIManager { get; private set; }
-    public PlayerManager PlayerManager { get; private set; }
-    public DataManager DataManager { get; private set; }
-    public SaveManager SaveManager { get; private set; }
-    public InputManager InputManager { get; private set; }
+    [SerializeField] MapManager MapManager;
+    [SerializeField] StageManager StageManager;
+    [SerializeField] SoundManager SoundManager;
+    [SerializeField] UIManager UIManager;
+    [SerializeField] PlayerManager PlayerManager;
+    [SerializeField] DataManager DataManager;
+    [SerializeField] SaveManager SaveManager;
+    [SerializeField] InputManager InputManager;
 
     #endregion
 
@@ -35,15 +27,6 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject); // Keep this instance across scenes
             
             // Initialize managers
-            PlayerManager = playerManager;
-
-            MapManager = GetComponent<MapManager>();
-            SoundManager = GetComponent<SoundManager>();
-            UIManager = GetComponent<UIManager>();
-            DataManager = GetComponent<DataManager>();
-            SaveManager = GetComponent<SaveManager>();
-            InputManager = GetComponent<InputManager>();
-            StageManager = GetComponentInChildren<StageManager>();
         }
         else 
         {
@@ -61,4 +44,20 @@ public class GameManager : MonoBehaviour
     {
         
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+        if (MapManager == null) MapManager = FindAnyObjectByType<MapManager>();
+        if (StageManager == null) StageManager = FindAnyObjectByType<StageManager>();
+        if (SoundManager == null) SoundManager = FindAnyObjectByType<SoundManager>();
+        if (UIManager == null) UIManager = FindAnyObjectByType<UIManager>();
+        if (PlayerManager == null) PlayerManager = FindAnyObjectByType<PlayerManager>();
+        if (DataManager == null) DataManager = FindAnyObjectByType<DataManager>();
+        if (SaveManager == null) SaveManager = FindAnyObjectByType<SaveManager>();
+        if (InputManager == null) InputManager = FindAnyObjectByType<InputManager>();
+    }
+
+#endif
 }

@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
+    [SerializeField] PlayerManager playerManager;
     Vector3 Offset;
+
     void Start()
     {
         Offset = transform.position;
@@ -10,6 +12,6 @@ public class CameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        transform.position = GameManager.Instance.PlayerManager.PlayerMovement.transform.position + Offset;
+        transform.position = playerManager.PlayerMovement.transform.position + Offset;
     }
 }

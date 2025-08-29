@@ -25,7 +25,6 @@ public class PlayerManager : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
     }
 
-
     void Start()
     {   
         PlayerData = GetComponent<PlayerData>();

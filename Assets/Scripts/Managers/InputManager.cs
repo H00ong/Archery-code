@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
+    [SerializeField] PlayerManager playerManager;
+    [HideInInspector] public Vector2 moveInput;
     PlayerInput playerInput;
-
-    public Vector2 moveInput;
 
     private void Awake()
     {
@@ -18,18 +18,18 @@ public class InputManager : MonoBehaviour
 
         if (moveInput != Vector2.zero)
         { 
-            GameManager.Instance.PlayerManager.PlayerMovement.Move(moveInput);
+            playerManager.PlayerMovement.Move(moveInput);
         }
         else 
         {
             if (EnemyManager.enemies.Count > 0)
             {
-                GameManager.Instance.PlayerManager.PlayerAttack.Attack();
-                GameManager.Instance.PlayerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
+                playerManager.PlayerAttack.Attack();
+                playerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
             }
             else 
             {
-                GameManager.Instance.PlayerManager.ChangePlayerState(PlayerState.Idle);
+                playerManager.ChangePlayerState(PlayerState.Idle);
             }
         }
     }
@@ -43,4 +43,11 @@ public class InputManager : MonoBehaviour
     {
         playerInput.Player.Disable();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+    }
+#endif
 }

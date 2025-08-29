@@ -1,24 +1,41 @@
-using UnityEngine;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class EnemyBase
+{
+    public int hp;
+    public int atk;
+    public float moveSpeed;
+}
+
+[System.Serializable]
+public class ShootingData
+{
+    public int projectileAtk;
+    public float projectileSpeed;
+}
+
+[System.Serializable]
+public class FlyingShootingData
+{
+    public int flyingProjectileAtk;
+    public float flyingProjectileSpeed;
+}
 
 [System.Serializable]
 public class EnemyData
 {
-    public string enemyName;
-    public float idleTime;
-    public float moveTime;
-    public float moveSpeed;
+    public string enemyName;      // 디버그/가독성용 이름
 
-    #region MeleeEnemy
-    public float attackRange;
-    public float attackMoveSpeed; // 이동 속도
-    #endregion
+    public EnemyBase @base;
+    public List<string> tags;
 
-    public float attackSpeed;
-    // public float attackDamage;
+    public ShootingData shooter;
+    public FlyingShootingData flyingShooter;
 }
 
 [System.Serializable]
-public class EnemyDataList
+public class EnemyDataWrapper
 {
-    public EnemyData[] enemies;
+    public List<EnemyData> enemies;
 }

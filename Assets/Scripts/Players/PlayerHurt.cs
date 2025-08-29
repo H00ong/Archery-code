@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PlayerHurt : MonoBehaviour
 {
+    [SerializeField] PlayerManager playerManager;
     PlayerHeatlh playerHealth;
     string enemyTag = "Enemy";
 
@@ -23,7 +24,7 @@ public class PlayerHurt : MonoBehaviour
 
         if (playerHealth.IsDead()) 
         {
-            GameManager.Instance.PlayerManager.ChangePlayerState(PlayerState.Dead);
+            playerManager.ChangePlayerState(PlayerState.Dead);
         }
         else
         {
@@ -42,11 +43,17 @@ public class PlayerHurt : MonoBehaviour
         {
             float damage = 0f;
 
-            Enemy enemy = collision.gameObject.GetComponentInParent<Enemy>();
-            damage = enemy.GetAttackDamage();
+            EnemyController enemy = collision.gameObject.GetComponentInParent<EnemyController>();
+            damage = enemy.GetAtk();
 
             GetHit(damage);
         }
     }
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+    }
+#endif
 }

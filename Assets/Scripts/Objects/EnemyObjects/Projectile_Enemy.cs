@@ -28,7 +28,7 @@ public class Projectile_Enemy : Projectile
 
     private void OnTriggerEnter(Collider other)
     {
-        if (Utils.CompareTag(other, playerTag))
+        if (Utils.CompareRootTag(other, playerTag))
         {
             PlayerHurt player = other.GetComponent<PlayerHurt>();
 
@@ -38,12 +38,12 @@ public class Projectile_Enemy : Projectile
                 Terminate();
             }
         }
-        else if (Utils.CompareTag(other, obstacleTag))
+        else if (other.CompareTag(obstacleTag))
         {
             // Handle collision with obstacles if needed
             Terminate();
         }
-        else if (Utils.CompareTag(other, floorTag))
+        else if (other.CompareTag(floorTag))
         {
             Terminate();
         }

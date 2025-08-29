@@ -1,30 +1,14 @@
+using Game.Enemies.Enum;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 public class EnemyManager : MonoBehaviour
 {
-    public static List<Enemy> enemies = new List<Enemy>();
-
-    void Start()
-    {
-        FindAllEnemies();
-    }
-
-    public static void FindAllEnemies()
-    {
-        Enemy[] allEnemies = FindObjectsByType<Enemy>(FindObjectsSortMode.None);
-
-        foreach (Enemy enemy in allEnemies)
-        {
-            enemies.Add(enemy);
-        }
-    }
+    public static List<EnemyController> enemies = new List<EnemyController>();
 
     public static void ClearAllEnemies()
     {
-        foreach (Enemy enemy in enemies)
+        foreach (EnemyController enemy in enemies)
         {
             if (enemy != null)
             {
@@ -35,11 +19,28 @@ public class EnemyManager : MonoBehaviour
         enemies.Clear();
     }
 
-    public static void ChangeState(Enemy _enemy, Animator _anim, EnemyState _newState) 
+    public static void EnemySpawn(GameObject _go, MapData _mapData, int _stageIndex) 
     {
-        _anim.SetBool(_enemy.CurrentState.ToString(), false);
-        _anim.SetBool(_newState.ToString(), true);
+        EnemyController enemy = _go.GetComponent<EnemyController>();
+        if (enemy == null) return;
 
-        _enemy.CurrentState = _newState;
+        enemy.InitializeEnemy(_mapData, _stageIndex);
+        enemies.Add(enemy);
+    }
+
+    public static void RemoveEnemy(GameObject _go)
+    {
+        EnemyController _enemy = _go.GetComponent<EnemyController>();
+        if (_enemy == null) return;
+
+        if (!enemies.Contains(_enemy))
+        {
+            Debug.LogError("Remove enemy Error");
+            return;
+        }
+        else 
+        {
+            enemies.Remove(_enemy);
+        }
     }
 }
