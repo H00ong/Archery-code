@@ -39,8 +39,10 @@ public class MapManager : MonoBehaviour
     private bool _isCreatingMaps = false;
 
     // 순서 보장: 라벨 로드 완료 후 데이터 읽기/맵 생성
-    
+
     // Addressables 라벨로 MapScriptable 일괄 로드 → dict 구성
+
+    #region Map
     private IEnumerator EnsureMapDictReady()
     {
         if (mapDict != null && mapDict.Count > 0)
@@ -63,6 +65,15 @@ public class MapManager : MonoBehaviour
     {
         if (currentMapData != null) return;
 
+        if (dataManager == null)
+            dataManager = FindAnyObjectByType<DataManager>();
+
+        if (dataManager == null)
+        {
+            Debug.LogError("data manager is null");
+            return;
+        }
+
         currentMapData = dataManager.GetMapData(currentMapIndex);
         if (currentMapData == null) return;
 
@@ -80,7 +91,7 @@ public class MapManager : MonoBehaviour
         bossMapRef = data.bossMap;
     }
 
-    public void GetNewMap(bool isBossMap = false) 
+    public void GetNewMap(bool isBossMap = false)
     {
         StartCoroutine(GetMapCoroutine(go =>
         {
@@ -88,9 +99,9 @@ public class MapManager : MonoBehaviour
             if (go == currentMap) return;
             else
             {
-                if (currentMap != null) 
+                if (currentMap != null)
                     currentMap.SetActive(false); // 기존 맵 비활성화
-                
+
                 currentMap = go;
                 currentMap.transform.position = defaultMapPosition;
                 currentMap.SetActive(true);
@@ -114,9 +125,9 @@ public class MapManager : MonoBehaviour
             int idx = UnityEngine.Random.Range(0, createdMaps.Count);
             onReady?.Invoke(createdMaps[idx]);
         }
-        else 
+        else
         {
-            if (bossMap == null) 
+            if (bossMap == null)
             {
                 Debug.LogError("Boss maps not created");
                 onReady?.Invoke(null);
@@ -145,15 +156,24 @@ public class MapManager : MonoBehaviour
         if (createdMaps != null) createdMaps.Clear();
         else createdMaps = new List<GameObject>();
 
-            foreach (var map in mapList)
-            {
-                GameObject go = null;
-                yield return poolManager.GetObject(map, inst => go = inst, mapParent);
-                if (go != null) createdMaps.Add(go);
-            }
+        if (poolManager == null)
+            poolManager = FindAnyObjectByType<PoolManager>();
+
+        if (poolManager == null)
+        {
+            Debug.LogError("pool manager is null");
+            yield break;
+        }
+
+        foreach (var map in mapList)
+        {
+            GameObject go = null;
+            yield return poolManager.GetObject(map, inst => go = inst, mapParent);
+            if (go != null) createdMaps.Add(go);
+        }
 
         yield return poolManager.GetObject(bossMapRef, inst => bossMap = inst, mapParent);
-        if (bossMap == null) 
+        if (bossMap == null)
         {
             Debug.LogError("Boss map create fail");
         }
@@ -178,13 +198,35 @@ public class MapManager : MonoBehaviour
             mapDict.Clear();
         }
     }
+    #endregion
 
-    private void OnDestroy()
+    #region Player
+
+    public void PositionPlayer()
     {
-        if (_handle.IsValid())
-            Addressables.Release(_handle); // 수명 종료 시 일괄 해제
+        StartCoroutine(PositionPlayerCoroutine());
     }
 
+    IEnumerator PositionPlayerCoroutine() 
+    {
+        yield return EnsureMapsReady();
+
+        if (currentMap == null)
+        {
+            Debug.LogError("currentMap is null, map creation must precede");
+            yield break;
+        }
+
+        Map map = currentMap.GetComponent<Map>();
+
+        PlayerManager player = FindAnyObjectByType<PlayerManager>();
+
+        player.transform.position = map.playerPoint.position;
+    }
+
+    #endregion
+
+    #region Enemy
     public void SpawnEnemy(int count = 1, bool isBoss = false) 
     {
         StartCoroutine(SpawnEnemyAsync(count, isBoss));
@@ -193,22 +235,20 @@ public class MapManager : MonoBehaviour
     private IEnumerator SpawnEnemyAsync(int count, bool isBoss)
     {
         // 1) 맵 준비 보장
-        yield return EnsureMapDictReady();
-        if (mapDict == null || mapDict.Count == 0) yield break;
+        yield return EnsureMapsReady();
 
-        GetMapDataFromDataManager();
-        if (currentMapData == null) yield break;
+        if (currentMap == null) 
+        {
+            Debug.LogError("map is empty");
+            yield break;
+        }
 
         // 2) 풀에서 인스턴스 생성
         GameObject enemy = null;
         AssetReferenceGameObject enemyRef = null;
+        List<Transform> spawnPoint = new List<Transform> (currentMap.GetComponent<Map>().spawnPointOfEnemies);
 
-        if (!isBoss)
-        {
-            int randomIndex = UnityEngine.Random.Range(0, mapEnemyList.Count);
-            enemyRef = mapEnemyList[randomIndex];
-        }
-        else
+        if (isBoss)
         {
             int bossIndex = (StageManager.currentStageIndex - 1) / 10;
             enemyRef = bossEnemyList[bossIndex];
@@ -216,14 +256,35 @@ public class MapManager : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
+            if (!isBoss)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, mapEnemyList.Count);
+
+                enemyRef = mapEnemyList[randomIndex];
+            }
+
             yield return poolManager.GetObject(enemyRef, inst => enemy = inst, enemyPool, extraPrewarmCount: 0);
-            enemy.transform.position = Vector3.zero;
+
+            int randomIndexOfSpawnPoint = UnityEngine.Random.Range(0, spawnPoint.Count);
+            Transform sp = spawnPoint[randomIndexOfSpawnPoint];
+            sp.gameObject.SetActive(true);
+            enemy.transform.position = sp.position;
+
+            spawnPoint.RemoveAt(randomIndexOfSpawnPoint);
+
             enemy.SetActive(true);
 
             if (enemy == null) yield break;
 
             EnemyManager.EnemySpawn(enemy, currentMapData, currentMapIndex);
         }
+    }
+    #endregion
+
+    private void OnDestroy()
+    {
+        if (_handle.IsValid())
+            Addressables.Release(_handle); // 수명 종료 시 일괄 해제
     }
 
 #if UNITY_EDITOR

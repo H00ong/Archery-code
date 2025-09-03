@@ -6,9 +6,4 @@ public class PlayerHeatlh : Health
     {
         base.TakeDamage(damage, modifier);
     }
-
-    public override bool Heal(float healAmount, float modifier)
-    {
-        return base.Heal(healAmount, modifier);
-    }
 }

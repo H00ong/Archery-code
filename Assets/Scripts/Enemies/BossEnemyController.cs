@@ -4,19 +4,16 @@ using UnityEngine;
 
 public class BossEnemyController : EnemyController
 {
+    [Header("Boss Move")]
     #region Move Module
     [SerializeField] private RandomMove randomMove;
     [SerializeField] private FollowMove followMove;
     #endregion
 
     int currentAttackIndex = 0;
-    [HideInInspector] public bool isTargeting = false;
+    bool isTargeting = false;
 
     #region Unity Cycle
-    protected override void FixedUpdate()
-    {
-        base.FixedUpdate();
-    }
 
     protected override void OnDisable()
     {
@@ -69,9 +66,9 @@ public class BossEnemyController : EnemyController
         InitMoveModule();
         InitAttackModule();
 
-        idle = gameObject.GetOrAddComponent<EnemyIdle>();
-        die = gameObject.GetOrAddComponent<EnemyDie>();
-        hurt = gameObject.GetOrAddComponent<EnemyHurt>();
+        idle = gameObject.GetOrAddComponent<EnemyIdle>(); idle.Init(this);
+        die = gameObject.GetOrAddComponent<EnemyDie>(); die.Init(this);
+        hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
         move = (EnemyMove)randomMove;
 
         actionTable = new() {
@@ -86,7 +83,7 @@ public class BossEnemyController : EnemyController
 
     public override void GetHit(int _damage)
     {
-        if (currentState == EnemyState.Dead)
+        if (CurrentState == EnemyState.Dead)
             return;
 
         health.TakeDamage(_damage);
@@ -106,9 +103,9 @@ public class BossEnemyController : EnemyController
 
     public override void ChangeState(EnemyState next)
     {
-        if (currentState == next) return;
+        if (CurrentState == next) return;
 
-        if (currentState == EnemyState.Dead) return;
+        if (CurrentState == EnemyState.Dead) return;
 
         if (next == EnemyState.Hurt) return;
 
@@ -116,36 +113,39 @@ public class BossEnemyController : EnemyController
         {
             if (!isTargeting)
             {
-                currentAttackIndex = Random.Range(0, attackList.Count);
+                // currentAttackIndex = Random.Range(0, attackList.Count);
+                currentAttackIndex = 0;
+
                 anim.SetFloat(AttackIndex, currentAttackIndex);
 
                 if (currentAttackIndex == 1 && followMove != null)
                 {
+                    isTargeting = true;
+
                     anim.SetFloat(MoveIndex, 1);
 
                     onExit?.Invoke();
-
-                    move = followMove;
-                    currentState = EnemyState.Move;
-                    (onEnter, onExit, onTick) = actionTable[currentState];
-                    
+                    (onEnter, onTick, onExit) = (followMove.OnEnter, followMove.Tick, followMove.OnExit);
                     onEnter?.Invoke();
+
                     return;
                 }
             }
             else 
             {
                 isTargeting = false;
+                
                 anim.SetFloat(MoveIndex, 0);
+
                 move = randomMove;
             }
         }
 
-        anim.SetBool(animBool[currentState], false);
+        anim.SetBool(animBool[CurrentState], false);
         anim.SetBool(animBool[next], true);
 
         onExit?.Invoke();
-        currentState = next;
+        CurrentState = next;
         (onEnter, onExit, onTick) = actionTable[next];
         onEnter?.Invoke();
     }

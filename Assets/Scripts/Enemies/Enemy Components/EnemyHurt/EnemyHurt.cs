@@ -20,7 +20,7 @@ public class EnemyHurt : MonoBehaviour, IEnemyBehavior
 
     public virtual void Tick()
     {
-        if (ctx.hurtTrigger) 
+        if (ctx.HurtTrigger) 
         {
             ctx.ChangeState(EnemyState.Move);
         }

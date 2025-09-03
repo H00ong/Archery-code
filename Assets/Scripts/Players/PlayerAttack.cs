@@ -4,27 +4,35 @@ using UnityEngine.AddressableAssets;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Required Mangagers")]
-    [SerializeField] PoolManager poolManager;
+    [Header("Debug Mode")]
+    [SerializeField] bool debugMode;
     [Space]
     [Header("Required Objects")]
     [SerializeField] AssetReferenceGameObject playerProjectile;
     [SerializeField] Transform projectileParent;
+    [SerializeField] Transform shootingPos;
     [Space]
     [Header("Player Attack Info")]
-    public static EnemyController CurrentTarget;
-    public static float playerAttackSpeed;
-    public int playerDamage = 50; // Default player damage, can be modified later
-    [Space]
-    public static float projectileSpeed;
     [SerializeField] float defaultAttackSpeed; // animation speed
     [SerializeField] float defaultProjectileSpeed;
     [SerializeField] float defaltProjectileLifetime = 10f; // Time after which the projectile will be destroyed if not used
+    [SerializeField] int defaultPlayerAtk = 1;
 
+    public static EnemyController currentTarget;
+    public static float playerAttackSpeed;
+    public static int playerAtk; // Default player damage, can be modified later
+    public static float projectileSpeed;
 
-    private void Start()
+    public void Init() 
     {
-        DefaultSetting();
+        if (!debugMode) 
+        {
+            // data 가져오기
+        }
+
+        playerAtk = defaultPlayerAtk;
+        playerAttackSpeed = defaultAttackSpeed;
+        projectileSpeed = defaultProjectileSpeed;
     }
 
     public void Attack()
@@ -33,7 +41,7 @@ public class PlayerAttack : MonoBehaviour
 
         if (target != null)
         {
-            CurrentTarget = target;
+            currentTarget = target;
             transform.rotation = Quaternion.LookRotation(target.transform.position - transform.position);
         }
     }
@@ -60,16 +68,17 @@ public class PlayerAttack : MonoBehaviour
         return target;
     }
 
-    public void Shoot(Vector3 _shootingPoint)
+    #region Animation Events
+    public void Shoot()
     {
-        StartCoroutine(ShootingCoroutine(_shootingPoint));
+        StartCoroutine(ShootingCoroutine());
     }
 
-    IEnumerator ShootingCoroutine(Vector3 _shootingPoint) 
+    IEnumerator ShootingCoroutine() 
     {
         GameObject go = null;
 
-        yield return poolManager.GetObject(playerProjectile, inst => go = inst, projectileParent);
+        yield return PoolManager.Instance.GetObject(playerProjectile, inst => go = inst, projectileParent);
 
         if (go == null) yield break;
 
@@ -77,20 +86,17 @@ public class PlayerAttack : MonoBehaviour
 
         if (newProjectile == null) yield break;
 
-        Vector3 projectileDir = Utils.GetDirectionVector(CurrentTarget.transform.position, _shootingPoint);
-        newProjectile.SetupProjectile(_shootingPoint, projectileDir, projectileSpeed, playerDamage, defaltProjectileLifetime);
+        Vector3 projectileDir = Utils.GetDirectionVector(currentTarget.transform.position, shootingPos.position);
+        newProjectile.SetupProjectile(shootingPos.position, projectileDir, projectileSpeed, playerAtk, defaltProjectileLifetime, _isFlying: false);
     }
+    #endregion
 
-    void DefaultSetting()
-    {
-        playerAttackSpeed = defaultAttackSpeed;
-        projectileSpeed = defaultProjectileSpeed;
-    }
+    
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (poolManager == null) poolManager = FindAnyObjectByType<PoolManager>();
+        
     }
 #endif
 }

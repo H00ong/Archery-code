@@ -18,13 +18,13 @@ public class InputManager : MonoBehaviour
 
         if (moveInput != Vector2.zero)
         { 
-            playerManager.PlayerMovement.Move(moveInput);
+            playerManager.Move.Move(moveInput);
         }
         else 
         {
             if (EnemyManager.enemies.Count > 0)
             {
-                playerManager.PlayerAttack.Attack();
+                playerManager.Attack.Attack();
                 playerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
             }
             else 

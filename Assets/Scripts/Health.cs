@@ -1,3 +1,4 @@
+using System.Xml.Schema;
 using UnityEngine;
 
 public abstract class Health : MonoBehaviour, IDamageable
@@ -26,31 +27,24 @@ public abstract class Health : MonoBehaviour, IDamageable
         {
             currentHealth = 0;
             isLive = false;
-            // Trigger death logic here, e.g., play animation, notify game manager, etc.
-            Debug.Log($"{gameObject.name} has died.");
-        }
-        else
-        {
-            Debug.Log($"{gameObject.name} took {damage} damage. Current health: {currentHealth}");
         }
     }
 
-    public virtual bool Heal(float healAmount, float modifier) 
+    public virtual void Heal(int amount, out bool valid) 
     {
         if (!isLive)
-            return false;
+            valid = false;
 
         if (currentHealth < maxHealth)
         {
-            currentHealth += Mathf.RoundToInt(healAmount * (1 + modifier));
-            if (currentHealth > maxHealth)
-            {
-                currentHealth = maxHealth;
-            }
+            currentHealth += amount;            
 
-            return true;
+            if(currentHealth > maxHealth)
+                currentHealth = maxHealth;
+
+            valid = true;
         }
 
-        return false;
+        valid = false;
     }
 }

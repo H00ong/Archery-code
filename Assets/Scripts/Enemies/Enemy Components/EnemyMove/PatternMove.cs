@@ -1,4 +1,6 @@
 using Game.Enemies.Enum;
+using NUnit.Framework;
+using System.Collections.Generic;
 using UltimateProceduralPrimitivesFREE;
 using UnityEngine;
 
@@ -6,8 +8,8 @@ using UnityEngine;
 public class PatternMove : EnemyMove
 {
     [Header("Patrol")]
-    [SerializeField] Transform patrolPointsParent;
-    public Transform[] patrolPoints = null;
+    [SerializeField] Transform[] patrolPoints = null;
+    List<Vector3> patrolPointsPos = new List<Vector3>();
     int currentPatrolIndex = 0;
 
     public override void Init(EnemyController c)
@@ -15,10 +17,10 @@ public class PatternMove : EnemyMove
         base.Init(c);
 
         currentPatrolIndex = 0;
-        foreach (var p in patrolPoints) 
-        {
-            p.SetParent(patrolPointsParent);
-        }
+
+        patrolPointsPos.Clear();
+
+        foreach (var p in patrolPoints) { patrolPointsPos.Add(p.position); }
     }
 
     public override void OnEnter()
@@ -35,24 +37,29 @@ public class PatternMove : EnemyMove
 
     public override void Tick()
     {
-        base.Tick();
+        UpdateState(EnemyState.Attack);
+    }
 
-        if (ctx.currentState != EnemyState.Move)
+    protected override void UpdateState(EnemyState _state)
+    {
+        base.UpdateState(_state);
+
+        if (ctx.CurrentState != EnemyState.Move)
             return;
 
-        if (Utils.GetXZDistance(transform.position, patrolPoints[currentPatrolIndex].position) < .5f)
+        if (Utils.GetXZDistance(transform.position, patrolPointsPos[currentPatrolIndex]) < .5f)
         {
             // 현재 목표 지점에 도달하면 index 하나 증가
-            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPointsPos.Count;
             SetDirection();
         }
 
-        if (!ctx.isBlocked) ForwardMove();
+        if (!ctx.IsBlocked) ForwardMove();
     }
 
     private void SetDirection()
     {
-        Vector3 targetPosition = patrolPoints[currentPatrolIndex].position;
+        Vector3 targetPosition = patrolPointsPos[currentPatrolIndex];
         Vector3 direction = Utils.GetDirectionVector(targetPosition, transform.position);
         transform.rotation = Quaternion.LookRotation(direction);
     }

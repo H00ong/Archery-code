@@ -30,22 +30,36 @@ public class FollowMove : EnemyMove
 
     public override void Tick()
     {
-        base.Tick();
+        UpdateState(EnemyState.Idle);
+    }
 
-        if (ctx.currentState != EnemyState.Move)
-            return;
+    protected override void UpdateState(EnemyState _state)
+    {
+        base.UpdateState(_state);
 
-        if (Vector3.Distance(player.transform.position, transform.position) < defaultAttackRange)
-        {
-            moveTimer = defaultMoveTime;
-            ctx.ChangeState(EnemyState.Attack);
+        if (ctx.CurrentState != EnemyState.Move)
             return;
-        }
 
         Vector3 dir = Utils.GetDirectionVector(player.transform, transform);
         transform.rotation = Quaternion.LookRotation(dir);
 
-        if (!ctx.isBlocked) ForwardMove();
+        if (Vector3.Distance(player.transform.position, transform.position) < defaultAttackRange)
+        {
+            moveTimer = defaultMoveTime;
 
+            ctx.lastPlayerPosition = player.transform.position;
+
+            ctx.ChangeState(EnemyState.Attack);
+            return;
+        }
+
+        if (!ctx.IsBlocked) ForwardMove();
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, defaultAttackRange);
     }
 }
+    

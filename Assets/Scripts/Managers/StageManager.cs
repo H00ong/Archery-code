@@ -1,3 +1,4 @@
+using Mono.Cecil.Cil;
 using UnityEngine;
 
 public class StageManager : MonoBehaviour
@@ -9,12 +10,22 @@ public class StageManager : MonoBehaviour
 
     private void Start()
     {
+        InitStage();
+    }
+
+    public void InitStage() 
+    {
+        currentStageIndex = 0;
+
         UpdateStage();
     }
 
-    public void UpdateStage() 
+    public void UpdateStage()
     {   
+        currentStageIndex++;
+
         mapManager.GetNewMap();
+        mapManager.PositionPlayer();
         mapManager.SpawnEnemy();
     }
 

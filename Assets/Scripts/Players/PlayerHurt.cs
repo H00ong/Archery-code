@@ -3,33 +3,33 @@ using UnityEngine;
 public class PlayerHurt : MonoBehaviour
 {
     [SerializeField] PlayerManager playerManager;
-    PlayerHeatlh playerHealth;
+    [SerializeField] PlayerHeatlh playerHealth;
     string enemyTag = "Enemy";
 
-    private void Start()
+    public void Init()
     {
-        playerHealth = GetComponent<PlayerHeatlh>();
-
-        playerHealth.InitializeHealth();
+        if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
     }
+
 
     public void GetHit(float _damage)
     {
-        if (PlayerManager.IsPlayerDead)
-            return;
-
-        // 데미지 감소 로직
-
         playerHealth.TakeDamage(_damage);
 
         if (playerHealth.IsDead()) 
         {
             playerManager.ChangePlayerState(PlayerState.Dead);
+            return;
         }
         else
         {
             // 피격 효과
         }
+    }
+
+    public void GetHeal(int _healAmount, out bool valid) 
+    {
+        playerHealth.Heal(_healAmount, out valid);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -53,7 +53,8 @@ public class PlayerHurt : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+        if (playerManager == null) playerManager = GetComponent<PlayerManager>();
+        if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
     }
 #endif
 }

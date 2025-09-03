@@ -27,7 +27,7 @@ public class MeleeAttack : EnemyAttack
     {
         base.Tick(); // empty
 
-        if (ctx.attackMoveTrigger) MoveForward();
+        if (ctx.AttackMoveTrigger) MoveForward();
     }
 
     private void MoveForward() 

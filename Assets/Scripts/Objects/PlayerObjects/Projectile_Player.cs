@@ -21,9 +21,9 @@ public class Projectile_Player : Projectile
         base.Update();
     }
 
-    public override void SetupProjectile(Vector3 _pos, Vector3 _dir, float _speed, int _damage, float _lifetime)
+    public override void SetupProjectile(Vector3 _pos, Vector3 _dir, float _speed, int _damage, float _lifetime, bool _isFlying)
     {
-        base.SetupProjectile(_pos, _dir, _speed, _damage, _lifetime);
+        base.SetupProjectile(_pos, _dir, _speed, _damage, _lifetime, _isFlying);
     }
 
     private void OnTriggerEnter(Collider other)

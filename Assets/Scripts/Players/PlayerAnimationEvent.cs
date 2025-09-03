@@ -3,11 +3,22 @@ using UnityEngine;
 public class PlayerAnimationEvent : MonoBehaviour
 {
     [SerializeField] PlayerAttack playerAttack;
-    [SerializeField] Transform shootingPosition;
+
+    private void Start()
+    {
+         if(playerAttack == null) 
+            playerAttack = GetComponent<PlayerAttack>();
+    }
 
     public void Shoot() 
     {
-        if(PlayerManager.CurrentState == PlayerState.Attack)
-            playerAttack.Shoot(shootingPosition.position);
-    } 
+        if (PlayerManager.CurrentState == PlayerState.Attack)
+            playerAttack.Shoot();
+    }
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (playerAttack == null) playerAttack = GetComponent<PlayerAttack>();  
+    }
+#endif
 }

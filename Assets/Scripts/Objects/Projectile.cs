@@ -3,7 +3,11 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    [Header("Required Managers")]
     [SerializeField] protected PoolManager poolManager;
+    [Header("Identity")]
+    [SerializeField] protected bool hasExplosionEffect = false;
+
     protected Rigidbody rb;
     protected Collider cd;
 
@@ -12,7 +16,6 @@ public class Projectile : MonoBehaviour
     protected bool spawned = false;
 
     public int damage { get; protected set; } = 1;
-
 
     protected virtual void Start()
     {
@@ -33,7 +36,7 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    public virtual void SetupProjectile(Vector3 _pos, Vector3 _dir, float _speed, int _damage, float _lifetime)
+    public virtual void SetupProjectile(Vector3 _pos, Vector3 _dir, float _speed, int _damage, float _lifetime, bool _isFlying)
     {
         spawned = true;
 
@@ -42,9 +45,19 @@ public class Projectile : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
 
-        transform.position = _pos;
+        transform.position = _pos; 
         transform.rotation = Quaternion.LookRotation(_dir);
-        rb.linearVelocity = transform.forward * _speed;
+
+        if (_isFlying)
+        {
+            rb.linearVelocity = _dir;
+            rb.useGravity = true;
+        }
+        else
+        {
+            rb.linearVelocity = _dir * _speed;
+        }
+
         damage = _damage;
         lifetime = _lifetime;
     }
@@ -52,8 +65,8 @@ public class Projectile : MonoBehaviour
     protected void Terminate()
     {
         spawned = false;
+        rb.useGravity = false;
         lifetimeTimer = 0f;
         poolManager.ReturnObject(gameObject);
     }
-
 }

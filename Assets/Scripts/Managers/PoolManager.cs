@@ -7,7 +7,15 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class PoolManager : MonoBehaviour
 {
-    [SerializeField] Transform Inactive;
+    public static PoolManager Instance { get; private set; }
+
+    public Transform Inactive;
+    public Transform EffectPool;
+    public Transform ProjectilePool;
+    public Transform EnemyPool;
+    public Transform MapPool;
+    public Transform Extra;
+
     // 내부 풀 구조 (프리팹당 1 핸들만 유지)
     class Pool
     {
@@ -25,6 +33,18 @@ public class PoolManager : MonoBehaviour
 
     [Serializable]
     class PoolTag : MonoBehaviour { public string key; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this) 
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
 
     // ---------- Public API ----------
 
@@ -156,8 +176,9 @@ public class PoolManager : MonoBehaviour
             // 인스턴스 파괴
             foreach (var go in pool.All)
                 if (go != null) Destroy(go);
+
             pool.All.Clear();
-            pool.Inactive.Clear();
+            pool.Inactive.Clear();  
 
             // 프리팹 핸들 Release (단 1회)
             if (pool.PrefabHandle.IsValid())

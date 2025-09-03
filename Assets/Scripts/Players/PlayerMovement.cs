@@ -9,19 +9,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float sphereCastRadius = 0.5f;
     [SerializeField] LayerMask obstacleLayer;
 
-    private void Awake()
-    {
-    }
-
-    void Start()
-    {
-
-    }
-
-    void Update()
-    {
-
-    }
 
     public void Move(Vector2 _moveInput)
     {
@@ -47,7 +34,7 @@ public class PlayerMovement : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+        if (playerManager == null) playerManager = GetComponent<PlayerManager>();
     }
 #endif
 }

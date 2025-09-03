@@ -54,12 +54,17 @@ public class EnemyMove : MonoBehaviour, IEnemyBehavior
 
     public virtual void Tick() 
     {
+        UpdateState(EnemyState.Idle);
+    }
+
+    protected virtual void UpdateState(EnemyState _state) 
+    {
         moveTimer -= Time.deltaTime;
 
         if (moveTimer < 0)
         {
             moveTimer = defaultMoveTime;
-            ctx.ChangeState(EnemyState.Idle);
+            ctx.ChangeState(_state);
             return;
         }
     }

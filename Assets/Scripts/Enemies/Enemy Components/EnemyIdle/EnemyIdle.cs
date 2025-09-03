@@ -2,7 +2,7 @@ using Game.Enemies.Enum;
 using UnityEngine;
 
 [System.Serializable]
-public class EnemyIdle :MonoBehaviour, IEnemyBehavior
+public class EnemyIdle : MonoBehaviour, IEnemyBehavior
 {
     [Header("Idle Tuning")]
     [SerializeField] float defaultIdleTime = 10f;

@@ -1,3 +1,5 @@
+using Game.Enemies.Enum;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum PlayerState
@@ -10,15 +12,27 @@ public enum PlayerState
 
 public class PlayerManager : MonoBehaviour
 {
-    public PlayerData PlayerData { get; private set; }
-    public PlayerMovement PlayerMovement { get; private set; }
-    public PlayerAttack PlayerAttack { get; private set; }
-    public PlayerHeatlh PlayerHeatlh { get; private set; }
+    public PlayerData Data { get; private set; }
+    public PlayerMovement Move { get; private set; }
+    public PlayerAttack Attack { get; private set; }
+    public PlayerHurt Hurt { get; private set; }
+    
     
 
     public static PlayerState CurrentState = PlayerState.Idle;
+
     public static bool IsPlayerDead => CurrentState == PlayerState.Dead;
     Animator anim;
+
+    protected readonly int AttackSpeed = Animator.StringToHash("AttackSpeed");
+    protected readonly int AttackIndex = Animator.StringToHash("AttackIndex");
+    protected readonly Dictionary<PlayerState, int> animBool = new()
+    {
+        { PlayerState.Idle,   Animator.StringToHash("Idle")   },
+        { PlayerState.Attack, Animator.StringToHash("Attack") },
+        { PlayerState.Dead,   Animator.StringToHash("Dead")   },
+        { PlayerState.Move,   Animator.StringToHash("Move")   },
+    };
 
     private void Awake()
     {
@@ -27,15 +41,10 @@ public class PlayerManager : MonoBehaviour
 
     void Start()
     {   
-        PlayerData = GetComponent<PlayerData>();
-        PlayerMovement = GetComponent<PlayerMovement>();
-        PlayerAttack = GetComponent<PlayerAttack>();
-        PlayerHeatlh = GetComponent<PlayerHeatlh>();
-    }   
-
-    void Update()
-    {
-        
+        Data = GetComponent<PlayerData>();
+        Move = GetComponent<PlayerMovement>();
+        Attack = GetComponent<PlayerAttack>(); Attack.Init();
+        Hurt = GetComponent<PlayerHurt>(); Hurt.Init();
     }
 
     public void ChangePlayerState(PlayerState _newState, float animSpeed = 1f) 
@@ -49,7 +58,17 @@ public class PlayerManager : MonoBehaviour
     {
         anim.speed = animSpeed;
 
-        anim.SetBool(CurrentState.ToString(), false);
-        anim.SetBool(_newState.ToString(), true);
+        anim.SetBool(animBool[CurrentState], false);
+        anim.SetBool(animBool[_newState], true);
+    }
+
+    public void GetHit(int damage) 
+    {
+        Hurt.GetHit(damage);
+    }
+
+    public void GetHeal(int amount, out bool valid) 
+    {
+        Hurt.GetHeal(amount, out valid);
     }
 }

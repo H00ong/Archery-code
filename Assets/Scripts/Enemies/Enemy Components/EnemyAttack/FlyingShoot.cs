@@ -10,6 +10,7 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
     [SerializeField] AssetReferenceGameObject flyingProjectilePrefab;
     [SerializeField] Transform projectileParent;
     [SerializeField] Transform shootingPoint;
+    private readonly string projectilePoolTag = "ProjectilePool";
     [Header("Flying Shooting Tuning")]
     [SerializeField] float defaultFlyingProjectileSpeed = 10f;   // EnemyData
     [SerializeField] float defaultProjectileLifetime = 10f;
@@ -25,6 +26,8 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
             defaultFlyingProjectileSpeed = shootingStats.flyingProjectileSpeed;
             defaultFlyingProjectileAtk = shootingStats.flyingProjectileAtk;
         }
+
+        projectileParent = ctx.poolManager.ProjectilePool;
     }
 
 
@@ -52,6 +55,7 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
     IEnumerator FlyingShootingCoroutine()
     {
         GameObject go = null;
+        projectileParent = ctx.poolManager.ProjectilePool;
 
         yield return ctx.poolManager.GetObject(flyingProjectilePrefab, inst => go = inst, projectileParent);
 
@@ -64,7 +68,13 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
         flyingDir = Utils.GetDirectionVector(ctx.lastPlayerPosition, shootingPoint.position);
         flyingDir = flyingDir * defaultFlyingProjectileSpeed + Vector3.up * yVelocity;
 
-        Projectile_Boss newProjectile = go.GetComponent<Projectile_Boss>();
-        newProjectile.SetupProjectile(shootingPoint.position, flyingDir, -1f, defaultFlyingProjectileAtk, defaultProjectileLifetime);
+        Projectile_Enemy newProjectile = go.GetComponent<Projectile_Enemy>();
+        newProjectile.SetupProjectile(shootingPoint.position, 
+                                      flyingDir, 
+                                      _speed : -1f, 
+                                      defaultFlyingProjectileAtk, 
+                                      defaultProjectileLifetime, 
+                                      _isFlying : true); // speed == -1 -> dir에 속도가 포함됨.
+        
     }
 }

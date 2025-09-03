@@ -16,13 +16,12 @@ public class EnemyController : MonoBehaviour
     public EnemyTag enemyTags;
     EnemyData data;
     public EnemyStats stats;
-    public EnemyState currentState { get; protected set; }
-
+    public EnemyState CurrentState { get; protected set; }
 
     [Header("Required Managers")]
-    [SerializeField] public DataManager dataManager = null;
-    [SerializeField] public PoolManager poolManager = null;
-    [SerializeField] public PlayerManager player = null;
+    public DataManager dataManager = null;
+    public PoolManager poolManager = null;
+    public PlayerManager player = null;
 
     [Header("Modules")]
     [SerializeField] protected EnemyIdle idle;
@@ -45,18 +44,20 @@ public class EnemyController : MonoBehaviour
     [Header("Collision")]
     [SerializeField] protected Transform blockCheck;
     [SerializeField] protected float sphereCastRadius = 0f;
+    [SerializeField] protected float castDistance = .5f;
     [SerializeField] protected LayerMask obstacleLayer;
 
     protected Action onEnter, onExit, onTick;
     protected Action attackOnEnter, attackOnExit, attackOnTick;
+
     protected Dictionary<EnemyState, (Action enter, Action exit, Action tick)> actionTable;
 
     [HideInInspector] public Vector3 lastPlayerPosition;
 
-    public bool isBlocked { get; protected set; } = false;
-    public bool attackTrigger { get; protected set; } = false;
-    public bool attackMoveTrigger { get; protected set; } = false;
-    public bool hurtTrigger { get; protected set; } = false;
+    public bool IsBlocked { get; protected set; } = false;
+    public bool AttackTrigger { get; protected set; } = false;
+    public bool AttackMoveTrigger { get; protected set; } = false;
+    public bool HurtTrigger { get; protected set; } = false;
 
     protected readonly int AttackSpeed = Animator.StringToHash("AttackSpeed");
     protected readonly int AttackIndex = Animator.StringToHash("AttackIndex");
@@ -72,12 +73,13 @@ public class EnemyController : MonoBehaviour
 
     #region Unity Cycle
 
-    protected virtual void FixedUpdate()
+
+    private void BlockCheck()
     {
         Vector3 origin = blockCheck.position;
         float radius = sphereCastRadius;
         Vector3 dir = transform.forward;
-        float checkDistance = 0.05f; // 원하는 탐색 거리 - 임의로 정함
+        float checkDistance = castDistance;
         LayerMask mask = obstacleLayer;
 
         if (Physics.SphereCast(origin,
@@ -87,22 +89,25 @@ public class EnemyController : MonoBehaviour
                                 checkDistance,
                                 mask))
         {
-            if (move is RandomMove rand)
+            if (move is RandomMove randomMove)
             {
                 // hit.normal을 이용해 정확한 반사
-                rand.PickReflectDirection(transform.forward, hit.normal);
+                randomMove.PickReflectDirection(transform.forward, hit.normal);
             }
-            else isBlocked = true;
+            else
+                IsBlocked = true;
         }
         else
         {
-            isBlocked = false;
+            IsBlocked = false;
         }
     }
 
     protected virtual void Update()
     {
-        if (attackTrigger)
+        BlockCheck();
+
+        if (AttackTrigger)
         {
             ChangeState(EnemyState.Idle);
             return;
@@ -136,6 +141,7 @@ public class EnemyController : MonoBehaviour
     private void SetupManager()
     {
         if (!dataManager) dataManager = FindAnyObjectByType<DataManager>();
+        if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
     }
 
     private void CacheComponent()
@@ -181,6 +187,7 @@ public class EnemyController : MonoBehaviour
         if (rb != null)
         {
             rb.isKinematic = !active;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
         }
     }
 
@@ -266,17 +273,17 @@ public class EnemyController : MonoBehaviour
     
     public void SetHurtTrigger(bool active) 
     {
-        hurtTrigger = active;
+        HurtTrigger = active;
     }
 
     public void SetAttackTrigger(bool active) 
     {
-        attackTrigger = active;
+        AttackTrigger = active;
     }
 
     public void SetAttackMoveTrigger(bool active) 
     {
-        attackMoveTrigger = active;
+        AttackMoveTrigger = active;
     }
 
     public void Die() 
@@ -295,29 +302,29 @@ public class EnemyController : MonoBehaviour
 
     protected void InitState(EnemyState initState) 
     {
-        currentState = initState;
+        CurrentState = initState;
         (onEnter, onExit, onTick) = actionTable[initState];
         onEnter?.Invoke();
     }
 
     public virtual void ChangeState(EnemyState next)
     {
-        if (currentState == next) return;
+        if (CurrentState == next) return;
 
-        if (currentState == EnemyState.Dead) return;
+        if (CurrentState == EnemyState.Dead) return;
 
-        anim.SetBool(animBool[currentState], false);
+        anim.SetBool(animBool[CurrentState], false);
         anim.SetBool(animBool[next], true);
 
         onExit?.Invoke();
-        currentState = next;
+        CurrentState = next;
         (onEnter, onExit, onTick) = actionTable[next];
         onEnter?.Invoke();
     }
 
     public virtual void GetHit(int _damage) 
     {
-        if (currentState == EnemyState.Dead)
+        if (CurrentState == EnemyState.Dead)
             return;
 
         health.TakeDamage(_damage);
@@ -365,6 +372,11 @@ public class EnemyController : MonoBehaviour
         if (!dataManager) dataManager = FindAnyObjectByType<DataManager>();
         if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
         if (!player) player = FindAnyObjectByType<PlayerManager>();
+
+        if (!idle) GetComponent<EnemyIdle>();
+        if(!die) GetComponent<EnemyDie>();
+        if(!hurt) GetComponent<EnemyHurt>();
+        if(!move) GetComponent<EnemyMove>();
 
         TagLayerSetup();
         ApplyTag();

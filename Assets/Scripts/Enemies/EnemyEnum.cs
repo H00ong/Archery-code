@@ -15,6 +15,8 @@ namespace Game.Enemies.Enum
     {
         None,
         Slime,
+        Bird,
+        Octopus,
         Box,
         TurtleShell,
         SkeletonMinion

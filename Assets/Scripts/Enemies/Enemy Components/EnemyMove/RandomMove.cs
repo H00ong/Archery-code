@@ -31,17 +31,22 @@ public class RandomMove : EnemyMove
 
     public override void Tick()
     {
+        UpdateState(EnemyState.Attack);
+    }
+
+    protected override void UpdateState(EnemyState _state)
+    {
         moveTimer -= Time.deltaTime;
         pickDirectionTimer -= Time.deltaTime;
 
         if (moveTimer < 0)
         {
             moveTimer = defaultMoveTime;
-            ctx.ChangeState(EnemyState.Attack);
+            ctx.ChangeState(_state);
             return;
         }
 
-        if (pickDirectionTimer < 0) 
+        if (pickDirectionTimer < 0)
         {
             PickMoveDirection();
         }

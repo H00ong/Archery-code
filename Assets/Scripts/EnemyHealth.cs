@@ -8,9 +8,8 @@ public class EnemyHealth : Health
         // Additional enemy-specific logic can be added here, e.g., play hurt animation
     }
 
-    public override bool Heal(float healAmount, float modifier)
+    public override void Heal(int amount, out bool valid)
     {
-        return base.Heal(healAmount, modifier);
-        // Additional enemy-specific logic can be added here, e.g., play heal animation
+        base.Heal(amount, out valid);
     }
 }
