@@ -1,3 +1,4 @@
+using Game.Player;
 using UnityEngine;
 
 public class PlayerAnimationEvent : MonoBehaviour

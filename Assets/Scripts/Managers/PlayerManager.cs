@@ -1,31 +1,23 @@
 using Game.Enemies.Enum;
+using Game.Player;
 using System.Collections.Generic;
 using UnityEngine;
-
-public enum PlayerState
-{
-    Idle,
-    Move,
-    Attack,
-    Dead
-}
 
 public class PlayerManager : MonoBehaviour
 {
     public PlayerData Data { get; private set; }
     public PlayerMovement Move { get; private set; }
     public PlayerAttack Attack { get; private set; }
-    public PlayerHurt Hurt { get; private set; }
-    
-    
+    public PlayerHurt Hurt { get; private set; } 
 
     public static PlayerState CurrentState = PlayerState.Idle;
 
     public static bool IsPlayerDead => CurrentState == PlayerState.Dead;
-    Animator anim;
+    public Animator anim { get; private set; }
 
     protected readonly int AttackSpeed = Animator.StringToHash("AttackSpeed");
     protected readonly int AttackIndex = Animator.StringToHash("AttackIndex");
+
     protected readonly Dictionary<PlayerState, int> animBool = new()
     {
         { PlayerState.Idle,   Animator.StringToHash("Idle")   },
@@ -47,17 +39,15 @@ public class PlayerManager : MonoBehaviour
         Hurt = GetComponent<PlayerHurt>(); Hurt.Init();
     }
 
-    public void ChangePlayerState(PlayerState _newState, float animSpeed = 1f) 
+    public void ChangePlayerState(PlayerState _newState) 
     {
-        UpdateAnimation(_newState, animSpeed);
+        UpdateAnimation(_newState);
 
         CurrentState = _newState;
     }
 
-    public void UpdateAnimation(PlayerState _newState, float animSpeed)
+    public void UpdateAnimation(PlayerState _newState)
     {
-        anim.speed = animSpeed;
-
         anim.SetBool(animBool[CurrentState], false);
         anim.SetBool(animBool[_newState], true);
     }

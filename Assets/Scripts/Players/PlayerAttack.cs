@@ -1,12 +1,26 @@
+using Game.Player;
+using Game.Player.Attack;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+
+namespace Game.Player.Attack
+{
+    public struct ShotInstruction
+    {
+        Vector3 shootingPos;
+        Vector3 shootingDir;
+    }
+}
 
 public class PlayerAttack : MonoBehaviour
 {
     [Header("Debug Mode")]
     [SerializeField] bool debugMode;
     [Space]
+    [Header("Required Components")]
+    [SerializeField] PlayerSkill skill;
     [Header("Required Objects")]
     [SerializeField] AssetReferenceGameObject playerProjectile;
     [SerializeField] Transform projectileParent;
@@ -19,7 +33,7 @@ public class PlayerAttack : MonoBehaviour
     [SerializeField] int defaultPlayerAtk = 1;
 
     public static EnemyController currentTarget;
-    public static float playerAttackSpeed;
+    public static float playerAttackSpeed { get; set; }
     public static int playerAtk; // Default player damage, can be modified later
     public static float projectileSpeed;
 
@@ -89,14 +103,31 @@ public class PlayerAttack : MonoBehaviour
         Vector3 projectileDir = Utils.GetDirectionVector(currentTarget.transform.position, shootingPos.position);
         newProjectile.SetupProjectile(shootingPos.position, projectileDir, projectileSpeed, playerAtk, defaltProjectileLifetime, _isFlying: false);
     }
+
+    private void BuildShotPlan() 
+    {
+        var list = new List<ShotInstruction>();
+
+        // ¼öÆò
+        if (PlayerSkill.acquiredSkillModule.TryGetValue(PlayerSkillId.HorizontalShot, out PlayerSkillModuleBase horizontal) )
+        {
+            
+        }
+
+        //if ()
+        //{
+           
+        //}
+
+    }
     #endregion
 
-    
+
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        
+        if (skill == null) skill = GetComponent<PlayerSkill>();
     }
 #endif
 }

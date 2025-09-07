@@ -19,7 +19,7 @@ public class PoolManager : MonoBehaviour
     // 내부 풀 구조 (프리팹당 1 핸들만 유지)
     class Pool
     {
-        public AsyncOperationHandle<GameObject> PrefabHandle; // LoadAssetAsync 핸들(프리팹 에셋)
+        public AsyncOperationHandle<GameObject> PrefabHandle;  // LoadAssetAsync 핸들(프리팹 에셋)
         public GameObject Prefab;                              // PrefabHandle.Result
         public Transform Root;                                 // 비활성 루트 (항상 SetActive(false))
         public readonly HashSet<GameObject> All = new();       // 관리 중인 전체 인스턴스
@@ -202,7 +202,7 @@ public class PoolManager : MonoBehaviour
         // 프리팹 핸들 준비(1회 로드)
         if (!pool.PrefabHandle.IsValid())
         {
-            pool.PrefabHandle = aref.LoadAssetAsync<GameObject>(); // or Addressables.LoadAssetAsync<GameObject>(key)
+            pool.PrefabHandle = aref.LoadAssetAsync<GameObject>();
             yield return pool.PrefabHandle;
 
             if (pool.PrefabHandle.Status != AsyncOperationStatus.Succeeded)

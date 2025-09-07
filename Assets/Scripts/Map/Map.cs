@@ -1,23 +1,44 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using UnityEditor.Build;
 using UnityEngine;
 
 public class Map : MonoBehaviour
 {
     public List<Transform> spawnPointOfEnemies;
     public Transform playerPoint;
-    public Transform portal;
+    [SerializeField] GameObject portal;
+    [SerializeField] Collider portalCollider;
 
-    [SerializeField] LayerMask obstacleLayer;
-    [SerializeField] LayerMask portalLayer;
+    readonly string obstacleLayerName = "Obstacle";
+    readonly string portalLayerName   = "Portal";
 
-    private void Start()
+    public void Init() 
     {
-        portal.gameObject.layer = obstacleLayer;
+        StageManager.OnStageCleared += ActivePortal;
+
+        foreach (var point in spawnPointOfEnemies) 
+            point.gameObject.SetActive(false);
+
+        playerPoint.gameObject.SetActive(false);
+        portal.GetOrAddComponent<PlayerPortal>();
+        InActivePortal();
     }
 
-    public void UpdatePortal()
+    public void ActivePortal()
     {
-        portal.gameObject.layer = portalLayer;
+        portal.layer = LayerMask.NameToLayer(portalLayerName);
+        portalCollider.isTrigger = true;
+    }
+
+    public void InActivePortal() 
+    {
+        portal.layer = LayerMask.NameToLayer(obstacleLayerName);
+        portalCollider.isTrigger = false;
+    }
+
+    private void OnDisable()
+    {
+        StageManager.OnStageCleared -= ActivePortal;        
     }
 }

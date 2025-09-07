@@ -90,7 +90,7 @@ public class BossEnemyController : EnemyController
 
         if (health.IsDead())
         {
-            EnemyManager.enemies.Remove(this);
+            EnemyManager.RemoveEnemy(this);
             ColliderActive(false); // Disable collider on death
             RigidbodyActive(false); // Disable rigidbody on death            
             ChangeState(EnemyState.Dead);

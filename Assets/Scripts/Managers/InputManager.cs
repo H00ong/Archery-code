@@ -1,48 +1,68 @@
+using Game.Player;
 using System;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
+    public static InputManager Instance { get; private set; }
     [SerializeField] PlayerManager playerManager;
     [HideInInspector] public Vector2 moveInput;
     PlayerInput playerInput;
 
     private void Awake()
     {
+        if (Instance != null && Instance != this) 
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
         playerInput = new PlayerInput();
     }
 
     private void Update()
     {
-        moveInput = playerInput.Player.Move.ReadValue<Vector2>();
-
-        if (moveInput != Vector2.zero)
-        { 
-            playerManager.Move.Move(moveInput);
-        }
-        else 
+        if (playerInput.Player.enabled) 
         {
-            if (EnemyManager.enemies.Count > 0)
+            moveInput = playerInput.Player.Move.ReadValue<Vector2>();
+
+            if (moveInput != Vector2.zero)
             {
-                playerManager.Attack.Attack();
-                playerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
+                playerManager.Move.Move(moveInput);
             }
-            else 
+            else
             {
-                playerManager.ChangePlayerState(PlayerState.Idle);
+                if (EnemyManager.enemies.Count > 0)
+                {
+                    playerManager.Attack.Attack();
+                    playerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
+                }
+                else
+                {
+                    playerManager.ChangePlayerState(PlayerState.Idle);
+                }
             }
         }
     }
 
     private void OnEnable()
     {
-        playerInput.Player.Enable();
+        ActivePlayerInput(true);
     }
-
     private void OnDisable()
     {
-        playerInput.Player.Disable();
+        ActivePlayerInput(false);
     }
+
+    private void ActivePlayerInput(bool active)
+    {
+        if (active) playerInput.Player.Enable();
+        else playerInput.Player.Disable();
+    }
+
+    
 
 #if UNITY_EDITOR
     private void OnValidate()

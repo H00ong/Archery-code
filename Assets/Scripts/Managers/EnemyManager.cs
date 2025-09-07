@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class EnemyManager : MonoBehaviour
 {
+    [SerializeField] StageManager stageManager;
+
     public static List<EnemyController> enemies = new List<EnemyController>();
 
     public static void ClearAllEnemies()
@@ -28,11 +30,8 @@ public class EnemyManager : MonoBehaviour
         enemies.Add(enemy);
     }
 
-    public static void RemoveEnemy(GameObject _go)
+    public static void RemoveEnemy(EnemyController _enemy)
     {
-        EnemyController _enemy = _go.GetComponent<EnemyController>();
-        if (_enemy == null) return;
-
         if (!enemies.Contains(_enemy))
         {
             Debug.LogError("Remove enemy Error");
@@ -41,6 +40,19 @@ public class EnemyManager : MonoBehaviour
         else 
         {
             enemies.Remove(_enemy);
+
+            if (enemies.Count <= 0) 
+            {
+                StageManager.ChangeStageState(StageState.Clear);
+                return;
+            }
         }
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if(stageManager == null) stageManager = FindAnyObjectByType<StageManager>();
+    }
+#endif
 }

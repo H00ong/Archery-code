@@ -96,13 +96,13 @@ public class MapManager : MonoBehaviour
         StartCoroutine(GetMapCoroutine(go =>
         {
             if (go == null) return;
-            if (go == currentMap) return;
             else
             {
                 if (currentMap != null)
                     currentMap.SetActive(false); // 기존 맵 비활성화
 
                 currentMap = go;
+                currentMap.GetComponent<Map>().Init();
                 currentMap.transform.position = defaultMapPosition;
                 currentMap.SetActive(true);
             }
