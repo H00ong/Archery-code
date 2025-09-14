@@ -37,7 +37,7 @@ public class InputManager : MonoBehaviour
                 if (EnemyManager.enemies.Count > 0)
                 {
                     playerManager.Attack.Attack();
-                    playerManager.ChangePlayerState(PlayerState.Attack, PlayerAttack.playerAttackSpeed);
+                    playerManager.ChangePlayerState(PlayerState.Attack);
                 }
                 else
                 {

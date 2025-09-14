@@ -75,6 +75,7 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
                                       defaultFlyingProjectileAtk, 
                                       defaultProjectileLifetime, 
                                       _isFlying : true); // speed == -1 -> dir에 속도가 포함됨.
-        
+
+        go.SetActive(true);
     }
 }

@@ -81,6 +81,8 @@ public class Shoot : EnemyAttack, IAnimationListener
                                           defaultProjectileAtk,
                                           defaultProjectileLifetime,
                                           _isFlying: false);
+
+            go.SetActive(true);
         }
     }
 }

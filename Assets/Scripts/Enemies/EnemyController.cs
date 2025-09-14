@@ -59,9 +59,6 @@ public class EnemyController : MonoBehaviour
     public bool AttackMoveTrigger { get; protected set; } = false;
     public bool HurtTrigger { get; protected set; } = false;
 
-    protected readonly int AttackSpeed = Animator.StringToHash("AttackSpeed");
-    protected readonly int AttackIndex = Animator.StringToHash("AttackIndex");
-    protected readonly int MoveIndex = Animator.StringToHash("MoveIndex");
     protected readonly Dictionary<EnemyState, int> animBool = new()
     {
         { EnemyState.Idle,   Animator.StringToHash("Idle")   },
@@ -133,7 +130,7 @@ public class EnemyController : MonoBehaviour
         AssignPlayerManager();
         InitModule();
 
-        anim.SetFloat(AttackSpeed, defaultAttackSpeed);
+        anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
         InitState(EnemyState.Idle);
 
     }

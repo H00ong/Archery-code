@@ -73,8 +73,6 @@ public class Projectile : MonoBehaviour
     {
         spawned = true;
 
-        gameObject.SetActive(true);
-
         rb = GetComponent<Rigidbody>();
         if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
 

@@ -9,6 +9,17 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float defaultMoveSpeed = 5f;
     [SerializeField] float sphereCastRadius = 0.5f;
     [SerializeField] LayerMask obstacleLayer;
+    public float Movespeed { get; set; }
+
+    private void Start()
+    {
+        Init();
+    }
+
+    private void Init() 
+    {
+        Movespeed = defaultMoveSpeed;        
+    }
 
 
     public void Move(Vector2 _moveInput)
@@ -22,8 +33,14 @@ public class PlayerMovement : MonoBehaviour
         if (Physics.OverlapSphere(transform.position + transform.up + transform.forward * 1 / 2, sphereCastRadius, obstacleLayer).Length > 0)
             return;
 
-        transform.position += moveDir * defaultMoveSpeed * Time.deltaTime;
+        transform.position += moveDir * Movespeed * Time.deltaTime;
     }
+
+    #region Skill Methods
+
+    public void UpdateMoveSpeed(float _modifier) => Movespeed = defaultMoveSpeed * (1 + _modifier);
+
+    #endregion
 
     private void OnDrawGizmos()
     {

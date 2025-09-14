@@ -3,6 +3,15 @@ using UnityEngine;
 
 namespace Game.Player 
 {
+    public enum OrbType
+    {
+        Common,
+        Venom,
+        Blaze,
+        Ice,
+        Lightning,
+    }
+
     public enum PlayerState
     {
         Idle,
@@ -17,6 +26,10 @@ namespace Game.Player
         DiagonalShot,
         HorizontalShot,
         MultiShot,
+        MoveSpeedIncrease,
+        AttackSpeedIncrease,
+        VenomOrb,
+        IceOrb,
     }
 
 

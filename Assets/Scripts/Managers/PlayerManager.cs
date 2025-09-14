@@ -9,14 +9,13 @@ public class PlayerManager : MonoBehaviour
     public PlayerMovement Move { get; private set; }
     public PlayerAttack Attack { get; private set; }
     public PlayerHurt Hurt { get; private set; } 
+    public PlayerSkill Skill { get; private set; }
 
     public static PlayerState CurrentState = PlayerState.Idle;
 
     public static bool IsPlayerDead => CurrentState == PlayerState.Dead;
     public Animator anim { get; private set; }
 
-    protected readonly int AttackSpeed = Animator.StringToHash("AttackSpeed");
-    protected readonly int AttackIndex = Animator.StringToHash("AttackIndex");
 
     protected readonly Dictionary<PlayerState, int> animBool = new()
     {
@@ -28,15 +27,17 @@ public class PlayerManager : MonoBehaviour
 
     private void Awake()
     {
-        anim = GetComponentInChildren<Animator>();
+        InitComponent();
     }
 
-    void Start()
-    {   
-        Data = GetComponent<PlayerData>();
-        Move = GetComponent<PlayerMovement>();
-        Attack = GetComponent<PlayerAttack>(); Attack.Init();
-        Hurt = GetComponent<PlayerHurt>(); Hurt.Init();
+    private void InitComponent()
+    {
+        anim = GetComponentInChildren<Animator>();
+        if (Data == null)   Data = GetComponent<PlayerData>();
+        if (Move == null)   Move = GetComponent<PlayerMovement>();
+        if (Attack == null) Attack = GetComponent<PlayerAttack>();  Attack.Init();
+        if (Hurt == null)   Hurt = GetComponent<PlayerHurt>();      Hurt.Init();
+        if (Skill == null)  Skill = GetComponent<PlayerSkill>();    Skill.Init();
     }
 
     public void ChangePlayerState(PlayerState _newState) 

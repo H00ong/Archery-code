@@ -113,21 +113,23 @@ public class BossEnemyController : EnemyController
         {
             if (!isTargeting)
             {
-                // currentAttackIndex = Random.Range(0, attackList.Count);
-                currentAttackIndex = 0;
+                currentAttackIndex = Random.Range(0, attackList.Count);
 
-                anim.SetFloat(AttackIndex, currentAttackIndex);
+                anim.SetFloat(AnimHashes.AttackIndex, currentAttackIndex);
 
                 if (currentAttackIndex == 1 && followMove != null)
                 {
                     isTargeting = true;
 
-                    anim.SetFloat(MoveIndex, 1);
+                    anim.SetFloat(AnimHashes.MoveIndex, 1);
 
                     onExit?.Invoke();
-                    (onEnter, onTick, onExit) = (followMove.OnEnter, followMove.Tick, followMove.OnExit);
-                    onEnter?.Invoke();
 
+                    move = followMove;
+                    actionTable[EnemyState.Move] = (move.OnEnter, move.OnExit, move.Tick);
+                    (onEnter, onExit, onTick) = actionTable[EnemyState.Move];
+
+                    onEnter?.Invoke();
                     return;
                 }
             }
@@ -135,9 +137,10 @@ public class BossEnemyController : EnemyController
             {
                 isTargeting = false;
                 
-                anim.SetFloat(MoveIndex, 0);
+                anim.SetFloat(AnimHashes.MoveIndex, 0);
 
                 move = randomMove;
+                actionTable[EnemyState.Move] = (move.OnEnter, move.OnExit, move.Tick);
             }
         }
 

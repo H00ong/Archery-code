@@ -5,13 +5,12 @@ public class PlayerHurt : MonoBehaviour
 {
     [SerializeField] PlayerManager playerManager;
     [SerializeField] PlayerHeatlh playerHealth;
-    string enemyTag = "Enemy";
+    private readonly string enemyTag = "Enemy";
 
     public void Init()
     {
         if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
     }
-
 
     public void GetHit(float _damage)
     {
@@ -40,14 +39,14 @@ public class PlayerHurt : MonoBehaviour
 
         // 충돌한 오브젝트가 적의 공격인지 확인
 
-        if (Utils.CompareTag(collision, enemyTag)) 
+        var hitRoot = collision.collider.attachedRigidbody ? collision.collider.attachedRigidbody.gameObject
+                                              : collision.collider.gameObject;
+
+        if(hitRoot.TryGetComponent<EnemyController>(out var enemy))
         {
-            float damage = 0f;
+            float atk = enemy.GetAtk();
 
-            EnemyController enemy = collision.gameObject.GetComponentInParent<EnemyController>();
-            damage = enemy.GetAtk();
-
-            GetHit(damage);
+            GetHit(atk);
         }
     }
 

@@ -42,6 +42,16 @@ public class MapManager : MonoBehaviour
 
     // Addressables 라벨로 MapScriptable 일괄 로드 → dict 구성
 
+    private void Start()
+    {
+        Init();
+    }
+
+    public void Init() 
+    {
+        CreateAllMaps();
+    }
+
     #region Map
     private IEnumerator EnsureMapDictReady()
     {
@@ -173,6 +183,7 @@ public class MapManager : MonoBehaviour
         }
 
         yield return poolManager.GetObject(bossMapRef, inst => bossMap = inst, mapParent);
+
         if (bossMap == null)
         {
             Debug.LogError("Boss map create fail");
