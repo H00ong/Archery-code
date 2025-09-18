@@ -4,7 +4,6 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class Projectile_Player : Projectile
 {
-    readonly string enemyTag = "Enemy";
     readonly string obstacleTag = "Obstacle";
     readonly string floorTag = "Floor";
     readonly string playerProjectileTag = "PlayerProjectile";

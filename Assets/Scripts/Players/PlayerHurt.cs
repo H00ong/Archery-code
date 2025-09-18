@@ -5,7 +5,6 @@ public class PlayerHurt : MonoBehaviour
 {
     [SerializeField] PlayerManager playerManager;
     [SerializeField] PlayerHeatlh playerHealth;
-    private readonly string enemyTag = "Enemy";
 
     public void Init()
     {

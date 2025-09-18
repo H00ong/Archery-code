@@ -12,6 +12,15 @@ namespace Game.Player
         Lightning,
     }
 
+    public enum BarrelType
+    {
+        Common,
+        Venom,
+        Blaze,
+        Ice,
+        Lightning,
+    }
+
     public enum PlayerState
     {
         Idle,
@@ -20,7 +29,6 @@ namespace Game.Player
         Dead
     }
 
-    
     public enum PlayerSkillId
     {
         DiagonalShot,
@@ -30,27 +38,8 @@ namespace Game.Player
         AttackSpeedIncrease,
         VenomOrb,
         IceOrb,
+        IceBarrelGenerate,
     }
-
-
-    [Flags]
-    public enum SkillTag : uint
-    {
-        None = 0,
-        Venom = 1 << 0,
-        Blaze = 1 << 1,
-        Ice = 1 << 2,
-        Lightning = 1 << 3, // (Lightening พฦดิ)
-        Orb = 1 << 4,
-        Melee = 1 << 5,
-        Ranged = 1 << 6,
-    }
-
-    public static class SkillTagUtil
-    {
-        public static bool HasAny(SkillTag v, SkillTag mask) => (v & mask) != 0;
-    }
-
 
     public enum SkillRarity 
     {

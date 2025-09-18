@@ -5,9 +5,10 @@ using UnityEngine;
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
-    [SerializeField] PlayerManager playerManager;
-    [HideInInspector] public Vector2 moveInput;
-    PlayerInput playerInput;
+
+    [SerializeField] PlayerManager _player;
+    [HideInInspector] public Vector2 MoveInput;
+    PlayerInput _playerInput;
 
     private void Awake()
     {
@@ -19,29 +20,29 @@ public class InputManager : MonoBehaviour
 
         Instance = this;
 
-        playerInput = new PlayerInput();
+        _playerInput = new PlayerInput();
     }
 
     private void Update()
     {
-        if (playerInput.Player.enabled) 
+        if (_playerInput.Player.enabled) 
         {
-            moveInput = playerInput.Player.Move.ReadValue<Vector2>();
+            MoveInput = _playerInput.Player.Move.ReadValue<Vector2>();
 
-            if (moveInput != Vector2.zero)
+            if (MoveInput != Vector2.zero)
             {
-                playerManager.Move.Move(moveInput);
+                _player.Move.Move(MoveInput);
             }
             else
             {
-                if (EnemyManager.enemies.Count > 0)
+                if (EnemyManager.Enemies.Count > 0)
                 {
-                    playerManager.Attack.Attack();
-                    playerManager.ChangePlayerState(PlayerState.Attack);
+                    _player.Attack.Attack();
+                    _player.ChangePlayerState(PlayerState.Attack);
                 }
                 else
                 {
-                    playerManager.ChangePlayerState(PlayerState.Idle);
+                    _player.ChangePlayerState(PlayerState.Idle);
                 }
             }
         }
@@ -50,16 +51,23 @@ public class InputManager : MonoBehaviour
     private void OnEnable()
     {
         ActivePlayerInput(true);
+
+        LevelUpFlow.OnLevelUp += () => ActivePlayerInput(false);
+        LevelUpFlow.OnSkillChosen += () => ActivePlayerInput(true);
     }
+
     private void OnDisable()
     {
         ActivePlayerInput(false);
+
+        LevelUpFlow.OnLevelUp -= () => ActivePlayerInput(false);
+        LevelUpFlow.OnSkillChosen -= () => ActivePlayerInput(true);
     }
 
     private void ActivePlayerInput(bool active)
     {
-        if (active) playerInput.Player.Enable();
-        else playerInput.Player.Disable();
+        if (active) _playerInput.Player.Enable();
+        else _playerInput.Player.Disable();
     }
 
     
@@ -67,7 +75,7 @@ public class InputManager : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (playerManager == null) playerManager = FindAnyObjectByType<PlayerManager>();
+        if (_player == null) _player = FindAnyObjectByType<PlayerManager>();
     }
 #endif
 }

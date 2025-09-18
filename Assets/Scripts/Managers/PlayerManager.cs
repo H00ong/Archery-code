@@ -14,7 +14,7 @@ public class PlayerManager : MonoBehaviour
     public static PlayerState CurrentState = PlayerState.Idle;
 
     public static bool IsPlayerDead => CurrentState == PlayerState.Dead;
-    public Animator anim { get; private set; }
+    public Animator Anim { get; private set; }
 
 
     protected readonly Dictionary<PlayerState, int> animBool = new()
@@ -32,7 +32,7 @@ public class PlayerManager : MonoBehaviour
 
     private void InitComponent()
     {
-        anim = GetComponentInChildren<Animator>();
+        Anim = GetComponentInChildren<Animator>();
         if (Data == null)   Data = GetComponent<PlayerData>();
         if (Move == null)   Move = GetComponent<PlayerMovement>();
         if (Attack == null) Attack = GetComponent<PlayerAttack>();  Attack.Init();
@@ -49,8 +49,8 @@ public class PlayerManager : MonoBehaviour
 
     public void UpdateAnimation(PlayerState _newState)
     {
-        anim.SetBool(animBool[CurrentState], false);
-        anim.SetBool(animBool[_newState], true);
+        Anim.SetBool(animBool[CurrentState], false);
+        Anim.SetBool(animBool[_newState], true);
     }
 
     public void GetHit(int damage) 

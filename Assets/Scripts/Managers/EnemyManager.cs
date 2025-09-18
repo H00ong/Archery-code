@@ -1,4 +1,5 @@
 using Game.Enemies.Enum;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,11 +7,12 @@ public class EnemyManager : MonoBehaviour
 {
     [SerializeField] StageManager stageManager;
 
-    public static List<EnemyController> enemies = new List<EnemyController>();
+    public static List<EnemyController> Enemies = new List<EnemyController>();
+    public static event Action OnAllEnemiesSpawned;
 
     public static void ClearAllEnemies()
     {
-        foreach (EnemyController enemy in enemies)
+        foreach (EnemyController enemy in Enemies)
         {
             if (enemy != null)
             {
@@ -18,7 +20,7 @@ public class EnemyManager : MonoBehaviour
             }
         }
 
-        enemies.Clear();
+        Enemies.Clear();
     }
 
     public static void EnemySpawn(GameObject _go, MapData _mapData, int _stageIndex) 
@@ -27,21 +29,26 @@ public class EnemyManager : MonoBehaviour
         if (enemy == null) return;
 
         enemy.InitializeEnemy(_mapData, _stageIndex);
-        enemies.Add(enemy);
+        Enemies.Add(enemy);
+    }
+
+    public static void AllEnemiesSpawned() 
+    {
+        OnAllEnemiesSpawned?.Invoke();
     }
 
     public static void RemoveEnemy(EnemyController _enemy)
     {
-        if (!enemies.Contains(_enemy))
+        if (!Enemies.Contains(_enemy))
         {
             Debug.LogError("Remove enemy Error");
             return;
         }
         else 
         {
-            enemies.Remove(_enemy);
+            Enemies.Remove(_enemy);
 
-            if (enemies.Count <= 0) 
+            if (Enemies.Count <= 0) 
             {
                 StageManager.ChangeStageState(StageState.Clear);
                 return;

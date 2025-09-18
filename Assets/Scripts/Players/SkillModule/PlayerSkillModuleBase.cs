@@ -59,9 +59,9 @@ public interface IOrbGenerator
 // 플레이어 공중 폭격 계열
 // ---------------------------
 
-public interface IPickupActivatedBombardment
+public interface IPickupBarrel
 {
-    public void GenerateItem();
+    public void GenerateActivate();
 }
 
 // ---------------------------

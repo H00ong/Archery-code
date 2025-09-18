@@ -63,8 +63,8 @@ namespace Game.Enemies.Stat
             var p = new StageMulPack { hpStage = 1f, atkStage = 1f, bossHpPerBoss = 1f, bossAtkPerBoss = 1f };
             if (sg == null) return p;
 
-            int stage = Mathf.Max(1, stageIndex);
-            int defaultMod = stage - 1;
+            int stage = Mathf.Max(0, stageIndex);
+            int defaultMod = stage;
             int bossMod = defaultMod / 10;
 
             p.hpStage = 1f + sg.hpMulPerStage * defaultMod;

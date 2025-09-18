@@ -15,52 +15,44 @@ public class StageManager : MonoBehaviour
     [Header("Required Managers")]
     [SerializeField] MapManager mapManager;
 
-    public static int currentStageIndex = 1;
+    public static int CurrentStageIndex { get; private set; } = 1;
     public static StageState CurrentState { get; private set; } = StageState.Combat;
-    
+    public static bool IsBossStage 
+    {
+        get => (CurrentStageIndex % 10 == 0) && (CurrentStageIndex != 0);
+    }
+
     public static event Action OnStageCleared;
-    public static Action OnCombat;
+    public static event Action OnCombat;
 
     private void OnEnable()
     {
         Init();
     }
-
-    private void Init()
-    {
-        OnCombat = UpdateStage;
-
-        InitStage();
-    }
-
     private void OnDisable()
     {
         OnStageCleared = null;
         OnCombat = null;
     }
 
+    private void Init()
+    {
+        InitStage();
+    }
+
     public void InitStage() 
     {
-        currentStageIndex = 0;
-
-        UpdateStage();
+        CurrentStageIndex = 0;
+        OnStageCleared?.Invoke();
     }
 
-    public void UpdateStage()
-    {   
-        currentStageIndex++;
-
-        mapManager.GetNewMap();
-        mapManager.PositionPlayer();
-        mapManager.SpawnEnemy();
-    }
 
     public static void ChangeStageState(StageState _newState) 
     {
         CurrentState = _newState;
 
         if (CurrentState == StageState.Clear) OnStageCleared?.Invoke();
-        if(CurrentState == StageState.Combat) OnCombat?.Invoke();
+        if (CurrentState == StageState.Combat) OnCombat?.Invoke();
     }
 
 #if UNITY_EDITOR

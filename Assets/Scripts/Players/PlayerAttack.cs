@@ -72,10 +72,10 @@ public class PlayerAttack : MonoBehaviour
         EnemyController target = null;
         float minDistance = float.MaxValue;
 
-        if (EnemyManager.enemies.Count <= 0)
+        if (EnemyManager.Enemies.Count <= 0)
             return null;
 
-        foreach (EnemyController enemy in EnemyManager.enemies)
+        foreach (EnemyController enemy in EnemyManager.Enemies)
         {
             float distance = Vector3.Distance(transform.position, enemy.transform.position);
 
@@ -190,7 +190,7 @@ public class PlayerAttack : MonoBehaviour
     public void UpdateAttackSpeed(float _modifier) 
     {
         AttackSpeed = defaultAttackSpeed * (1 +_modifier);
-        player.anim.SetFloat(AnimHashes.AttackSpeed, AttackSpeed);
+        player.Anim.SetFloat(AnimHashes.AttackSpeed, AttackSpeed);
     }
 
 

@@ -19,20 +19,31 @@ public static class Utils
     }
 
 
-    public static Vector3 GetDirectionVector(Vector3 _dest, Vector3 _source) 
+    public static Vector3 GetDirectionVector(Vector3 dest, Vector3 source) 
     {
-        Vector3 dir = _dest - _source;
+        Vector3 dir = dest - source;
         dir.y = 0; // Ignore vertical component
 
         return dir.normalized;
     }
 
-    public static Vector3 GetDirectionVector(Transform _target, Transform _source)
-        => GetDirectionVector(_target.position, _source.position);
+    public static Vector3 GetDirectionVector(Transform target, Transform source)
+        => GetDirectionVector(target.position, source.position);
 
-    public static float GetXZDistance(Vector3 _a, Vector3 _b)
+    public static float GetXZDistance(Vector3 a, Vector3 b)
     {
-        return Mathf.Sqrt(Mathf.Pow(_a.x - _b.x, 2) + Mathf.Pow(_a.z - _b.z, 2));
+        return Mathf.Sqrt(Mathf.Pow(a.x - b.x, 2) + Mathf.Pow(a.z - b.z, 2));
+    }
+
+    public static GameObject GetCollisionRoot(Collider other) 
+    {
+        return other.attachedRigidbody != null ? other.attachedRigidbody.gameObject
+                                               : other.gameObject;
+    }
+
+    public static Vector3 GetXZPosition(Vector3 pos) 
+    {
+        return new Vector3(pos.x, 0, pos.z);
     }
 
 }

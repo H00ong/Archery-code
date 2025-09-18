@@ -2,30 +2,21 @@ using Game.Player;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Serialization.Json;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.UIElements;
 
-class OrbConfig 
+public class OrbConfig
 {
-    public OrbConfig() 
-    {
-        orbs = new();
-        distance = -1; 
-    }
-
-    public List<Orb> orbs;
+    public List<Orb> orbs = new();
     public bool clockwise;
-    public float distance;
+    public float distance = -1;
 }
 
 public class OrbManager : MonoBehaviour
 {
     [SerializeField] Transform orbPivot;
     [SerializeField] private string label;
-    [SerializeField] int count = 3;
     [SerializeField] float defaultDistance;
     int generatedOrbSetCount = 0;
     bool clockwise = true;
@@ -43,26 +34,22 @@ public class OrbManager : MonoBehaviour
         Init();
     }
 
-    private void Init() 
+    private void Init()
     {
-        TryBind();
+        Bind();
         StartCoroutine(EnsureOrbDictReady());
         CreateOrbObjDict();
     }
 
-    private void TryBind() 
+    private void Bind()
     {
-        if (orbPivot == null) 
+        if (orbPivot == null)
         {
-            PlayerManager player = FindFirstObjectByType<PlayerManager>();
-            if (player != null)
-            {
-                orbPivot = FindAnyObjectByType<OrbPivot>().transform;
-            }
+            orbPivot = FindAnyObjectByType<OrbPivot>().transform;
         }
     }
 
-    private void CreateOrbObjDict() 
+    private void CreateOrbObjDict()
     {
         if (orbObjDict == null) orbObjDict = new();
         else orbObjDict.Clear();
@@ -88,13 +75,13 @@ public class OrbManager : MonoBehaviour
 
         yield return _handle;
 
-        if (_handle.Status != AsyncOperationStatus.Succeeded) 
+        if (_handle.Status != AsyncOperationStatus.Succeeded)
         {
             Debug.LogError($"Load {label} failed");
         }
     }
 
-    public void GenerateOrb(OrbType _type, int _count) 
+    public void GenerateOrb(OrbType _type, int _count)
     {
         StartCoroutine(GenerateOrbCoroutine(_type, _count));
     }
@@ -143,17 +130,10 @@ public class OrbManager : MonoBehaviour
     {
         if (!orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.orbs == null || orbConfig.orbs.Count == 0)
             return;
-
-        float distance = 0f;
-
-        if (orbConfig.distance > 0)
+        
+        if(orbConfig.distance <= 0)
         {
-            distance = orbConfig.distance;
-        }
-        else
-        {
-            distance = GeneratedOrbSetDistance;
-            orbConfig.distance = distance;
+            orbConfig.distance = GeneratedOrbSetDistance;
             generatedOrbSetCount++;
 
             orbConfig.clockwise = clockwise;
@@ -167,7 +147,7 @@ public class OrbManager : MonoBehaviour
             var obj = orbConfig.orbs[i];
 
             obj.InitilaizeOrb(orbPivot, orbConfig.clockwise);
-            SetOrbPosition(obj.transform, distance, count, i);
+            SetOrbPosition(obj.transform, orbConfig.distance, count, i);
             obj.gameObject.SetActive(true);
         }
 

@@ -7,40 +7,33 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MapManager : MonoBehaviour
 {
-    [Header("Required Managers")]
-    [SerializeField] DataManager dataManager;
-    [SerializeField] PoolManager poolManager;
-
-    [Header("Required Objects")]
-    [SerializeField] Transform mapParent;
-    [SerializeField] Transform enemyPool;
-
     [Header("Default Postion")]
-    [SerializeField] Vector3 defaultMapPosition;
+    [SerializeField] Vector3 _defaultMapPosition;
 
-    public static MapData currentMapData = null;
+    public static MapData CurrentMapData = null;
+    public static int CurrentMapIndex = 0;
+    public static MapType CurrentMapType;
+    public static GameObject CurrentMap;
+    private List<GameObject> _createdMaps;
 
-    public static int currentMapIndex = 0;
-    public static MapType currentMapType;
-    public static GameObject currentMap;
-    private List<GameObject> createdMaps;
-
-    [SerializeField] private string label = "map_config"; // Addressables 공통 라벨
-    public static Dictionary<MapType, MapScriptable> mapDict = new Dictionary<MapType, MapScriptable>();
+    [SerializeField] private string _label = "map_config"; // Addressables 공통 라벨
+    private Dictionary<MapType, MapScriptable> _mapDict = new Dictionary<MapType, MapScriptable>();
     private AsyncOperationHandle<IList<MapScriptable>> _handle; // 핸들 유지(언로드 방지)
 
-    private List<AssetReferenceGameObject> mapList;
-    private List<AssetReferenceGameObject> mapEnemyList;
-    private List<AssetReferenceGameObject> bossEnemyList;
-    private AssetReferenceGameObject bossMapRef;
-    private GameObject bossMap;
+    private List<AssetReferenceGameObject> _mapList;
+    private List<AssetReferenceGameObject> _mapEnemyList;
+    private List<AssetReferenceGameObject> _bossEnemyList;
+    private AssetReferenceGameObject _bossMapRef;
+    private GameObject _bossMap; // 보스맵 딱 하나만 존재하고 따로 보관
 
     private bool _mapsReady = false;
     private bool _isCreatingMaps = false;
 
-    // 순서 보장: 라벨 로드 완료 후 데이터 읽기/맵 생성
+    public static event Action OnMapUpdated;
+    private Action _onStageCleared;
 
-    // Addressables 라벨로 MapScriptable 일괄 로드 → dict 구성
+    private PoolManager _poolManager;
+    private DataManager _dataManager;
 
     private void Start()
     {
@@ -49,56 +42,68 @@ public class MapManager : MonoBehaviour
 
     public void Init() 
     {
-        CreateAllMaps();
+        _poolManager = PoolManager.Instance;
+        _dataManager = DataManager.Instance;
+
+        StartCoroutine(CreateAllMaps());
+    }
+
+    private void OnEnable()
+    {
+        _onStageCleared = () =>
+        {
+            GetNewMap(StageManager.IsBossStage);
+            SpawnEnemy(isBoss: StageManager.IsBossStage);
+        };
+
+        StageManager.OnStageCleared += _onStageCleared;
+        StageManager.OnStageCleared += PositionPlayer;
+    }
+
+    private void OnDisable()
+    {
+        StageManager.OnStageCleared -= _onStageCleared;
+        StageManager.OnStageCleared -= PositionPlayer;
     }
 
     #region Map
     private IEnumerator EnsureMapDictReady()
     {
-        if (mapDict != null && mapDict.Count > 0)
+        if (_mapDict != null && _mapDict.Count > 0)
             yield break;
 
-        if (mapDict == null)
-            mapDict = new Dictionary<MapType, MapScriptable>();
+        _mapDict.Clear();
+        _mapDict ??= new Dictionary<MapType, MapScriptable>();
 
         _handle = Addressables.LoadAssetsAsync<MapScriptable>(
-            label,
-            so => mapDict[so.mapType] = so // 동일 key 존재 시 마지막 항목으로 갱신
+            _label,
+            so => _mapDict[so.mapType] = so // 동일 key 존재 시 마지막 항목으로 갱신
         );
         yield return _handle;
 
         if (_handle.Status != AsyncOperationStatus.Succeeded)
-            Debug.LogError($"[MapManager] Addressables Load failed. label={label}");
+            Debug.LogError($"[MapManager] Addressables Load failed. label={_label}");
     }
 
     private void GetMapDataFromDataManager()
     {
-        if (currentMapData != null) return;
+        if (CurrentMapData != null) return;
 
-        if (dataManager == null)
-            dataManager = FindAnyObjectByType<DataManager>();
+        CurrentMapData = _dataManager.GetMapData(CurrentMapIndex);
+        if (CurrentMapData == null) return;
 
-        if (dataManager == null)
+        CurrentMapType = (MapType)CurrentMapData.mapType;
+        if (!_mapDict.TryGetValue(CurrentMapType, out var data))
         {
-            Debug.LogError("data manager is null");
-            return;
-        }
-
-        currentMapData = dataManager.GetMapData(currentMapIndex);
-        if (currentMapData == null) return;
-
-        currentMapType = (MapType)currentMapData.mapType;
-        if (!mapDict.TryGetValue(currentMapType, out var data))
-        {
-            Debug.LogError($"[MapManager] MapScriptable not found for {currentMapType}");
+            Debug.LogError($"[MapManager] MapScriptable not found for {CurrentMapType}");
             return;
         }
 
         // 참조 복사 대신 새 리스트로 교체(외부에서 Clear()해도 원본 SO 영향 없음)
-        mapList = new List<AssetReferenceGameObject>(data.mapList);
-        mapEnemyList = new List<AssetReferenceGameObject>(data.enemyList);
-        bossEnemyList = new List<AssetReferenceGameObject>(data.bossList);
-        bossMapRef = data.bossMap;
+        _mapList = new List<AssetReferenceGameObject>(data.mapList);
+        _mapEnemyList = new List<AssetReferenceGameObject>(data.enemyList);
+        _bossEnemyList = new List<AssetReferenceGameObject>(data.bossList);
+        _bossMapRef = data.bossMap;
     }
 
     public void GetNewMap(bool isBossMap = false)
@@ -108,13 +113,15 @@ public class MapManager : MonoBehaviour
             if (go == null) return;
             else
             {
-                if (currentMap != null)
-                    currentMap.SetActive(false); // 기존 맵 비활성화
+                if (CurrentMap != null)
+                    CurrentMap.SetActive(false); // 기존 맵 비활성화
 
-                currentMap = go;
-                currentMap.GetComponent<Map>().Init();
-                currentMap.transform.position = defaultMapPosition;
-                currentMap.SetActive(true);
+                CurrentMap = go;
+                CurrentMap.GetComponent<Map>().Init();
+                CurrentMap.transform.position = _defaultMapPosition;
+                CurrentMap.SetActive(true);
+
+                OnMapUpdated?.Invoke();
             }
         }, isBossMap));
     }
@@ -125,26 +132,26 @@ public class MapManager : MonoBehaviour
 
         if (!isBossMap)
         {
-            if (createdMaps == null || createdMaps.Count == 0)
+            if (_createdMaps == null || _createdMaps.Count == 0)
             {
                 Debug.LogError("No maps created.");
                 onReady?.Invoke(null);
                 yield break;
             }
 
-            int idx = UnityEngine.Random.Range(0, createdMaps.Count);
-            onReady?.Invoke(createdMaps[idx]);
+            int idx = UnityEngine.Random.Range(0, _createdMaps.Count);
+            onReady?.Invoke(_createdMaps[idx]);
         }
         else
         {
-            if (bossMap == null)
+            if (_bossMap == null)
             {
                 Debug.LogError("Boss maps not created");
                 onReady?.Invoke(null);
                 yield break;
             }
 
-            onReady?.Invoke(bossMap);
+            onReady?.Invoke(_bossMap);
         }
     }
 
@@ -163,28 +170,19 @@ public class MapManager : MonoBehaviour
         yield return EnsureMapDictReady();
         GetMapDataFromDataManager();
 
-        if (createdMaps != null) createdMaps.Clear();
-        else createdMaps = new List<GameObject>();
+        if (_createdMaps != null) _createdMaps.Clear();
+        else _createdMaps = new List<GameObject>();
 
-        if (poolManager == null)
-            poolManager = FindAnyObjectByType<PoolManager>();
-
-        if (poolManager == null)
-        {
-            Debug.LogError("pool manager is null");
-            yield break;
-        }
-
-        foreach (var map in mapList)
+        foreach (var map in _mapList)
         {
             GameObject go = null;
-            yield return poolManager.GetObject(map, inst => go = inst, mapParent);
-            if (go != null) createdMaps.Add(go);
+            yield return _poolManager.GetObject(map, inst => go = inst, _poolManager.MapPool);
+            if (go != null) _createdMaps.Add(go);
         }
 
-        yield return poolManager.GetObject(bossMapRef, inst => bossMap = inst, mapParent);
+        yield return _poolManager.GetObject(_bossMapRef, inst => _bossMap = inst, _poolManager.MapPool);
 
-        if (bossMap == null)
+        if (_bossMap == null)
         {
             Debug.LogError("Boss map create fail");
         }
@@ -195,18 +193,18 @@ public class MapManager : MonoBehaviour
 
     public void ClearMap()
     {
-        mapList.Clear();
-        mapEnemyList.Clear();
-        bossEnemyList.Clear();
+        _mapList.Clear();
+        _mapEnemyList.Clear();
+        _bossEnemyList.Clear();
 
-        poolManager.ReturnObject(currentMap);
-        currentMap = null;
+        _poolManager.ReturnObject(CurrentMap);
+        CurrentMap = null;
 
         if (_handle.IsValid())
         {
             Addressables.Release(_handle);
             _handle = default;
-            mapDict.Clear();
+            _mapDict.Clear();
         }
     }
     #endregion
@@ -222,13 +220,13 @@ public class MapManager : MonoBehaviour
     {
         yield return EnsureMapsReady();
 
-        if (currentMap == null)
+        if (CurrentMap == null)
         {
             Debug.LogError("currentMap is null, map creation must precede");
             yield break;
         }
 
-        Map map = currentMap.GetComponent<Map>();
+        Map map = CurrentMap.GetComponent<Map>();
 
         PlayerManager player = FindAnyObjectByType<PlayerManager>();
 
@@ -240,15 +238,15 @@ public class MapManager : MonoBehaviour
     #region Enemy
     public void SpawnEnemy(int count = 1, bool isBoss = false) 
     {
-        StartCoroutine(SpawnEnemyAsync(count, isBoss));
+        StartCoroutine(SpawnEnemyCoroutine(count, isBoss));
     }
 
-    private IEnumerator SpawnEnemyAsync(int count, bool isBoss)
+    private IEnumerator SpawnEnemyCoroutine(int count, bool isBoss)
     {
         // 1) 맵 준비 보장
         yield return EnsureMapsReady();
 
-        if (currentMap == null) 
+        if (CurrentMap == null) 
         {
             Debug.LogError("map is empty");
             yield break;
@@ -257,24 +255,24 @@ public class MapManager : MonoBehaviour
         // 2) 풀에서 인스턴스 생성
         GameObject enemy = null;
         AssetReferenceGameObject enemyRef = null;
-        List<Transform> spawnPoint = new List<Transform> (currentMap.GetComponent<Map>().spawnPointOfEnemies);
+        List<Transform> spawnPoint = new List<Transform> (CurrentMap.GetComponent<Map>().SpawnPointOfEnemies);
 
         if (isBoss)
         {
-            int bossIndex = (StageManager.currentStageIndex - 1) / 10;
-            enemyRef = bossEnemyList[bossIndex];
+            int bossIndex = StageManager.CurrentStageIndex / 10;
+            enemyRef = _bossEnemyList[bossIndex];
         }
 
         for (int i = 0; i < count; i++)
         {
             if (!isBoss)
             {
-                int randomIndex = UnityEngine.Random.Range(0, mapEnemyList.Count);
+                int randomIndex = UnityEngine.Random.Range(0, _mapEnemyList.Count);
 
-                enemyRef = mapEnemyList[randomIndex];
+                enemyRef = _mapEnemyList[randomIndex];
             }
 
-            yield return poolManager.GetObject(enemyRef, inst => enemy = inst, enemyPool, extraPrewarmCount: 0);
+            yield return _poolManager.GetObject(enemyRef, inst => enemy = inst, _poolManager.EnemyPool);
 
             int randomIndexOfSpawnPoint = UnityEngine.Random.Range(0, spawnPoint.Count);
             Transform sp = spawnPoint[randomIndexOfSpawnPoint];
@@ -284,11 +282,11 @@ public class MapManager : MonoBehaviour
             spawnPoint.RemoveAt(randomIndexOfSpawnPoint);
 
             enemy.SetActive(true);
-
             if (enemy == null) yield break;
-
-            EnemyManager.EnemySpawn(enemy, currentMapData, currentMapIndex);
+            EnemyManager.EnemySpawn(enemy, CurrentMapData, StageManager.CurrentStageIndex);
         }
+
+        EnemyManager.AllEnemiesSpawned();
     }
     #endregion
 
@@ -297,12 +295,4 @@ public class MapManager : MonoBehaviour
         if (_handle.IsValid())
             Addressables.Release(_handle); // 수명 종료 시 일괄 해제
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (!poolManager) poolManager = FindAnyObjectByType<PoolManager>();
-        if (!dataManager) dataManager = FindAnyObjectByType<DataManager>();
-    }
-#endif
 }

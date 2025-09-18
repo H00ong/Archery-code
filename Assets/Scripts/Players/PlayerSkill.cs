@@ -9,7 +9,6 @@ public class PlayerSkill : MonoBehaviour
     [SerializeField] PlayerAttack attack;
     [SerializeField] PlayerMovement move;
 
-
     public static Dictionary<PlayerSkillId, PlayerSkillModuleBase> acquiredSkillModule = new();
 
     [SerializeField] private List<SkillDefinition> _skills = new();
@@ -23,6 +22,7 @@ public class PlayerSkill : MonoBehaviour
     [SerializeField] SkillDefinition moveSpeedUpgradeSKill;
     [SerializeField] SkillDefinition iceOrb;
     [SerializeField] SkillDefinition venomOrb;
+    [SerializeField] SkillDefinition iceBarrel;
 
     public void Init()
     {
@@ -64,6 +64,10 @@ public class PlayerSkill : MonoBehaviour
         {
             AcquireSkill(venomOrb);
         }
+        if (Input.GetKeyDown(KeyCode.Alpha8)) 
+        {
+            AcquireSkill(iceBarrel);
+        }
     }
 
     public void AcquireSkill(SkillDefinition so)
@@ -89,6 +93,25 @@ public class PlayerSkill : MonoBehaviour
 
         if (acquiredSkillModule[so.id].Level >= so.maxLevel)
             availableSkills.Remove(so);
+    }
+
+    public static int GetLevel(SkillDefinition def)
+    {
+        return acquiredSkillModule.TryGetValue(def.id, out var mod) ? mod.Level : 0;
+    }
+
+    public static List<SkillDefinition> GetRandomChoices(int count = 3)
+    {
+        // 이미 availableSkills는 "배울 수 있는 것만" 포함한다고 하셨으므로 필터 불필요
+        var rng = new System.Random();
+        // 간단 셔플 후 take
+        var pool = new List<SkillDefinition>(availableSkills);
+        for (int i = pool.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+        return pool.Count <= count ? pool : pool.GetRange(0, count);
     }
 
 

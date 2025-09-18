@@ -160,7 +160,7 @@ public class EnemyController : MonoBehaviour
                 return;
             }
 
-            MapData mapData = MapManager.currentMapData;
+            MapData mapData = MapManager.CurrentMapData;
             if (mapData == null)
             {
                 Debug.LogError("Map data is null");

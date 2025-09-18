@@ -10,7 +10,6 @@ public class FlyingShoot : EnemyAttack, IAnimationListener
     [SerializeField] AssetReferenceGameObject flyingProjectilePrefab;
     [SerializeField] Transform projectileParent;
     [SerializeField] Transform shootingPoint;
-    private readonly string projectilePoolTag = "ProjectilePool";
     [Header("Flying Shooting Tuning")]
     [SerializeField] float defaultFlyingProjectileSpeed = 10f;   // EnemyData
     [SerializeField] float defaultProjectileLifetime = 10f;

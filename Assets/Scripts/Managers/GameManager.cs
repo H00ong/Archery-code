@@ -35,15 +35,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void Start()
+    private void OnEnable()
     {
-        
+        LevelUpFlow.OnLevelUp += PauseGame;
+        LevelUpFlow.OnSkillChosen += ResumeGame;
+    }
+
+    private void OnDisable()
+    {
+        LevelUpFlow.OnLevelUp -= PauseGame;
+        LevelUpFlow.OnSkillChosen -= ResumeGame;
     }
 
     void Update()
     {
         
     }
+
+    private void PauseGame() => Time.timeScale = 0f;
+    private void ResumeGame() => Time.timeScale = 1f;
 
 #if UNITY_EDITOR
     private void OnValidate()
