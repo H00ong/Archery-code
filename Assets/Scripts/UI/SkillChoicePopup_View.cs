@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SkillChoicePopupView : MonoBehaviour
+public class SkillChoicePopup_View : MonoBehaviour
 {
-    [SerializeField] UI_Skill _uiSkillPrefab;
+    [SerializeField] Skill_View _uiSkillPrefab;
 
-    public List<UI_Skill> BuildCards(IReadOnlyList<SkillDefinition> defs)
+    public List<Skill_View> BuildCards(IReadOnlyList<SkillDefinition> defs)
     {
-        var list = new List<UI_Skill>(defs.Count);
+        var list = new List<Skill_View>(defs.Count);
         foreach (var _ in defs)
             list.Add(Instantiate(_uiSkillPrefab, transform));
         return list;

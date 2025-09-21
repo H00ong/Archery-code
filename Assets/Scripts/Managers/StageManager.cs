@@ -22,6 +22,8 @@ public class StageManager : MonoBehaviour
         get => (CurrentStageIndex % 10 == 0) && (CurrentStageIndex != 0);
     }
 
+    public static bool IsInCombat => CurrentState == StageState.Combat;
+
     public static event Action OnStageCleared;
     public static event Action OnCombat;
 

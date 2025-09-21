@@ -53,14 +53,17 @@ public class BarrelManager : MonoBehaviour
 
     private void GenerateBarrelCheck()
     {
-        foreach (var key in _barrelConfigDict.Keys)
+        if (StageManager.IsInCombat) 
         {
-            var config = _barrelConfigDict[key];
-            config.Timer += Time.deltaTime;
-            if (config.Timer >= _barrelGenerateTime)
+            foreach (var key in _barrelConfigDict.Keys)
             {
-                StartCoroutine(GenerateBarrel(config.Type));
-                config.Timer = 0f;
+                var config = _barrelConfigDict[key];
+                config.Timer += Time.deltaTime;
+                if (config.Timer >= _barrelGenerateTime)
+                {
+                    StartCoroutine(GenerateBarrel(config.Type));
+                    config.Timer = 0f;
+                }
             }
         }
     }
@@ -172,11 +175,11 @@ public class BarrelManager : MonoBehaviour
             int randomIndex = UnityEngine.Random.Range(0, enemyCount);
             var enemy = EnemyManager.Enemies[randomIndex];
 
-            StartCoroutine(AttackCouroutine(type, enemy.transform.position));
+            StartCoroutine(AttackCoroutine(type, enemy.transform.position));
         }
     }
 
-    IEnumerator AttackCouroutine(BarrelType type, Vector3 pos)
+    IEnumerator AttackCoroutine(BarrelType type, Vector3 pos)
     {
         GameObject go = null;
 
