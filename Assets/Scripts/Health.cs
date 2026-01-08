@@ -23,14 +23,14 @@ public abstract class Health : MonoBehaviour, IDamageable
         if (!isLive) return;
 
         currentHealth -= Mathf.RoundToInt(damage * (1 + modifier));
-        if (currentHealth <= 0)
-        {
-            currentHealth = 0;
-            isLive = false;
-        }
+        
+        if (currentHealth > 0) return;
+        
+        currentHealth = 0;
+        isLive = false;
     }
 
-    public virtual void Heal(int amount, out bool valid) 
+    public virtual void TakeHeal(int amount, out bool valid) 
     {
         if (!isLive)
             valid = false;

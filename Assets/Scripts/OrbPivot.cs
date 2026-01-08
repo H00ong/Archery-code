@@ -1,3 +1,4 @@
+using Players;
 using UnityEngine;
 
 public class OrbPivot : MonoBehaviour
@@ -7,7 +8,7 @@ public class OrbPivot : MonoBehaviour
     private void Start()
     {
         if(pivot == null)
-            pivot = FindAnyObjectByType<PlayerManager>().transform;
+            pivot = FindAnyObjectByType<PlayerController>().transform;
     }
 
     private void Update()

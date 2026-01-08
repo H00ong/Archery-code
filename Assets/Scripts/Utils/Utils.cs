@@ -1,34 +1,47 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+
+public enum TagType
+{
+    Player,
+    Enemy,
+    Obstacle,
+    PlayerProjectile,
+    EnemyProjectile,
+    Floor
+}
 
 public static class Utils
 {
     public static Component GetOrAddComponent(this GameObject obj, Type type)
     {
         var comp = obj.GetComponent(type);
-        if (comp == null) comp = obj.AddComponent(type);
+        if (!comp) comp = obj.AddComponent(type);
         return comp;
     }
 
     public static T GetOrAddComponent<T>(this GameObject obj) where T : Component
     {
-        var comp = obj.GetComponent<T>();
-        if (comp == null)
-            comp = obj.AddComponent<T>();
+        if (!obj.TryGetComponent<T>(out T comp))
+        { 
+            return obj.AddComponent<T>();
+        }
+
         return comp;
     }
 
 
-    public static Vector3 GetDirectionVector(Vector3 dest, Vector3 source) 
+    public static Vector3 GetXZDirectionVector(Vector3 dest, Vector3 source) 
     {
         Vector3 dir = dest - source;
-        dir.y = 0; // Ignore vertical component
+        dir.y = 0;
 
         return dir.normalized;
     }
 
     public static Vector3 GetDirectionVector(Transform target, Transform source)
-        => GetDirectionVector(target.position, source.position);
+        => GetXZDirectionVector(target.position, source.position);
 
     public static float GetXZDistance(Vector3 a, Vector3 b)
     {
@@ -46,4 +59,15 @@ public static class Utils
         return new Vector3(pos.x, 0, pos.z);
     }
 
+    private static readonly Dictionary<TagType, string> Map = new()
+    {
+        { TagType.Player,           "Player" },
+        { TagType.Enemy,            "Enemy" },
+        { TagType.Obstacle,         "Obstacle" },
+        { TagType.PlayerProjectile, "PlayerProjectile" },
+        { TagType.EnemyProjectile,  "EnemyProjectile" },
+        { TagType.Floor,            "Floor" },
+    };
+
+    public static string ToString(TagType t) => Map[t];    
 }
