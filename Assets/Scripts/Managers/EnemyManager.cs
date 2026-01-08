@@ -106,6 +106,8 @@ namespace Managers
             else
             {
                 Enemies.Remove(enemy);
+                
+                PoolManager.Instance.ReturnObject(enemy.gameObject);
 
                 if (Enemies.Count <= 0)
                 {

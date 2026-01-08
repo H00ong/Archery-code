@@ -17,10 +17,12 @@ namespace Managers
         [SerializeField] private Vector3 defaultMapPosition;
         [SerializeField] private string label = "map_config";
 
-        [HideInInspector] public MapData currentMapData = null;
+        
         [HideInInspector] public MapType currentMapType;
         [HideInInspector] public GameMap currentMap = null;
-        
+
+        private MapData _currentMapData = null;
+
         private PoolManager _poolManager;
         private DataManager _dataManager;
         
@@ -40,6 +42,7 @@ namespace Managers
         private Action _onStartedLoading;
 
         public int CurrentMapIndex { get; private set; } = 0;
+        public MapData CurrentMapData => _currentMapData;
 
         private void Awake()
         {
@@ -60,7 +63,7 @@ namespace Managers
             _dataManager = DataManager.Instance;
 
             currentMap = null;
-            currentMapData = null;
+            _currentMapData = null;
 
             StartCoroutine(PrepareMapRoutine()); 
         }
@@ -78,7 +81,7 @@ namespace Managers
             _preloadedMaps.Clear();
 
             currentMap = null;
-            currentMapData = null;
+            _currentMapData = null;
         }
 
         #region Main Loading Sequence
@@ -93,7 +96,7 @@ namespace Managers
 
             yield return PreloadMapsRoutine();
             
-            StageManager.Instance.Init(currentMapData);
+            StageManager.Instance.Init(_currentMapData);
         }
         #endregion
 
@@ -120,17 +123,17 @@ namespace Managers
 
         private void RefreshMapData()
         {
-            if(currentMapData != null) return;
+            if(_currentMapData != null) return;
             
-            currentMapData = _dataManager.GetMapData(CurrentMapIndex);
+            _currentMapData = _dataManager.GetMapData(CurrentMapIndex);
             
-            if (currentMapData == null)
+            if (_currentMapData == null)
             {
                 Debug.LogError("MapData is null!");
                 return;
             }
 
-            currentMapType = (MapType)currentMapData.mapType;
+            currentMapType = (MapType)_currentMapData.mapType;
 
             if (!_mapDict.TryGetValue(currentMapType, out var scriptable))
             {
