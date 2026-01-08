@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// 이거는 맵 transform 설정을 하기 위한 스크립트   
 public class MapSetter : MonoBehaviour
 {
     private void OnValidate()
