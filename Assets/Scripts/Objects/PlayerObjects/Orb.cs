@@ -28,14 +28,11 @@ public class Orb : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Rigidbody ������(������ ����, ������ collider �ڽ�)
-        var hitRoot = other.attachedRigidbody ? other.attachedRigidbody.gameObject
-                                              : other.gameObject;
+        var damagable = other.GetComponentInParent<IDamageable>();
 
-        // ���� ���� ���� ����
-        if (hitRoot.TryGetComponent<EnemyController>(out var enemy))
+        if (damagable != null) 
         {
-            enemy.TakeDamage(orbAtk);
+            damagable.TakeDamage(orbAtk);
         }
     }
 }

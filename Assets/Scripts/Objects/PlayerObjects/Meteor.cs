@@ -45,7 +45,7 @@ public class Meteor : MonoBehaviour
         {
             foreach (var cd in cds)
             {
-                if (cd.TryGetComponent<EnemyController>(out var enemy))
+                if (cd.TryGetComponent<IDamageable>(out var enemy))
                     enemy.TakeDamage(_atk);
             }
         }
