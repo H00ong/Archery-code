@@ -1,10 +1,13 @@
 using System.Collections;
+using Enemies;
+using Enemy;
+using Managers;
 using UnityEngine;
 
 public class Meteor : MonoBehaviour
 {
-    [SerializeField] float _terminateTime = 2f;      // meteor »ç¶óÁö´Â ½Ã°£
-    [SerializeField] float _timeDelayForMeteor = 1f; // ½ÇÁ¦ burst ½Ã°£ delay
+    [SerializeField] float _terminateTime = 2f;      // meteor ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
+    [SerializeField] float _timeDelayForMeteor = 1f; // ï¿½ï¿½ï¿½ï¿½ burst ï¿½Ã°ï¿½ delay
 
     [SerializeField] LayerMask _enemyLayer;
     [SerializeField] float _attackRange = 1f;
@@ -43,7 +46,7 @@ public class Meteor : MonoBehaviour
             foreach (var cd in cds)
             {
                 if (cd.TryGetComponent<EnemyController>(out var enemy))
-                    enemy.GetHit(_atk);
+                    enemy.TakeDamage(_atk);
             }
         }
     }

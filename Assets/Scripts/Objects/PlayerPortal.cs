@@ -1,16 +1,44 @@
+using Game.Stage.Management;
 using UnityEngine;
 
-public class PlayerPortal : MonoBehaviour
+namespace Objects
 {
-    private readonly string playerTag = "Player";
-
-    private void OnTriggerEnter(Collider other)
+    public class PlayerPortal : MonoBehaviour
     {
-        if (other.CompareTag(playerTag)) 
+        private readonly string playerTag = Utils.ToString(TagType.Player);
+        
+        [SerializeField] private Collider obstacleCd;
+        [SerializeField] private Collider portalCd;
+        
+        private void DeactivePortal()
         {
-            if (StageManager.CurrentState == StageState.Clear) 
+            obstacleCd.enabled = true;
+            portalCd.enabled = false;
+        }
+
+        private void ActivePortal()
+        {
+            portalCd.enabled = true;
+        }
+
+        private void OnEnable()
+        {
+            EventBus.Subscribe(EventType.StageCleared, ActivePortal);
+        
+            DeactivePortal();
+        }
+
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.StageCleared, ActivePortal);
+        }
+
+
+        private void OnTriggerEnter(Collider other)    
+        {
+            if (other.CompareTag(playerTag)) 
             {
-                StageManager.ChangeStageState(StageState.Combat);
+                StageManager.Instance.HandleCommand(StageCommandType.EnterPortal);
             }
         }
     }

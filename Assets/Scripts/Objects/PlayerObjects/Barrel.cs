@@ -1,5 +1,7 @@
 using Game.Player;
 using System.Collections;
+using Managers;
+using Players;
 using UnityEngine;
 
 public class Barrel : MonoBehaviour
@@ -31,7 +33,7 @@ public class Barrel : MonoBehaviour
     {
         GameObject go = Utils.GetCollisionRoot(other);
 
-        if (go.GetComponent<PlayerManager>() != null)
+        if (go.GetComponent<PlayerController>() != null)
         {
             _barrelManager.BarrelAttackActive(_type);
 

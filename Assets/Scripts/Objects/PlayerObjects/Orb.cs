@@ -1,3 +1,5 @@
+using Enemies;
+using Enemy;
 using UnityEditor.Rendering;
 using UnityEngine;
 
@@ -26,14 +28,14 @@ public class Orb : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Rigidbody ¼ÒÀ¯ÀÚ(ÀÖÀ¸¸é ±×ÂÊ, ¾øÀ¸¸é collider ÀÚ½Å)
+        // Rigidbody ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ collider ï¿½Ú½ï¿½)
         var hitRoot = other.attachedRigidbody ? other.attachedRigidbody.gameObject
                                               : other.gameObject;
 
-        // °¡Àå ÈçÇÑ ÆÇÁ¤ ÆÐÅÏ
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         if (hitRoot.TryGetComponent<EnemyController>(out var enemy))
         {
-            enemy.GetHit(orbAtk);
+            enemy.TakeDamage(orbAtk);
         }
     }
 }

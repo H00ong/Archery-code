@@ -1,33 +1,36 @@
 using System.Collections;
-using TMPro;
+using Managers;
 using UnityEngine;
 
-public class ParticleEffect : MonoBehaviour
+namespace Objects
 {
-    public void SetupEffect(Vector3 _pos) 
+    public class ParticleEffect : MonoBehaviour
     {
-        gameObject.transform.position = new Vector3(_pos.x, 0.1f, _pos.z);
-        gameObject.transform.rotation = Quaternion.identity;
-
-        gameObject.SetActive(true);
-
-        ParticleSystem particle = GetComponent<ParticleSystem>();
-
-        if (particle == null) 
+        public void InitializeEffect(Vector3 pos) 
         {
-            Debug.LogError("Particle is null");
-            return;
+            gameObject.transform.position = pos + Vector3.up * 1f;
+            gameObject.transform.rotation = Quaternion.identity;
+
+            gameObject.SetActive(true);
+
+            ParticleSystem particle = GetComponent<ParticleSystem>();
+
+            if (!particle) 
+            {
+                Debug.LogError("Particle is null");
+                return;
+            }
+
+            StartCoroutine(PlayCoroutine(particle));
         }
 
-        StartCoroutine(PlayCoroutine(particle));
-    }
+        IEnumerator PlayCoroutine(ParticleSystem ps)
+        {
+            ps.Play();
+            yield return new WaitForSeconds(ps.main.duration);
+            ps.Stop();
 
-    IEnumerator PlayCoroutine(ParticleSystem _ps)
-    {
-        _ps.Play();
-        yield return new WaitForSeconds(_ps.main.duration);
-        _ps.Stop();
-
-        PoolManager.Instance.ReturnObject(gameObject);
+            PoolManager.Instance.ReturnObject(gameObject);
+        }
     }
 }
