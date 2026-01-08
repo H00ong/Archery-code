@@ -64,6 +64,10 @@ namespace Enemy
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
             move = (EnemyMove)randomMove;
 
+            health = gameObject.GetOrAddComponent<Health>(); health.InitializeHealth(1);
+            health.OnHit += this.OnHit;
+            health.OnDie += this.OnDie;
+
             ActionTable = new() {
                 { EnemyState.Idle,   (enter: idle.OnEnter,   exit: idle.OnExit,      tick: idle.Tick) },
                 { EnemyState.Move,   (enter: move.OnEnter,   exit: move.OnExit,      tick: move.Tick)  },
@@ -74,12 +78,11 @@ namespace Enemy
         }
         #endregion
 
-        public override void TakeDamage(int damage)
+        public override void TakeDamage()
         {
             if (CurrentState == EnemyState.Dead)
                 return;
 
-            health.TakeDamage(damage);
 
             if (health.IsDead())
             {
@@ -141,7 +144,7 @@ namespace Enemy
             (OnEnter, OnExit, OnTick) = ActionTable[next];
             OnEnter?.Invoke();
         }
-
+        
         protected override void OnDrawGizmos()
         {
             base.OnDrawGizmos();

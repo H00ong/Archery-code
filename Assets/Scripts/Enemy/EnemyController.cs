@@ -6,6 +6,7 @@ using Managers;
 using Map;
 using Players;
 using UnityEngine;
+using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 namespace Enemy
 {
@@ -37,7 +38,7 @@ namespace Enemy
         public List<EnemyAttack> attacks = new List<EnemyAttack>();
 
         [Header("Components")]
-        public EnemyHealth health;
+        public Health health;
         public Animator anim;
         public Rigidbody rigidBody;
         public Collider enemyCollider;
@@ -53,16 +54,17 @@ namespace Enemy
         [SerializeField] protected LayerMask obstacleLayer;
     
         private EnemyData _enemyData;
-        private bool _attackEndTrigger = false;
+        
         [HideInInspector] public Vector3 lastPlayerPosition;
         [HideInInspector] public PlayerController player;
         [HideInInspector] public PoolManager PoolManager;
         private DataManager _dataManager;
 
-        public bool IsBlocked { get; private set; } = false;
-        public bool AttackMoveTrigger { get; private set; } = false;
-        public bool HurtEndTrigger { get; private set; } = false;
-    
+        public bool IsBlocked { get; private set; }
+        public bool AttackMoveTrigger { get; set; }
+        public bool HurtEndTrigger { get; set; }
+        public bool AttackEndTrigger { get; set; }
+
         private readonly Dictionary<EnemyTag, EnemyAttack> _attackDict = new Dictionary<EnemyTag, EnemyAttack>();
     
         protected Action OnEnter, OnExit, OnTick;
@@ -102,7 +104,7 @@ namespace Enemy
         {
             BlockCheck();
 
-            if (_attackEndTrigger)
+            if (AttackEndTrigger)
             {
                 ChangeState(EnemyState.Idle);
                 return;
@@ -142,7 +144,7 @@ namespace Enemy
         private void CacheComponent()
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
-            if (!health) health = GetComponent<EnemyHealth>();
+            if (!health) health = GetComponent<Health>();
             if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
         }
@@ -158,7 +160,7 @@ namespace Enemy
                     return;
                 }
 
-                MapData mapData = MapManager.Instance.currentMapData;
+                MapData mapData = MapManager.Instance.CurrentMapData;
                 if (mapData == null)
                 {
                     Debug.LogError("Map data is null");
@@ -168,16 +170,13 @@ namespace Enemy
                 int stageIndex = StageManager.Instance.CurrentStageIndex;
 
                 stats = EnemyStatUtil.GetEnemyStats(_enemyData, enemyTags, mapData, stageIndex);
-
-                var baseStats = stats.baseStats;
-                health.InitializeHealth(baseStats.hp);
-                defaultAtk = baseStats.atk;
+                return;
             }
         }
 
-        protected void ColliderActive(bool active) => enemyCollider.enabled = active;
+        public void ColliderActive(bool active) => enemyCollider.enabled = active;
 
-        protected void RigidbodyActive(bool active)
+        public void RigidbodyActive(bool active)
         {
             if (rigidBody)
             {
@@ -227,6 +226,9 @@ namespace Enemy
             OnAttackEnter = null;
             OnAttackExit = null;
             OnAttackTick = null;
+
+            health.OnDie -= this.OnDie;
+            health.OnHit -= this.OnHit;
         }
 
         protected virtual void InitModule()
@@ -238,6 +240,10 @@ namespace Enemy
             idle = gameObject.GetOrAddComponent<EnemyIdle>(); idle.Init(this);
             die = gameObject.GetOrAddComponent<EnemyDie>(); die.Init(this);
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
+            health = gameObject.GetOrAddComponent<Health>(); health.InitializeHealth(1);
+
+            health.OnHit += this.OnHit;
+            health.OnDie += this.OnDie;
 
             ActionTable = new Dictionary<EnemyState, (Action enter, Action exit, Action tick)> {
                 { EnemyState.Idle,   (enter: idle.OnEnter,   exit: idle.OnExit,      tick: idle.Tick) },
@@ -273,7 +279,7 @@ namespace Enemy
 
         public void SetAttackTrigger(bool active) 
         {
-            _attackEndTrigger = active;
+            AttackEndTrigger = active;
         }
 
         public void SetAttackMoveTrigger(bool active) 
@@ -286,11 +292,11 @@ namespace Enemy
             StartCoroutine(ReturnCoroutine());
         }
 
-        IEnumerator ReturnCoroutine() 
+        private IEnumerator ReturnCoroutine() 
         {
             yield return new WaitForSeconds(.5f);
 
-            PoolManager.ReturnObject(gameObject);
+            EnemyManager.Instance.RemoveEnemy(this);
         }
 
         #endregion
@@ -317,16 +323,10 @@ namespace Enemy
             OnEnter?.Invoke();
         }
 
-        public virtual void TakeDamage(int damage) 
+        public virtual void TakeDamage() 
         {
-            if (CurrentState == EnemyState.Dead)
-                return;
-
-            health.TakeDamage(damage);
-
             if (health.IsDead())
             {
-                EnemyManager.Instance.RemoveEnemy(this);
                 ColliderActive(false);
                 RigidbodyActive(false);
                 ChangeState(EnemyState.Dead);
@@ -336,6 +336,10 @@ namespace Enemy
                 ChangeState(EnemyState.Hurt);
             }
         }
+
+        protected virtual void OnHit() => ChangeState(EnemyState.Hurt);
+        protected virtual void OnDie() => ChangeState(EnemyState.Dead);
+
 
         protected virtual void OnDrawGizmos()
         {
@@ -347,7 +351,7 @@ namespace Enemy
         protected virtual void OnValidate()
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
-            if (!health) health = GetComponent<EnemyHealth>();
+            if (!health) health = GetComponent<Health>();
             if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
             if (!idle) GetComponent<EnemyIdle>();

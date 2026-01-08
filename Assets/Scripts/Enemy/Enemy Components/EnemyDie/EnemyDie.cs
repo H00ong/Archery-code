@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class EnemyDie : MonoBehaviour, IEnemyBehavior
 {
-    EnemyController ctx;
-    public virtual void Init(EnemyController c) => ctx = c;
+    private EnemyController _ctx;
+    public virtual void Init(EnemyController c) => _ctx = c;
 
     public virtual void OnEnter() 
     {
-
+        _ctx.ColliderActive(false);
+        _ctx.RigidbodyActive(false);
     }
         
     public virtual void OnExit()
