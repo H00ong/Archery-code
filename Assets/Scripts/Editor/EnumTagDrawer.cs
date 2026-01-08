@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
-using Game.Enemies.Enum;
 using System;
+using Enemies;
 using UnityEditor;
 using UnityEngine;
 
