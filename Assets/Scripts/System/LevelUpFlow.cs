@@ -1,36 +1,39 @@
-using System;
+using Players;
+using UI;
 using UnityEngine;
 
-public class LevelUpFlow : MonoBehaviour
+namespace System
 {
-    [SerializeField] SkillChoicePopup_View _skillChoicePopup;
-    [SerializeField] Transform _popupContainer;
-    [SerializeField] PlayerSkill _playerSkill; // 씬의 기존 컴포넌트 참조
-
-    public static event Action OnLevelUp; // 레벨업 시그널
-    public static event Action OnSkillChosen; // 스킬 선택 시그널
-
-    private void Start()
+    public class LevelUpFlow : MonoBehaviour
     {
-        if (_playerSkill == null)
-            _playerSkill = FindAnyObjectByType<PlayerSkill>();
+        [SerializeField] private SkillChoicePopupView skillChoicePopup;
+        [SerializeField] private Transform popupContainer;
 
-        OnLevelUp += ShowSkillChoicePopup;
-    }
+        private void OnEnable()
+        {
+            EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
+        }
 
-    public void ShowSkillChoicePopup()
-    {
-        var popup = Instantiate(_skillChoicePopup, _popupContainer);
-        var presenter = new SkillChoicePopup_Presenter( skillPopup: popup,
-                                                        playerSkill: _playerSkill,
-                                                        onCompleted: OnSkillChosen);
+        private void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
+        }
 
-        presenter.Show();
-    }
+        private void ShowSkillChoicePopup()
+        {
+            var popup = Instantiate(skillChoicePopup, popupContainer);
+            var presenter = new SkillChoicePopupPresenter( 
+                skillPopup: popup, 
+                playerSkill: PlayerController.Instance.Skill
+            );
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F1))
-            OnLevelUp?.Invoke();
+            presenter.Show();
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F1))
+                EventBus.Publish(EventType.LevelUp);
+        }
     }
 }
