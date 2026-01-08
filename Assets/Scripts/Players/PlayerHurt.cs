@@ -7,11 +7,11 @@ namespace Players
     public class PlayerHurt : MonoBehaviour
     {
         [SerializeField] PlayerController playerManager;
-        [SerializeField] PlayerHeatlh playerHealth;
+        [SerializeField] Health playerHealth;
 
         public void Init()
         {
-            if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
+            if (playerHealth == null) playerHealth = GetComponent<Health>();
         }
 
         public void TakeDamage(float damage)
@@ -47,7 +47,7 @@ namespace Players
         private void OnValidate()
         {
             if (!playerManager) playerManager = GetComponent<PlayerController>();
-            if (!playerHealth) playerHealth = GetComponent<PlayerHeatlh>();
+            if (!playerHealth) playerHealth = GetComponent<Health>();
         }
 #endif
     }
