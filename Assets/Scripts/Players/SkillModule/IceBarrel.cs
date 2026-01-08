@@ -1,4 +1,7 @@
 using Game.Player;
+using Managers;
+using Players;
+using Players.SkillModule;
 using UnityEngine;
 
 public class IceBarrel : PlayerSkillModuleBase, IPickupBarrel

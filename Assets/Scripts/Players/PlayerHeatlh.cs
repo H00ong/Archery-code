@@ -1,9 +1,10 @@
-using UnityEngine;
-
-public class PlayerHeatlh : Health
+namespace Players
 {
-    public override void TakeDamage(float damage, float modifier = 0)
+    public class PlayerHeatlh : Health
     {
-        base.TakeDamage(damage, modifier);
+        public override void TakeDamage(float damage, float modifier = 0)
+        {
+            base.TakeDamage(damage, modifier);
+        }
     }
 }

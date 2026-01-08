@@ -1,7 +1,4 @@
-using System;
-using UnityEngine;
-
-namespace Game.Player 
+namespace Players 
 {
     public enum OrbType
     {

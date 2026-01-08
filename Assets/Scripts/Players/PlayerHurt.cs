@@ -1,59 +1,54 @@
-using Game.Player;
+using Enemies;
+using Enemy;
 using UnityEngine;
 
-public class PlayerHurt : MonoBehaviour
+namespace Players
 {
-    [SerializeField] PlayerManager playerManager;
-    [SerializeField] PlayerHeatlh playerHealth;
-
-    public void Init()
+    public class PlayerHurt : MonoBehaviour
     {
-        if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
-    }
+        [SerializeField] PlayerController playerManager;
+        [SerializeField] PlayerHeatlh playerHealth;
 
-    public void GetHit(float _damage)
-    {
-        playerHealth.TakeDamage(_damage);
-
-        if (playerHealth.IsDead()) 
+        public void Init()
         {
-            playerManager.ChangePlayerState(PlayerState.Dead);
-            return;
+            if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
         }
-        else
+
+        public void TakeDamage(float damage)
         {
-            // 피격 효과
+            playerHealth.TakeDamage(damage);
+
+            if (playerHealth.IsDead()) 
+            {
+                playerManager.ChangePlayerState(PlayerState.Dead);
+            }
         }
-    }
 
-    public void GetHeal(int _healAmount, out bool valid) 
-    {
-        playerHealth.Heal(_healAmount, out valid);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (PlayerManager.IsPlayerDead)
-            return;
-
-        // 충돌한 오브젝트가 적의 공격인지 확인
-
-        var hitRoot = collision.collider.attachedRigidbody ? collision.collider.attachedRigidbody.gameObject
-                                              : collision.collider.gameObject;
-
-        if(hitRoot.TryGetComponent<EnemyController>(out var enemy))
+        public void TakeHeal(int healAmount, out bool valid) 
         {
+            playerHealth.TakeHeal(healAmount, out valid);
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (PlayerController.Instance.IsPlayerDead)
+                return;
+
+            var hitRoot = collision.collider.attachedRigidbody ? collision.collider.attachedRigidbody.gameObject
+                : collision.collider.gameObject;
+
+            if (!hitRoot.TryGetComponent<EnemyController>(out var enemy)) return;
             float atk = enemy.GetAtk();
 
-            GetHit(atk);
+            TakeDamage(atk);
         }
-    }
 
 #if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (playerManager == null) playerManager = GetComponent<PlayerManager>();
-        if (playerHealth == null) playerHealth = GetComponent<PlayerHeatlh>();
-    }
+        private void OnValidate()
+        {
+            if (!playerManager) playerManager = GetComponent<PlayerController>();
+            if (!playerHealth) playerHealth = GetComponent<PlayerHeatlh>();
+        }
 #endif
+    }
 }

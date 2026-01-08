@@ -1,25 +1,28 @@
-using Game.Player;
 using UnityEngine;
 
-public class PlayerAnimationEvent : MonoBehaviour
+namespace Players
 {
-    [SerializeField] PlayerAttack playerAttack;
-
-    private void Start()
+    public class PlayerAnimationEvent : MonoBehaviour
     {
-         if(playerAttack == null) 
-            playerAttack = GetComponent<PlayerAttack>();
-    }
+        [SerializeField] PlayerAttack playerAttack;
 
-    public void Shoot() 
-    {
-        if (PlayerManager.CurrentState == PlayerState.Attack)
-            playerAttack.Shoot();
-    }
+        private void Start()
+        {
+            if(playerAttack == null) 
+                playerAttack = GetComponent<PlayerAttack>();
+        }
+
+        public void Shoot() 
+        {
+            if (PlayerController.Instance.currentState == PlayerState.Attack)
+                playerAttack.Shoot();
+        }
+    
 #if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (playerAttack == null) playerAttack = GetComponent<PlayerAttack>();  
-    }
+        private void OnValidate()
+        {
+            if (playerAttack == null) playerAttack = GetComponent<PlayerAttack>();  
+        }
 #endif
+    }
 }

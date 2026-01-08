@@ -1,3 +1,4 @@
+using Players.SkillModule;
 using UnityEngine;
 
 public class MultiShot : PlayerSkillModuleBase

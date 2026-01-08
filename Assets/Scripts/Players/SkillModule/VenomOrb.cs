@@ -1,4 +1,6 @@
 using Game.Player;
+using Players;
+using Players.SkillModule;
 using UnityEngine;
 
 public class VenomOrb : PlayerSkillModuleBase, IOrbGenerator

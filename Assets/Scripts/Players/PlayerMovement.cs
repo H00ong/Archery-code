@@ -1,10 +1,11 @@
 using Game.Player;
+using Players;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Required Managers")]
-    [SerializeField] PlayerManager playerManager;
+    [SerializeField] PlayerController playerManager;
     [Header("Player Movement Info")]
     [SerializeField] float defaultMoveSpeed = 5f;
     [SerializeField] float sphereCastRadius = 0.5f;
@@ -29,8 +30,8 @@ public class PlayerMovement : MonoBehaviour
         Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
         transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
 
-        // º® ºÎµúÈû °Ë»ç
-        if (Physics.OverlapSphere(transform.position + transform.up + transform.forward * 1 / 2, sphereCastRadius, obstacleLayer).Length > 0)
+        Vector3 collisionPos = transform.position + transform.up + transform.forward * .5f;
+        if (Physics.OverlapSphere(collisionPos, sphereCastRadius, obstacleLayer).Length > 0)
             return;
 
         transform.position += moveDir * Movespeed * Time.deltaTime;
@@ -46,13 +47,13 @@ public class PlayerMovement : MonoBehaviour
     {
         Gizmos.color = Color.green;
 
-        Gizmos.DrawWireSphere(transform.position + transform.up + transform.forward * 1 / 2, sphereCastRadius);
+        Gizmos.DrawWireSphere(transform.position + transform.up + transform.forward * .5f, sphereCastRadius);
     }
 
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (playerManager == null) playerManager = GetComponent<PlayerManager>();
+        if (playerManager == null) playerManager = GetComponent<PlayerController>();
     }
 #endif
 }
