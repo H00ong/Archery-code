@@ -1,298 +1,292 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Map;
+using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public class MapManager : MonoBehaviour
+namespace Managers
 {
-    [Header("Default Postion")]
-    [SerializeField] Vector3 _defaultMapPosition;
-
-    public static MapData CurrentMapData = null;
-    public static int CurrentMapIndex = 0;
-    public static MapType CurrentMapType;
-    public static GameObject CurrentMap;
-    private List<GameObject> _createdMaps;
-
-    [SerializeField] private string _label = "map_config"; // Addressables °øÅë ¶óº§
-    private Dictionary<MapType, MapScriptable> _mapDict = new Dictionary<MapType, MapScriptable>();
-    private AsyncOperationHandle<IList<MapScriptable>> _handle; // ÇÚµé À¯Áö(¾ğ·Îµå ¹æÁö)
-
-    private List<AssetReferenceGameObject> _mapList;
-    private List<AssetReferenceGameObject> _mapEnemyList;
-    private List<AssetReferenceGameObject> _bossEnemyList;
-    private AssetReferenceGameObject _bossMapRef;
-    private GameObject _bossMap; // º¸½º¸Ê µü ÇÏ³ª¸¸ Á¸ÀçÇÏ°í µû·Î º¸°ü
-
-    private bool _mapsReady = false;
-    private bool _isCreatingMaps = false;
-
-    public static event Action OnMapUpdated;
-    private Action _onStageCleared;
-
-    private PoolManager _poolManager;
-    private DataManager _dataManager;
-
-    private void Start()
+    public class MapManager : MonoBehaviour
     {
-        Init();
-    }
+        public static MapManager Instance;
 
-    public void Init() 
-    {
-        _poolManager = PoolManager.Instance;
-        _dataManager = DataManager.Instance;
+        [Header("Settings")]
+        [SerializeField] private Vector3 defaultMapPosition;
+        [SerializeField] private string label = "map_config";
 
-        StartCoroutine(CreateAllMaps());
-    }
+        [HideInInspector] public MapData currentMapData = null;
+        [HideInInspector] public MapType currentMapType;
+        [HideInInspector] public GameMap currentMap = null;
+        
+        private PoolManager _poolManager;
+        private DataManager _dataManager;
+        
+        // Addressable & Caching
+        private AsyncOperationHandle<IList<MapScriptable>> _handle;
+        private Dictionary<MapType, MapScriptable> _mapDict = new Dictionary<MapType, MapScriptable>();
+        
+        private List<AssetReferenceGameObject> _currentMapList;
+        private List<AssetReferenceGameObject> _currentEnemyList;
+        private List<AssetReferenceGameObject> _currentBossList;
+        private AssetReferenceGameObject _currentBossMapRef;
 
-    private void OnEnable()
-    {
-        _onStageCleared = () =>
+        private readonly List<GameObject> _preloadedMaps = new List<GameObject>();
+        private GameObject _preloadedBossMap;
+
+        // ì´ë²¤íŠ¸ í•¸ë“¤ëŸ¬
+        private Action _onStartedLoading;
+
+        public int CurrentMapIndex { get; private set; } = 0;
+
+        private void Awake()
         {
-            GetNewMap(StageManager.IsBossStage);
-            SpawnEnemy(isBoss: StageManager.IsBossStage);
-        };
-
-        StageManager.OnStageCleared += _onStageCleared;
-        StageManager.OnStageCleared += PositionPlayer;
-    }
-
-    private void OnDisable()
-    {
-        StageManager.OnStageCleared -= _onStageCleared;
-        StageManager.OnStageCleared -= PositionPlayer;
-    }
-
-    #region Map
-    private IEnumerator EnsureMapDictReady()
-    {
-        if (_mapDict != null && _mapDict.Count > 0)
-            yield break;
-
-        _mapDict.Clear();
-        _mapDict ??= new Dictionary<MapType, MapScriptable>();
-
-        _handle = Addressables.LoadAssetsAsync<MapScriptable>(
-            _label,
-            so => _mapDict[so.mapType] = so // µ¿ÀÏ key Á¸Àç ½Ã ¸¶Áö¸· Ç×¸ñÀ¸·Î °»½Å
-        );
-        yield return _handle;
-
-        if (_handle.Status != AsyncOperationStatus.Succeeded)
-            Debug.LogError($"[MapManager] Addressables Load failed. label={_label}");
-    }
-
-    private void GetMapDataFromDataManager()
-    {
-        if (CurrentMapData != null) return;
-
-        CurrentMapData = _dataManager.GetMapData(CurrentMapIndex);
-        if (CurrentMapData == null) return;
-
-        CurrentMapType = (MapType)CurrentMapData.mapType;
-        if (!_mapDict.TryGetValue(CurrentMapType, out var data))
-        {
-            Debug.LogError($"[MapManager] MapScriptable not found for {CurrentMapType}");
-            return;
-        }
-
-        // ÂüÁ¶ º¹»ç ´ë½Å »õ ¸®½ºÆ®·Î ±³Ã¼(¿ÜºÎ¿¡¼­ Clear()ÇØµµ ¿øº» SO ¿µÇâ ¾øÀ½)
-        _mapList = new List<AssetReferenceGameObject>(data.mapList);
-        _mapEnemyList = new List<AssetReferenceGameObject>(data.enemyList);
-        _bossEnemyList = new List<AssetReferenceGameObject>(data.bossList);
-        _bossMapRef = data.bossMap;
-    }
-
-    public void GetNewMap(bool isBossMap = false)
-    {
-        StartCoroutine(GetMapCoroutine(go =>
-        {
-            if (go == null) return;
-            else
+            if (!Instance)
             {
-                if (CurrentMap != null)
-                    CurrentMap.SetActive(false); // ±âÁ¸ ¸Ê ºñÈ°¼ºÈ­
-
-                CurrentMap = go;
-                CurrentMap.GetComponent<Map>().Init();
-                CurrentMap.transform.position = _defaultMapPosition;
-                CurrentMap.SetActive(true);
-
-                OnMapUpdated?.Invoke();
+                Instance = this;
+                DontDestroyOnLoad(this);
             }
-        }, isBossMap));
-    }
-
-    public IEnumerator GetMapCoroutine(Action<GameObject> onReady, bool isBossMap = false)
-    {
-        yield return EnsureMapsReady();
-
-        if (!isBossMap)
-        {
-            if (_createdMaps == null || _createdMaps.Count == 0)
+            else if (Instance != this)
             {
-                Debug.LogError("No maps created.");
-                onReady?.Invoke(null);
-                yield break;
+                Destroy(this);
             }
-
-            int idx = UnityEngine.Random.Range(0, _createdMaps.Count);
-            onReady?.Invoke(_createdMaps[idx]);
-        }
-        else
-        {
-            if (_bossMap == null)
-            {
-                Debug.LogError("Boss maps not created");
-                onReady?.Invoke(null);
-                yield break;
-            }
-
-            onReady?.Invoke(_bossMap);
-        }
-    }
-
-    private IEnumerator EnsureMapsReady()
-    {
-        if (_mapsReady) yield break;
-        if (!_isCreatingMaps) yield return StartCoroutine(CreateAllMaps());
-        else yield return new WaitUntil(() => _mapsReady);
-    }
-
-    public IEnumerator CreateAllMaps()
-    {
-        if (_mapsReady || _isCreatingMaps) yield break;
-        _isCreatingMaps = true;
-
-        yield return EnsureMapDictReady();
-        GetMapDataFromDataManager();
-
-        if (_createdMaps != null) _createdMaps.Clear();
-        else _createdMaps = new List<GameObject>();
-
-        foreach (var map in _mapList)
-        {
-            GameObject go = null;
-            yield return _poolManager.GetObject(map, inst => go = inst, _poolManager.MapPool);
-            if (go != null) _createdMaps.Add(go);
         }
 
-        yield return _poolManager.GetObject(_bossMapRef, inst => _bossMap = inst, _poolManager.MapPool);
-
-        if (_bossMap == null)
+        private void Start()
         {
-            Debug.LogError("Boss map create fail");
+            _poolManager = PoolManager.Instance;
+            _dataManager = DataManager.Instance;
+
+            currentMap = null;
+            currentMapData = null;
+
+            StartCoroutine(PrepareMapRoutine()); 
         }
 
-        _mapsReady = true;
-        _isCreatingMaps = false;
-    }
-
-    public void ClearMap()
-    {
-        _mapList.Clear();
-        _mapEnemyList.Clear();
-        _bossEnemyList.Clear();
-
-        _poolManager.ReturnObject(CurrentMap);
-        CurrentMap = null;
-
-        if (_handle.IsValid())
+        private void OnDestroy()
         {
-            Addressables.Release(_handle);
-            _handle = default;
+            if (_handle.IsValid()) Addressables.Release(_handle);
+            
+            _currentBossList.Clear();
+            _currentEnemyList.Clear();
+            _currentMapList.Clear();
+            _currentBossMapRef = null;
+            
             _mapDict.Clear();
-        }
-    }
-    #endregion
+            _preloadedMaps.Clear();
 
-    #region Player
-
-    public void PositionPlayer()
-    {
-        StartCoroutine(PositionPlayerCoroutine());
-    }
-
-    IEnumerator PositionPlayerCoroutine() 
-    {
-        yield return EnsureMapsReady();
-
-        if (CurrentMap == null)
-        {
-            Debug.LogError("currentMap is null, map creation must precede");
-            yield break;
+            currentMap = null;
+            currentMapData = null;
         }
 
-        Map map = CurrentMap.GetComponent<Map>();
+        #region Main Loading Sequence
 
-        PlayerManager player = FindAnyObjectByType<PlayerManager>();
-
-        player.transform.position = map.playerPoint.position;
-    }
-
-    #endregion
-
-    #region Enemy
-    public void SpawnEnemy(int count = 1, bool isBoss = false) 
-    {
-        StartCoroutine(SpawnEnemyCoroutine(count, isBoss));
-    }
-
-    private IEnumerator SpawnEnemyCoroutine(int count, bool isBoss)
-    {
-        // 1) ¸Ê ÁØºñ º¸Àå
-        yield return EnsureMapsReady();
-
-        if (CurrentMap == null) 
+        // ëª¨ë“  ë¡œë”© ê³¼ì •ì„ ìˆœì„œëŒ€ë¡œ ì²˜ë¦¬í•˜ëŠ” ë©”ì¸ ì½”ë£¨í‹´
+        // ì´ˆê¸°í™” ë° ë§µ ìƒì„± (ì¤€ë¹„ë§Œ í•¨)
+        private IEnumerator PrepareMapRoutine()
         {
-            Debug.LogError("map is empty");
-            yield break;
+            yield return LoadMapConfigRoutine();
+            
+            RefreshMapData();
+
+            yield return PreloadMapsRoutine();
+            
+            StageManager.Instance.Init(currentMapData);
         }
+        #endregion
 
-        // 2) Ç®¿¡¼­ ÀÎ½ºÅÏ½º »ı¼º
-        GameObject enemy = null;
-        AssetReferenceGameObject enemyRef = null;
-        List<Transform> spawnPoint = new List<Transform> (CurrentMap.GetComponent<Map>().SpawnPointOfEnemies);
+        #region 1. Data & Addressables
 
-        if (isBoss)
+        private IEnumerator LoadMapConfigRoutine()
         {
-            int bossIndex = StageManager.CurrentStageIndex / 10;
-            enemyRef = _bossEnemyList[bossIndex];
-        }
+            if (_mapDict is { Count: > 0 }) yield break;
 
-        for (int i = 0; i < count; i++)
-        {
-            if (!isBoss)
+            _mapDict = new Dictionary<MapType, MapScriptable>();
+            
+            _handle = Addressables.LoadAssetsAsync<MapScriptable>(
+                label,
+                so => { if (so) _mapDict[so.mapType] = so; }
+            );
+
+            yield return _handle;
+
+            if (_handle.Status != AsyncOperationStatus.Succeeded)
             {
-                int randomIndex = UnityEngine.Random.Range(0, _mapEnemyList.Count);
+                Debug.LogError($"[MapManager] Addressable Load Failed: {label}");
+            }
+        }
 
-                enemyRef = _mapEnemyList[randomIndex];
+        private void RefreshMapData()
+        {
+            if(currentMapData != null) return;
+            
+            currentMapData = _dataManager.GetMapData(CurrentMapIndex);
+            
+            if (currentMapData == null)
+            {
+                Debug.LogError("MapData is null!");
+                return;
             }
 
-            yield return _poolManager.GetObject(enemyRef, inst => enemy = inst, _poolManager.EnemyPool);
+            currentMapType = (MapType)currentMapData.mapType;
 
-            int randomIndexOfSpawnPoint = UnityEngine.Random.Range(0, spawnPoint.Count);
-            Transform sp = spawnPoint[randomIndexOfSpawnPoint];
-            sp.gameObject.SetActive(true);
-            enemy.transform.position = sp.position;
+            if (!_mapDict.TryGetValue(currentMapType, out var scriptable))
+            {
+                Debug.LogError($"MapScriptable not found for type: {currentMapType}");
+            }
 
-            spawnPoint.RemoveAt(randomIndexOfSpawnPoint);
-
-            enemy.SetActive(true);
-            if (enemy == null) yield break;
-            EnemyManager.EnemySpawn(enemy, CurrentMapData, StageManager.CurrentStageIndex);
+            if (scriptable == null) return;
+            
+            _currentMapList = scriptable.mapList;
+            _currentEnemyList = scriptable.enemyList;
+            _currentBossList = scriptable.bossList;
+            _currentBossMapRef = scriptable.bossMap;
         }
 
-        EnemyManager.AllEnemiesSpawned();
-    }
-    #endregion
+        #endregion
 
-    private void OnDestroy()
-    {
-        if (_handle.IsValid())
-            Addressables.Release(_handle); // ¼ö¸í Á¾·á ½Ã ÀÏ°ı ÇØÁ¦
+        #region 2. Map Pooling (Creation)
+
+        public IEnumerator PreloadMapsRoutine()
+        {
+            if (_preloadedMaps is { Count: > 0 })  yield break;
+
+            yield return new WaitUntil(() => _currentMapList.Count > 0);
+
+            foreach (var mapRef in _currentMapList)
+            {
+                if (!_poolManager.TryGetObject(mapRef, out var go, _poolManager.MapPool))
+                {
+                    yield return _poolManager.GetObject(mapRef, inst => go = inst, _poolManager.MapPool);
+                }
+
+                if (!go) continue;
+                
+                _preloadedMaps.Add(go);
+            }
+
+            // ë³´ìŠ¤ ë§µ ìƒì„± ìš”ì²­
+            if (_currentBossMapRef == null)
+            {
+                Debug.LogError("_currentBossMapRef is null.");
+                yield break;
+            }
+
+            if (!_poolManager.TryGetObject(_currentBossMapRef, out _preloadedBossMap, _poolManager.MapPool))
+            {
+                yield return _poolManager.GetObject(_currentBossMapRef, 
+                    inst => _preloadedBossMap = inst,
+                    _poolManager.MapPool);
+            }
+        }
+
+        #endregion
+
+        #region 3. Map Activation
+
+        // ë§µ í™œì„±í™” (StageManagerê°€ ì‹œí‚¬ ë•Œ ìˆ˜í–‰)
+        public void ActivateRandomMap(bool isBoss)
+        {
+            if (currentMap != null)
+            {
+                currentMap.gameObject.SetActive(false);
+            }
+            
+            SelectMap(isBoss);
+            
+            currentMap.transform.position = defaultMapPosition;
+            currentMap.Init();
+            currentMap.gameObject.SetActive(true);
+        }
+
+        private void SelectMap(bool isBoss)
+        {
+            if (isBoss)
+            {
+                if (_preloadedBossMap == null)
+                {
+                    Debug.LogError("_preloadedBossMap is null.");
+                    return;
+                }
+
+                currentMap = _preloadedBossMap.GetComponent<GameMap>();
+                return;
+            }
+
+            if (_preloadedMaps == null || _preloadedMaps.Count == 0)
+            {
+                Debug.LogError("_preloadedMaps is null or empty.");
+                return;
+            }
+
+            int idx = UnityEngine.Random.Range(0, _preloadedMaps.Count);
+            currentMap = _preloadedMaps[idx].GetComponent<GameMap>();
+            currentMap.Init();
+        }
+
+        #endregion
+
+        #region 4. Player & Enemy
+
+        public Transform GetPlayerSpawnPoint()
+        {
+            if (!currentMap)
+            {
+                Debug.LogError("Cannot position player: currentMap is null.");
+                return null;
+            }
+
+            return currentMap.PlayerSpawnPoint;
+        }
+
+        public List<Transform> GetEnemySpawnPoint(int count)
+        {
+            var list = currentMap.enemySpawnPoints;
+            
+            if (list.Count < count)
+            {
+                Debug.LogError($"[MapManager] Not enough spawn points! Requested: {count}, Available: {list.Count}");
+                return null;
+            }
+            
+            for (int i = 0; i < count; i++)
+            {
+                int randomIndex = UnityEngine.Random.Range(i, list.Count);
+                (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
+            }
+            
+            return list.GetRange(0, count);
+        }
+
+        public Transform GetBossSpawnPoint()
+        {
+            return currentMap.bossSpawnPoint;
+        }
+
+        public AssetReferenceGameObject GetBossAssetRef(int index)
+        {
+            return _currentBossList[index];
+        }
+
+        public AssetReferenceGameObject GetEnemeyAssetRef()
+        {
+            var count = _currentEnemyList.Count;
+            var idx = UnityEngine.Random.Range(0, count);
+            
+            return _currentEnemyList[idx];
+        }
+
+        #endregion
+
+        public void ClearMap()
+        {
+            if (currentMap == null) return;
+            
+            currentMap.gameObject.SetActive(false);
+            _poolManager.ReturnObject(currentMap.gameObject);
+            currentMap = null;
+        }
     }
 }

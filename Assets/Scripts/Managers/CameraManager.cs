@@ -1,8 +1,9 @@
+using Players;
 using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
-    [SerializeField] PlayerManager playerManager;
+    [SerializeField] PlayerController playerManager;
     Vector3 Offset;
 
     void Start()

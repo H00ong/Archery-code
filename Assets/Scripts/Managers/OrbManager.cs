@@ -2,32 +2,36 @@ using Game.Player;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Managers;
+using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class OrbConfig
 {
-    public List<Orb> orbs = new();
-    public bool clockwise;
-    public float distance = -1;
+    public List<Orb> Orbs = new();
+    public bool Clockwise;
+    public float Distance = -1;
 }
 
 public class OrbManager : MonoBehaviour
 {
-    [SerializeField] Transform orbPivot;
-    [SerializeField] private string label;
-    [SerializeField] float defaultDistance;
-    int generatedOrbSetCount = 0;
-    bool clockwise = true;
+    [SerializeField] Transform _orbPivot;
+    [SerializeField] private string _label;
+    [SerializeField] float _defaultDistance;
+    int _generatedOrbSetCount = 0;
+    bool _clockwise = true;
 
     public float GeneratedOrbSetDistance =>
-    defaultDistance + .5f * (generatedOrbSetCount - 1);
+    _defaultDistance + .5f * (_generatedOrbSetCount - 1);
 
-    Dictionary<OrbType, OrbScriptable> orbSoDict = new();
-    Dictionary<OrbType, OrbConfig> orbObjDict = new();
+    Dictionary<OrbType, OrbScriptable> _orbSoDict = new();
+    Dictionary<OrbType, OrbConfig> _orbObjDict = new();
 
     AsyncOperationHandle<IList<OrbScriptable>> _handle;
+
+    PoolManager _poolManager;
 
     void Start()
     {
@@ -43,42 +47,69 @@ public class OrbManager : MonoBehaviour
 
     private void Bind()
     {
-        if (orbPivot == null)
+        if (_orbPivot == null)
         {
-            orbPivot = FindAnyObjectByType<OrbPivot>().transform;
+            _orbPivot = FindAnyObjectByType<OrbPivot>().transform;
         }
+
+        _poolManager = PoolManager.Instance;
     }
 
     private void CreateOrbObjDict()
     {
-        if (orbObjDict == null) orbObjDict = new();
-        else orbObjDict.Clear();
+        if (_orbObjDict == null) _orbObjDict = new();
+        else _orbObjDict.Clear();
 
         foreach (OrbType type in Enum.GetValues(typeof(OrbType)))
         {
-            orbObjDict[type] = new OrbConfig();
+            _orbObjDict[type] = new OrbConfig();
         }
     }
 
     private IEnumerator EnsureOrbDictReady()
     {
-        if (orbSoDict != null && orbSoDict.Count > 0)
+        if (_orbSoDict != null && _orbSoDict.Count > 0)
             yield break;
 
-        if (orbSoDict == null)
-            orbSoDict = new();
+        if (_orbSoDict == null)
+            _orbSoDict = new();
 
         _handle = Addressables.LoadAssetsAsync<OrbScriptable>(
-            label,
-            so => orbSoDict[so.orbType] = so
+            _label,
+            so => _orbSoDict[so.orbType] = so
         );
 
         yield return _handle;
 
         if (_handle.Status != AsyncOperationStatus.Succeeded)
         {
-            Debug.LogError($"Load {label} failed");
+            Debug.LogError($"Load {_label} failed");
         }
+    }
+
+    private void ClearOrbData() 
+    {
+        if (_handle.IsValid())
+        {
+            Addressables.Release(_handle);
+            _handle = default;
+        }
+
+        foreach (var kv in _orbObjDict)
+        {
+            var orbConfig = kv.Value;
+            foreach (var orb in orbConfig.Orbs)
+            {
+                if (orb != null)
+                    _poolManager.ReturnObject(orb.gameObject);
+            }
+
+            orbConfig.Orbs.Clear();
+            orbConfig.Distance = -1;
+        }
+
+        _orbSoDict.Clear();
+
     }
 
     public void GenerateOrb(OrbType _type, int _count)
@@ -90,10 +121,10 @@ public class OrbManager : MonoBehaviour
     {
         int _count = _orbCount;
 
-        if (orbObjDict == null)
+        if (_orbObjDict == null)
             CreateOrbObjDict();
 
-        int beforeCount = orbObjDict[_type].orbs.Count;
+        int beforeCount = _orbObjDict[_type].Orbs.Count;
 
         if (beforeCount > 0 && _orbCount > beforeCount)
         {
@@ -107,7 +138,7 @@ public class OrbManager : MonoBehaviour
         for (int i = 0; i < _count; i++)
         {
             GameObject go = null;
-            var orbSo = orbSoDict[_type];
+            var orbSo = _orbSoDict[_type];
 
             yield return PoolManager.Instance.GetObject(orbSo.orb, inst => go = inst);
 
@@ -117,10 +148,10 @@ public class OrbManager : MonoBehaviour
                 yield break;
             }
 
-            go.transform.SetParent(orbPivot);
+            go.transform.SetParent(_orbPivot);
 
             var _orb = go.GetComponent<Orb>();
-            orbObjDict[_type].orbs.Add(_orb);
+            _orbObjDict[_type].Orbs.Add(_orb);
         }
 
         InitOrbType(_type);
@@ -128,26 +159,26 @@ public class OrbManager : MonoBehaviour
 
     private void InitOrbType(OrbType _type)
     {
-        if (!orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.orbs == null || orbConfig.orbs.Count == 0)
+        if (!_orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.Orbs == null || orbConfig.Orbs.Count == 0)
             return;
         
-        if(orbConfig.distance <= 0)
+        if(orbConfig.Distance <= 0)
         {
-            orbConfig.distance = GeneratedOrbSetDistance;
-            generatedOrbSetCount++;
+            orbConfig.Distance = GeneratedOrbSetDistance;
+            _generatedOrbSetCount++;
 
-            orbConfig.clockwise = clockwise;
-            clockwise = !clockwise;
+            orbConfig.Clockwise = _clockwise;
+            _clockwise = !_clockwise;
         }
 
-        int count = orbConfig.orbs.Count;
+        int count = orbConfig.Orbs.Count;
 
         for (int i = 0; i < count; i++)
         {
-            var obj = orbConfig.orbs[i];
+            var obj = orbConfig.Orbs[i];
 
-            obj.InitilaizeOrb(orbPivot, orbConfig.clockwise);
-            SetOrbPosition(obj.transform, orbConfig.distance, count, i);
+            obj.InitilaizeOrb(_orbPivot, orbConfig.Clockwise);
+            SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
             obj.gameObject.SetActive(true);
         }
 
@@ -155,12 +186,10 @@ public class OrbManager : MonoBehaviour
 
     private void SetOrbPosition(Transform _obj, float distance, int totalCount, int index)
     {
-        Transform _pivot = orbPivot;
+        Transform _pivot = _orbPivot;
 
-        // 기본 방향은 pivot의 forward
         _obj.position = _pivot.position + _pivot.forward * distance;
 
-        // 피벗 기준으로 각도만큼 회전
         float angle = (360f / totalCount) * index;
         _obj.RotateAround(_pivot.position, Vector3.up, angle);
     }

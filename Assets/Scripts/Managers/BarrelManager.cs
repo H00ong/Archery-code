@@ -1,204 +1,212 @@
-using Game.Player;
 using System.Collections;
 using System.Collections.Generic;
+using Map;
+using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public sealed class BarrelConfig
+namespace Managers
 {
-    public BarrelType Type;
-    public int AttackCountPerBarrel = 0;
-    public float Timer = 0f; // barrel 생성 시간
-}
+    public sealed class BarrelConfig
+    {
+        public BarrelType Type;
+        public int AttackCountPerBarrel = 0;
+        public float Timer = 0f;
+    }
 
-public class BarrelManager : MonoBehaviour
-{
-    [SerializeField] string _label;
-    [SerializeField] float _barrelGenerateTime = 5f;
-    [SerializeField] int _atk = 1;
+    public class BarrelManager : MonoBehaviour
+    {
+        [SerializeField] private string addressableAssetLabel;
+        [SerializeField] private float barrelGenerateTime = 5f;
+        [SerializeField] private int atk = 1;
 
-    Dictionary<BarrelType, BarrelScriptable> _barrelSoDict = new();
-    readonly Dictionary<BarrelType, BarrelConfig> _barrelConfigDict = new();
-    Queue<BarrelType> _attackQueue = new();
+        private Dictionary<BarrelType, BarrelScriptable> _barrelSoDict = new();
+        private readonly Dictionary<BarrelType, BarrelConfig> _barrelConfigDict = new();
+        private Queue<BarrelType> _attackQueue = new();
 
-    AsyncOperationHandle<IList<BarrelScriptable>> _handle;
-    Bounds _currentMapBound;
+        private AsyncOperationHandle<IList<BarrelScriptable>> _handle; 
+        private Bounds _currentMapBound;
+
+        private PoolManager _poolManager;
+        private EnemyManager _enemyManager;
+
+        private void Init()
+        {
+            StartCoroutine(EnsureBarrelDictReady());
+
+            EventBus.Subscribe(EventType.StageCombatStarted, MeteorAttack);
+            EventBus.Subscribe(EventType.StageCombatStarted, GetBoundsOfMap);
+
+            _poolManager = PoolManager.Instance;
+            _enemyManager = EnemyManager.Instance;
+        }
     
-    public void Init()
-    {
-        StartCoroutine(EnsureBarrelDictReady());
-
-        EnemyManager.OnAllEnemiesSpawned += MeteorAttack;
-
-        MapManager.OnMapUpdated += () =>
+        private void OnEnable()
         {
-            var go = MapManager.CurrentMap;
-            if (go == null) return;
+            Init();
+        }
 
-            _currentMapBound = go.GetComponent<Map>().GetBounds();
-        };
-    }
-
-    private void OnEnable()
-    {
-        Init();
-    }
-
-    private void Update()
-    {
-        GenerateBarrelCheck();
-    }
-
-    private void GenerateBarrelCheck()
-    {
-        if (StageManager.IsInCombat) 
+        private void OnDisable()
         {
+            EventBus.Unsubscribe(EventType.StageCombatStarted, MeteorAttack);
+            EventBus.Unsubscribe(EventType.StageCombatStarted, GetBoundsOfMap);
+        }
+
+        private void Update()
+        {
+            GenerateBarrelCheck();
+        }
+
+        private void GetBoundsOfMap() 
+        {
+            var go = MapManager.Instance.currentMap;
+            if (!go) 
+            {
+                Debug.LogError("CurrentMap is null");
+            }
+
+            var map = go.GetComponent<GameMap>();
+            _currentMapBound = map.GetBounds();
+        }
+
+        private void GenerateBarrelCheck()
+        {
+            if (!StageManager.Instance.IsInCombat) return;
+        
             foreach (var key in _barrelConfigDict.Keys)
             {
                 var config = _barrelConfigDict[key];
                 config.Timer += Time.deltaTime;
-                if (config.Timer >= _barrelGenerateTime)
-                {
-                    StartCoroutine(GenerateBarrel(config.Type));
-                    config.Timer = 0f;
-                }
+            
+                if (!(config.Timer >= barrelGenerateTime)) continue;
+            
+                StartCoroutine(GenerateBarrel(config.Type));
+                config.Timer = 0f;
             }
         }
-    }
 
-    private IEnumerator GenerateBarrel(BarrelType type) 
-    {
-        var assetRef = _barrelSoDict[type].barrelPrefab;
+        private IEnumerator GenerateBarrel(BarrelType type)
+        {
+            var assetRef = _barrelSoDict[type].barrelPrefab;
 
-        yield return PoolManager.Instance.GetObject(
-            assetRef,
-            (inst) =>
+            if(!_poolManager.TryGetObject(assetRef, out var go, _poolManager.EffectPool))
+                yield return PoolManager.Instance.GetObject(assetRef, inst => go = inst, PoolManager.Instance.EffectPool);
+        
+            bool isInside = false;
+            Vector3 pos = Vector3.zero;
+
+            while (!isInside)
             {
-                GameObject go = inst;
-                bool isInside = false;
-                Vector3 pos = Vector3.zero;
+                RandomPointInBounds(_currentMapBound);
 
-                while (isInside) 
+                if (NavMesh.SamplePosition(pos, out var hit, 1f, NavMesh.AllAreas))
                 {
-                    RandomPointInBounds(_currentMapBound);
-
-                    if (NavMesh.SamplePosition(pos, out var hit, 1f, NavMesh.AllAreas))
-                    { 
-                        isInside = true;
-                        pos = hit.position;
-                    }
+                    isInside = true;
+                    pos = hit.position;
                 }
+            }
 
-                go.transform.position = pos;
-                go.GetComponent<Barrel>().Init(type);
-                inst.SetActive(true);
-            },
-            PoolManager.Instance.EffectPool
-        );
-    }
-
-    Vector3 RandomPointInBounds(Bounds b)
-    {
-        return new Vector3(
-            UnityEngine.Random.Range(b.min.x, b.max.x),
-            UnityEngine.Random.Range(b.min.y, b.max.y),
-            UnityEngine.Random.Range(b.min.z, b.max.z)
-        );
-    }
-
-    private IEnumerator EnsureBarrelDictReady()
-    {
-        if (_barrelSoDict != null && _barrelSoDict.Count > 0)
-            yield break;
-
-        _barrelSoDict ??= new();
-
-        _handle = Addressables.LoadAssetsAsync<BarrelScriptable>(
-            _label,
-            so => _barrelSoDict[so.type] = so
-        );
-
-        yield return _handle;
-
-        if (_handle.Status != AsyncOperationStatus.Succeeded)
-        {
-            Debug.LogError($"Load {_label} failed");
+            go.transform.position = pos;
+            go.GetComponent<Barrel>().Init(type);
+            go.SetActive(true);
         }
-    }
 
-    public void UpdateBarrelSkill(BarrelType type, int count)
-    {
-        if (_barrelConfigDict.TryGetValue(type, out var barrelConfig))
+        Vector3 RandomPointInBounds(Bounds b)
         {
-            barrelConfig.AttackCountPerBarrel = count;
+            return new Vector3(
+                UnityEngine.Random.Range(b.min.x, b.max.x),
+                UnityEngine.Random.Range(b.min.y, b.max.y),
+                UnityEngine.Random.Range(b.min.z, b.max.z)
+            );
         }
-        else
+
+        private IEnumerator EnsureBarrelDictReady()
         {
-            _barrelConfigDict[type] = new BarrelConfig()
+            if (_barrelSoDict is { Count: > 0 })
+                yield break;
+
+            _barrelSoDict ??= new Dictionary<BarrelType, BarrelScriptable>();
+
+            _handle = Addressables.LoadAssetsAsync<BarrelScriptable>(
+                addressableAssetLabel,
+                so => _barrelSoDict[so.type] = so
+            );
+
+            yield return _handle;
+
+            if (_handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Type = type,
-                AttackCountPerBarrel = count,
-            };
+                Debug.LogError($"Load {addressableAssetLabel} failed");
+            }
         }
-    }
 
-    public void BarrelAttackActive(BarrelType type)
-    {
-        var _config = _barrelConfigDict[type];
-        int count = _config.AttackCountPerBarrel;
-
-        for (int i = 0; i < count; i++)
-            _attackQueue.Enqueue(type);
-
-        int enemyCount = EnemyManager.Enemies.Count;
-
-        if (enemyCount <= 0) return;
-        else MeteorAttack();
-    }
-
-    public void MeteorAttack() 
-    {
-
-        _attackQueue ??= new Queue<BarrelType>();
-
-        if (_attackQueue.Count <= 0) return;
-
-        while (_attackQueue.Count > 0) 
+        public void UpdateBarrelSkill(BarrelType type, int count)
         {
-            var type = _attackQueue.Dequeue();
-            int enemyCount = EnemyManager.Enemies.Count;
-
-            if (enemyCount <= 0) break;
-
-            int randomIndex = UnityEngine.Random.Range(0, enemyCount);
-            var enemy = EnemyManager.Enemies[randomIndex];
-
-            StartCoroutine(AttackCoroutine(type, enemy.transform.position));
-        }
-    }
-
-    IEnumerator AttackCoroutine(BarrelType type, Vector3 pos)
-    {
-        GameObject go = null;
-
-        yield return PoolManager.Instance.GetObject(
-            _barrelSoDict[type].meteorPrefab,
-            (inst) =>
+            if (_barrelConfigDict.TryGetValue(type, out var barrelConfig))
             {
-                go = inst;
+                barrelConfig.AttackCountPerBarrel = count;
+            }
+            else
+            {
+                _barrelConfigDict[type] = new BarrelConfig()
+                {
+                    Type = type,
+                    AttackCountPerBarrel = count,
+                };
+            }
+        }
 
-                var meteor = go.GetComponent<Meteor>();
-                meteor.Init
-                (
-                    pos: Utils.GetXZPosition(pos),
-                    atk: _atk
-                );
+        public void BarrelAttackActive(BarrelType type)
+        {
+            var config = _barrelConfigDict[type];
+            int count = config.AttackCountPerBarrel;
 
-                go.SetActive(true);
-            },
-            PoolManager.Instance.EffectPool
-        );
+            for (int i = 0; i < count; i++)
+                _attackQueue.Enqueue(type);
+
+            int enemyCount = _enemyManager.Enemies.Count;
+
+            if (enemyCount <= 0) return;
+            else MeteorAttack();
+        }
+
+        private void MeteorAttack() 
+        {
+            _attackQueue ??= new Queue<BarrelType>();
+
+            if (_attackQueue.Count <= 0) return;
+
+            while (_attackQueue.Count > 0) 
+            {
+                var type = _attackQueue.Dequeue();
+                int enemyCount = _enemyManager.Enemies.Count;
+
+                if (enemyCount <= 0) break;
+
+                int randomIndex = UnityEngine.Random.Range(0, enemyCount);
+                var enemy = _enemyManager.Enemies[randomIndex];
+
+                StartCoroutine(AttackCoroutine(type, enemy.transform.position));
+            }
+        }
+
+        private IEnumerator AttackCoroutine(BarrelType type, Vector3 pos)
+        {
+            GameObject go = null;
+
+            if(!_poolManager.TryGetObject(_barrelSoDict[type].meteorPrefab, out go, _poolManager.EffectPool))
+                yield return PoolManager.Instance.GetObject(_barrelSoDict[type].meteorPrefab, inst => go = inst, _poolManager.EffectPool);
+
+            var meteor = go.GetComponent<Meteor>();
+            meteor.Init
+            (
+                pos: Utils.GetXZPosition(pos),
+                atk: atk
+            );
+
+            go.SetActive(true);
+        }
     }
 }
