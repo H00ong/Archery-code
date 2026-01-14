@@ -7,7 +7,7 @@ namespace Players
 {
     public class PlayerController : MonoBehaviour
     {
-        public static PlayerController Instance;
+        public static PlayerController Instance { get; private set; }
 
         private readonly Dictionary<PlayerState, int> animBoolHashes = new()
         {
