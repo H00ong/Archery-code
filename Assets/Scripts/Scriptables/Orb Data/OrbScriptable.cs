@@ -3,7 +3,7 @@ using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-[CreateAssetMenu(fileName = "OrbScriptable", menuName = "Scriptable Objects/Orb")]
+[CreateAssetMenu(fileName = "OrbData", menuName = "OrbData")]
 public class OrbScriptable : ScriptableObject
 {
     public OrbType orbType;

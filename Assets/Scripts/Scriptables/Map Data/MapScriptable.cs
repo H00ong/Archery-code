@@ -3,7 +3,7 @@ using Map;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-[CreateAssetMenu(fileName = "Scriptable", menuName = "Scriptable Objects/Scriptable")]
+[CreateAssetMenu(fileName = "MapData", menuName = "MapData")]
 public abstract class MapScriptable : ScriptableObject
 {
     public MapType mapType;
