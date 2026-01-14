@@ -5,7 +5,7 @@ using UnityEngine;
 public class EnemyDie : MonoBehaviour, IEnemyBehavior
 {
     private EnemyController _ctx;
-    public virtual void Init(EnemyController c) => _ctx = c;
+    public virtual void Init(EnemyController ctx, BaseModuleData data = null) => _ctx = ctx;
 
     public virtual void OnEnter() 
     {

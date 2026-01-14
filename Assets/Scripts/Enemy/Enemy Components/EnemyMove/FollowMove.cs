@@ -11,9 +11,9 @@ public class FollowMove : EnemyMove
     [Header("Follow Move Tuning")]
     [SerializeField] float defaultAttackRange;
 
-    public override void Init(EnemyController c)
+    public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
-        base.Init(c);
+        base.Init(ctx, data);
     }
 
     public override void OnEnter()

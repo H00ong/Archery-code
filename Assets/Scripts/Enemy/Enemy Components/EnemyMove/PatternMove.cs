@@ -13,9 +13,9 @@ public class PatternMove : EnemyMove
     List<Vector3> patrolPointsPos = new List<Vector3>();
     int currentPatrolIndex = 0;
 
-    public override void Init(EnemyController c)
+    public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
-        base.Init(c);
+        base.Init(ctx, data);
 
         currentPatrolIndex = 0;
 

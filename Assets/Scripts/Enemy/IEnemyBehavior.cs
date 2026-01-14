@@ -6,7 +6,7 @@ namespace Enemies
 {
     public interface IEnemyBehavior
     {
-        public void Init(EnemyController ctx); 
+        public void Init(EnemyController ctx, BaseModuleData data = null); 
         public void Tick(); 
         public void OnEnter(); 
         public void OnExit();
@@ -20,7 +20,6 @@ namespace Enemies
     [System.Serializable]
     public class EnemyMove : MonoBehaviour, IEnemyBehavior
     {
-        
         [Header("Default Tuning")]
         [SerializeField] protected float defaultMoveTime = 4f;
         [SerializeField] protected float defaultMoveSpeed = 1f;
@@ -30,9 +29,9 @@ namespace Enemies
         protected PlayerController _player;
         protected float _moveTimer;
 
-        public virtual void Init(EnemyController c) 
+        public virtual void Init(EnemyController ctx, BaseModuleData data = null) 
         {
-            _ctx = c;
+            _ctx = ctx;
 
             if (!_ctx.isDebugMode) 
             {
@@ -84,9 +83,9 @@ namespace Enemies
 
         protected PlayerController _player;
 
-        public virtual void Init(EnemyController c) 
+        public virtual void Init(EnemyController ctx, BaseModuleData data = null) 
         {
-            _ctx = c;
+            _ctx = ctx;
 
             if (!_ctx.isDebugMode)
             {

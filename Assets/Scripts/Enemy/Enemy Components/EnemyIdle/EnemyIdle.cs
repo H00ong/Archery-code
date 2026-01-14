@@ -10,9 +10,9 @@ public class EnemyIdle : MonoBehaviour, IEnemyBehavior
     float idleTimer = 0f;
     
     EnemyController ctx;
-    public void Init(EnemyController c) 
+    public void Init(EnemyController ctx, BaseModuleData data = null) 
     {
-        ctx = c;
+        this.ctx = ctx;
         idleTimer = defaultIdleTime;
     }
 

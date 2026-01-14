@@ -1,28 +1,28 @@
 using System.Collections;
-using Enemy;
+using System.Collections.Generic;
+using Enemies;
 using Managers;
 using Objects;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace Enemies.Enemy_Components.EnemyAttack
+namespace Enemy.Enemy_Components.EnemyAttack
 {
     public class FlyingShoot : Enemies.EnemyAttack, IAnimationListener
     {
-        [Header("Required Objects")]
-        [SerializeField] private AssetReferenceGameObject flyingProjectilePrefab;
-        [SerializeField] private Transform projectileParent;
-        [SerializeField] private Transform shootingPoint;
         [Header("Flying Shooting Tuning")]
         [SerializeField] private float defaultFlyingProjectileSpeed = 10f;
         [SerializeField] private float defaultProjectileLifetime = 10f;
         [SerializeField] private int defaultFlyingProjectileAtk = 5;
+        
+        private AssetReferenceGameObject _projectilePrefab;
+        private List<Transform> _shootingPoints;
 
         private PoolManager _poolManager;
 
-        public override void Init(EnemyController c)
+        public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
-            base.Init(c);
+            base.Init(ctx, data);
 
             if (!_ctx.isDebugMode)
             {
@@ -32,7 +32,15 @@ namespace Enemies.Enemy_Components.EnemyAttack
             }
 
             _poolManager = PoolManager.Instance;
-            projectileParent = _poolManager.ProjectilePool;
+
+            if (data is not FlyingShootData fData)
+            {
+                Debug.LogError("[FlyingShoot] Invalid module data provided!");
+                return;
+            }
+            
+            _projectilePrefab = fData.projectilePrefab;
+            _shootingPoints = fData.GetShootingPoint(ctx);
         }
 
         public override void OnAnimEvent()
@@ -42,20 +50,24 @@ namespace Enemies.Enemy_Components.EnemyAttack
 
         IEnumerator FlyingShootingCoroutine()
         {
-            if (!_poolManager.TryGetObject(flyingProjectilePrefab, out var go, projectileParent)) 
-                yield return _poolManager.GetObject(flyingProjectilePrefab, inst => go = inst, projectileParent);
+            foreach (var point in  _shootingPoints)
+            {
+                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.ProjectilePool)) 
+                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _poolManager.ProjectilePool);
 
-            FlyingProjectile proj = go.GetComponent<FlyingProjectile>();
-            var inst = new ShootingInstruction(
-                shootingPoint.transform.position,
-                _player.transform.position,
-                defaultFlyingProjectileSpeed,
-                defaultProjectileLifetime,
-                defaultFlyingProjectileAtk
-            );
-            
-            proj.InitProjectile(inst);
-            go.SetActive(true);
+                FlyingProjectile proj = go.GetComponent<FlyingProjectile>();
+                
+                var inst = new ShootingInstruction(
+                    point.position,
+                    _player.transform.position,
+                    defaultFlyingProjectileSpeed,
+                    defaultProjectileLifetime,
+                    defaultFlyingProjectileAtk
+                );
+                
+                proj.InitProjectile(inst);
+                go.SetActive(true);
+            }
         }
     }
 }

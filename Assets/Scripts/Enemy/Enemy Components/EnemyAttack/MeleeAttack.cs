@@ -5,9 +5,9 @@ using UnityEngine;
 public class MeleeAttack : EnemyAttack
 {
     [SerializeField] float attackMoveSpeed;
-    public override void Init(EnemyController c)
+    public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
-        base.Init(c);
+        base.Init(ctx, data);
     }
 
     public override void OnEnter()

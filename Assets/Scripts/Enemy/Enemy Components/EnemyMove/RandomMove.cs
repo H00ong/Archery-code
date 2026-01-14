@@ -8,9 +8,9 @@ public class RandomMove : EnemyMove
     [SerializeField] float pickDirectionTime = 7f;
     float pickDirectionTimer;
 
-    public override void Init(EnemyController c)
+    public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
-        base.Init(c);
+        base.Init(ctx, data);
 
         pickDirectionTimer = pickDirectionTime;
     }

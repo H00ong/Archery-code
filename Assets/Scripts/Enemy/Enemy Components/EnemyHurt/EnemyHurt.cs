@@ -7,7 +7,7 @@ using UnityEngine;
 public class EnemyHurt : MonoBehaviour, IEnemyBehavior
 {
     EnemyController ctx;
-    public virtual void Init(EnemyController c) => ctx = c;
+    public virtual void Init(EnemyController ctx, BaseModuleData data = null) => this.ctx = ctx;
 
     public virtual void OnEnter()
     {

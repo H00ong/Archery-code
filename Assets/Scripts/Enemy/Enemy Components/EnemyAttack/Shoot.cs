@@ -10,25 +10,20 @@ namespace Enemies.Enemy_Components.EnemyAttack
 {
     public class Shoot : Enemies.EnemyAttack, IAnimationListener
     {
-        [Header("Required Objects")]
-        [SerializeField] private AssetReferenceGameObject projectilePrefab;
-        [SerializeField] private List<Transform> shootingPoint;
         [Header("Shooting Tuning")]
         [SerializeField] private float defaultProjectileSpeed = 10f;
         [SerializeField] private float defaultProjectileLifetime = 10f;
         [SerializeField] private int defaultProjectileAtk = 1;
 
+        private AssetReferenceGameObject _projectilePrefab;
+        private List<Transform> _shootingPoints;
+        
         private PoolManager _poolManager;
         private Transform _projectileParent;
-
-        bool IsPatternMove
+        
+        public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
-            get => EnemyTagUtil.Has(_ctx.enemyTags, EnemyTag.PatternMove);
-        }
-
-        public override void Init(EnemyController c)
-        {
-            base.Init(c);
+            base.Init(ctx, data);
 
             if (!_ctx.isDebugMode)
             {
@@ -38,7 +33,16 @@ namespace Enemies.Enemy_Components.EnemyAttack
             }
 
             _poolManager = PoolManager.Instance;
-            _projectileParent = _ctx.PoolManager.ProjectilePool;
+            _projectileParent = _poolManager.ProjectilePool;
+            
+            if (data is not ShootData sData)
+            {
+                Debug.LogError("[Shoot] Invalid module data provided!");
+                return;
+            }
+            
+            _projectilePrefab = sData.projectilePrefab;
+            _shootingPoints = sData.GetShootingPoint(ctx);
         }
 
         public override void OnEnter()
@@ -56,16 +60,14 @@ namespace Enemies.Enemy_Components.EnemyAttack
 
         IEnumerator ShootingCoroutine()
         {
-            int count = shootingPoint.Count;
-
-            foreach (var point in shootingPoint) 
+            foreach (var point in _shootingPoints) 
             {
-                if (!_poolManager.TryGetObject(projectilePrefab, out var go, _projectileParent))
-                    yield return _poolManager.GetObject(projectilePrefab, inst => go = inst, _projectileParent);
+                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _projectileParent))
+                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _projectileParent);
                 
                 Vector3 destDir = Vector3.zero;
 
-                if (IsPatternMove)
+                if (EnemyTagUtil.Has(_ctx.enemyTags, EnemyTag.PatternMove))
                     destDir = point.forward;
                 else
                     destDir = Utils.GetXZDirectionVector(_ctx.lastPlayerPosition, point.position);
