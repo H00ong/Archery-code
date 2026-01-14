@@ -30,7 +30,7 @@ namespace Enemy
         #region Initialization
         protected override void InitMoveModule()
         {
-            foreach (var (enemyTag, type) in EnemyBehaviorFactories.MoveFactory)
+            foreach (var (enemyTag, type) in EnemyBehaviorFactory.MoveFactory)
             {
                 if (EnemyTagUtil.Has(enemyTags, enemyTag))
                 {

@@ -1,4 +1,4 @@
-namespace Enemies
+namespace Enemy
 {
     public enum EnemyState
     {
@@ -39,5 +39,13 @@ namespace Enemies
         MeleeAttack = 1 << 6,
         Shoot = 1 << 7,
         FlyingShoot = 1 << 8,
+        
+        // Attributes
+        Fire = 1 << 26,
+        Ice = 1 << 27,
+        Poison = 1 << 28,
+        
+        ActionMask = MeleeAttack | Shoot | FlyingShoot,
+        AttributeMask = Fire | Ice | Poison,
     }
 }

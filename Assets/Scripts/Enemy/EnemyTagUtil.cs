@@ -1,11 +1,28 @@
 using System;
 using System.Collections.Generic;
+using Enemy;
 using UnityEngine;
 
 namespace Enemies
 {
     public static class EnemyTagUtil
     {
+        public static readonly EnemyTag[] AllTags = (EnemyTag[])System.Enum.GetValues(typeof(EnemyTag));
+        public static readonly List<EnemyTag> AllActionTags = new List<EnemyTag>();
+        
+        static EnemyTagUtil()
+        {
+            foreach (var tag in AllTags)
+            {
+                if (tag == EnemyTag.None) continue;
+                
+                if ((tag & EnemyTag.ActionMask) != 0)
+                {
+                    AllActionTags.Add(tag);
+                }
+            }
+        }
+        
         public static EnemyTag ParseTagsToMask(IEnumerable<string> tags)
         {
             if (tags == null) return EnemyTag.None;
@@ -36,9 +53,41 @@ namespace Enemies
         public EnemyName Name;
         public EnemyTag Tag;
 
-        public bool Equals(EnemyKey other) => Name == other.Name && Tag == other.Tag;
-        public override int GetHashCode() => ((int)Name * 397) ^ (int)Tag;
-    };
+        public EnemyKey(EnemyName name, EnemyTag tag)
+        {
+            Name = name;
+            Tag = tag;
+        }
 
-    
+        public bool Equals(EnemyKey other)
+        {
+            return Name == other.Name && Tag == other.Tag;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is EnemyKey other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked 
+            {
+                return ((int)Name * 397) ^ (int)Tag;
+            }
+        }
+        
+        public static bool operator ==(EnemyKey left, EnemyKey right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(EnemyKey left, EnemyKey right)
+        {
+            return !left.Equals(right);
+        }
+
+        // 디버깅용 ToString
+        public override string ToString() => $"[{Name} : {Tag}]";
+    };
 }

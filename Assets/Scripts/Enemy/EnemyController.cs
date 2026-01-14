@@ -10,6 +10,12 @@ using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 namespace Enemy
 {
+    public enum EnemyPointType
+    {
+        FlyingShootingMuzzle,
+        NormalShootingMuzzle,
+    }
+    
     public class EnemyController : MonoBehaviour
     {
         protected static readonly Dictionary<EnemyState, int> StateAnimHashes = new()
@@ -42,6 +48,7 @@ namespace Enemy
         public Animator anim;
         public Rigidbody rigidBody;
         public Collider enemyCollider;
+        public EnemyReferenceHub enemyReference;
 
         [Header("Default Tuning")]
         [SerializeField] protected float defaultAttackSpeed; // attack anim speed;
@@ -52,12 +59,12 @@ namespace Enemy
         [SerializeField] protected float sphereCastRadius = 0f;
         [SerializeField] protected float castDistance = .5f;
         [SerializeField] protected LayerMask obstacleLayer;
-    
-        private EnemyData _enemyData;
         
         [HideInInspector] public Vector3 lastPlayerPosition;
         [HideInInspector] public PlayerController player;
-        [HideInInspector] public PoolManager PoolManager;
+        
+        private EnemyData _enemyData;
+        private PoolManager _poolManager;
         private DataManager _dataManager;
 
         public bool IsBlocked { get; private set; }
@@ -137,7 +144,7 @@ namespace Enemy
         private void SetupManager()
         {
             _dataManager = DataManager.Instance;
-            PoolManager = PoolManager.Instance;
+            _poolManager = PoolManager.Instance;
             player = PlayerController.Instance;
         }
 
@@ -147,6 +154,8 @@ namespace Enemy
             if (!health) health = GetComponent<Health>();
             if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
+            if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>(); 
+            enemyReference.Init();
         }
 
         protected virtual void ApplyEnemyData()
@@ -187,7 +196,7 @@ namespace Enemy
 
         protected virtual void InitMoveModule()
         {
-            foreach (var (tag, type) in EnemyBehaviorFactories.MoveFactory)
+            foreach (var (tag, type) in EnemyBehaviorFactory.MoveFactory)
             {
                 if (EnemyTagUtil.Has(enemyTags, tag))
                 {
@@ -205,12 +214,31 @@ namespace Enemy
 
         protected void InitAttackModule()
         {
-            EnemyBehaviorFactories.CreateAttackModules(this, enemyTags, attacks, _attackDict);
-
-            foreach (var atk in attacks) 
+            var relevantData = new Dictionary<EnemyTag, BaseModuleData>();
+            EnemyTag myAttributes = enemyTags & EnemyTag.AttributeMask;
+            
+            foreach (var actionTag in EnemyTagUtil.AllActionTags)
             {
-                atk.Init(this);
+                if (EnemyTagUtil.Has(enemyTags, actionTag))
+                {
+                    BaseModuleData foundData = null;
+                    
+                    EnemyTag specificTag = actionTag | myAttributes;
+                    var key1 = new EnemyKey(this.enemyName, specificTag);
+                    foundData = EnemyManager.Instance.GetModuleData(key1);
+                    
+                    // 찾은 데이터 등록 (딕셔너리에는 순수 ActionTag를 키로 저장)
+                    if (foundData != null)
+                    {
+                        relevantData.TryAdd(actionTag, foundData);
+                    }
+                }
+            }
 
+            EnemyBehaviorFactory.CreateAttackModules(this, enemyTags, attacks, _attackDict, relevantData);
+
+            foreach (var atk in attacks)
+            {
                 OnAttackEnter += atk.OnEnter;
                 OnAttackTick += atk.Tick;
                 OnAttackExit += atk.OnExit;
@@ -235,8 +263,8 @@ namespace Enemy
         {
             ClearAction();
             InitMoveModule();
-            InitAttackModule();
 
+            // 기본 모듈 초기화 (기존 코드 유지)
             idle = gameObject.GetOrAddComponent<EnemyIdle>(); idle.Init(this);
             die = gameObject.GetOrAddComponent<EnemyDie>(); die.Init(this);
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
@@ -245,11 +273,12 @@ namespace Enemy
             health.OnHit += this.OnHit;
             health.OnDie += this.OnDie;
 
+            // ActionTable 재설정 (기존 코드 유지)
             ActionTable = new Dictionary<EnemyState, (Action enter, Action exit, Action tick)> {
                 { EnemyState.Idle,   (enter: idle.OnEnter,   exit: idle.OnExit,      tick: idle.Tick) },
-                { EnemyState.Move,   (enter: move.OnEnter,   exit: move.OnExit,      tick: move.Tick)  },
+                { EnemyState.Move,   (enter: move.OnEnter,   exit: move.OnExit,      tick: move.Tick) },
                 { EnemyState.Attack, (enter: OnAttackEnter,  exit: OnAttackExit,     tick: OnAttackTick)},
-                { EnemyState.Hurt,   (enter: hurt.OnEnter,   exit : hurt.OnExit,     tick: hurt.Tick)},
+                { EnemyState.Hurt,   (enter: hurt.OnEnter,   exit: hurt.OnExit,      tick: hurt.Tick)},
                 { EnemyState.Dead,   (enter: die.OnEnter,    exit: die.OnExit,       tick: die.Tick)},
             };
         }
