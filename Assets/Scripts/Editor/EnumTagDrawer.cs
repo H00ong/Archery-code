@@ -1,6 +1,5 @@
 #if UNITY_EDITOR
 using System;
-using Enemies;
 using Enemy;
 using UnityEditor;
 using UnityEngine;
