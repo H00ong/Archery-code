@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using Enemies;
-using Enemies.Enemy_Components.EnemyAttack;
 using Enemy;
-using Enemy.Enemy_Components.EnemyAttack;
+using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Component = UnityEngine.Component;
 
 public static class EnemyBehaviorFactory
 {
-    public static readonly List<(EnemyTag tag, System.Type type)> MoveFactory
+    public static readonly List<(EnemyTag tag, System.Type type)> MoveModuleRegistry
     = new()
     {
         (EnemyTag.FollowMove,  typeof(FollowMove)),
@@ -24,6 +22,7 @@ public static class EnemyBehaviorFactory
         { EnemyTag.MeleeAttack, typeof(MeleeAttack) },
         { EnemyTag.Shoot,       typeof(Shoot) },
         { EnemyTag.FlyingShoot, typeof(FlyingShoot) },
+        { EnemyTag.FollowMeleeAttack, typeof(FollowMeleeAttack) },
         // 새로운 공격이 생기면 여기에 한 줄만 추가하면 끝!
     };
     
@@ -31,51 +30,72 @@ public static class EnemyBehaviorFactory
         EnemyController c,
         EnemyTag tag,
         System.Type moduleType,
-        List<EnemyAttack> outList,
-        Dictionary<EnemyTag, EnemyAttack> outDict,
-        Dictionary<EnemyTag, BaseModuleData> loadedData)
+        BaseModuleData loadedData,
+        Dictionary<EnemyTag, IEnemyBehavior> outDict, 
+        List<EnemyAttack> outList)
     {
-        // 1. 컴포넌트 추가/가져오기 (Type 버전 사용)
         Component comp = c.gameObject.GetOrAddComponent(moduleType);
-
-        // 2. EnemyAttack으로 형변환 (모든 공격 모듈은 EnemyAttack 상속받으므로 가능)
-        if (comp is EnemyAttack module)
-        {
-            // 3. 데이터 가져오기 (없으면 null)
-            var data = loadedData?.GetValueOrDefault(tag);
-
-            // 4. 초기화 (데이터 주입)
-            module.Init(c, data);
-
-            // 5. 리스트 및 딕셔너리 등록
-            if (!outList.Contains(module)) 
-                outList.Add(module);
-            
-            // 주의: 딕셔너리 키는 현재 'tag'를 그대로 사용합니다.
-            // 만약 Tag(MeleeAttack)와 Key(Melee)가 다르다면 매핑 테이블을 수정해야 합니다.
-            outDict[tag] = module;
-        }
+        
+        if (comp is not EnemyAttack atk) return;
+        
+        atk.Init(c, loadedData);
+        outDict[tag] = atk;
+        outList.Add(atk);
     }
 
     public static void CreateAttackModules(
-        EnemyController c, 
+        EnemyController c,
+        EnemyName name,
         EnemyTag tags, 
-        List<EnemyAttack> outList, 
-        Dictionary<EnemyTag, EnemyAttack> outDict,
-        Dictionary<EnemyTag, BaseModuleData> loadedData = null // 데이터 딕셔너리 (없으면 null)
+        Dictionary<EnemyTag, IEnemyBehavior> outDict,
+        List<EnemyAttack> outList
     )
-    {
+    { 
+        EnemyTag attributeTags = tags & EnemyTag.AttributeMask;
+        
         foreach (var kvp in AttackModuleRegistry)
         {
-            EnemyTag targetTag = kvp.Key;   // 예: EnemyTag.FlyingShoot
-            System.Type type = kvp.Value;   // 예: typeof(FlyingShoot)
+            EnemyTag attackTag = kvp.Key;
+            Type type = kvp.Value;   // ex : typeof(FlyingShoot)
 
-            // 적이 해당 태그를 가지고 있다면?
-            if (EnemyTagUtil.Has(tags, targetTag))
+            if (EnemyTagUtil.Has(tags, attackTag))
             {
-                // 공통 로직 수행
-                ProcessAttackModule(c, targetTag, type, outList, outDict, loadedData);
+                EnemyTag specificTag = attackTag | attributeTags;
+                var key1 = new EnemyKey(name, specificTag);
+                
+                var foundData = EnemyManager.Instance.GetModuleData(key1);
+                
+                ProcessAttackModule(c, attackTag, type, foundData, outDict, outList);
             }
         }
+    }
+    
+    public static EnemyMove CreateMoveModules(
+        EnemyController c,
+        EnemyName enemyName,
+        EnemyTag tags,
+        Dictionary<EnemyTag, IEnemyBehavior> outModules
+    )
+    {
+        foreach (var (targetTag, type) in MoveModuleRegistry)
+        {
+            if (EnemyTagUtil.Has(tags, targetTag))
+            {
+                var key = new EnemyKey(enemyName, targetTag); 
+                BaseModuleData loadedData = EnemyManager.Instance.GetModuleData(key);
+                
+                var comp = c.gameObject.GetOrAddComponent(type);
+                
+                if (comp is EnemyMove module)
+                {
+                    module.Init(c, loadedData);
+                    outModules.TryAdd(targetTag, module);
+                    
+                    return module;
+                }
+            }
+        }
+        
+        return null;
     }
 }

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Enemies;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -57,7 +56,7 @@ namespace Managers
                 {
                     if (data)
                     {
-                        var key = new EnemyKey(data.targetName, data.linkedTag);
+                        var key = new EnemyKey(data.targetName, data.targetTag);
 
                         if (!_globalModuleData.TryAdd(key, data))
                         {
