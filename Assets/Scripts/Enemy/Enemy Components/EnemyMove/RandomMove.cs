@@ -1,18 +1,26 @@
-using Enemies;
 using Enemy;
 using UnityEngine;
 
 [System.Serializable]
 public class RandomMove : EnemyMove
 {
-    [SerializeField] float pickDirectionTime = 7f;
-    float pickDirectionTimer;
+    private float _pickDirectionTimer;
+    private float _pickDirectionTime;
 
     public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
         base.Init(ctx, data);
 
-        pickDirectionTimer = pickDirectionTime;
+        if (data is RandomMoveData randomData)
+        {
+            _pickDirectionTime = randomData.pickDirectionTime;
+        }
+        else
+        {
+            _pickDirectionTime = 7f;
+        }
+
+        _pickDirectionTimer = _pickDirectionTime;
     }
         
     public override void OnEnter()
@@ -32,32 +40,27 @@ public class RandomMove : EnemyMove
 
     public override void Tick()
     {
-        UpdateState(EnemyState.Attack);
-    }
-
-    protected override void UpdateState(EnemyState state)
-    {
         _moveTimer -= Time.deltaTime;
-        pickDirectionTimer -= Time.deltaTime;
+        _pickDirectionTimer -= Time.deltaTime;
 
         if (_moveTimer < 0)
         {
-            _moveTimer = defaultMoveTime;
-            _ctx.ChangeState(state);
+            _moveTimer = _duration;
+            _ctx.OnModuleComplete();
             return;
         }
 
-        if (pickDirectionTimer < 0)
+        if (_pickDirectionTimer < 0)
         {
             PickMoveDirection();
         }
 
-        ForwardMove();
+        MoveForward();
     }
-
+    
     private void PickMoveDirection()
     {
-        pickDirectionTimer = pickDirectionTime;
+        _pickDirectionTimer = _pickDirectionTime;
 
         Vector3 randomDir = UnityEngine.Random.onUnitSphere;
         randomDir.y = 0;
@@ -65,11 +68,11 @@ public class RandomMove : EnemyMove
         transform.rotation = Quaternion.LookRotation(randomDir);
     }
 
-    public void PickReflectDirection(Vector3 _inDir, Vector3 _inNormal)
+    public void PickReflectDirection(Vector3 inDir, Vector3 inNormal)
     {
-        pickDirectionTimer = pickDirectionTime;
+        _pickDirectionTimer = _pickDirectionTime;
 
-        Vector3 reflectDir = Vector3.Reflect(_inDir, _inNormal);
+        Vector3 reflectDir = Vector3.Reflect(inDir, inNormal);
         reflectDir.y = 0;
         reflectDir = Quaternion.Euler(0, UnityEngine.Random.Range(-30f, 30f), 0) * reflectDir;
 

@@ -1,27 +1,32 @@
-using NUnit.Framework;
 using System.Collections.Generic;
-using Enemies;
 using Enemy;
-using UltimateProceduralPrimitivesFREE;
 using UnityEngine;
+
 
 [System.Serializable]
 public class PatternMove : EnemyMove
 {
-    [Header("Patrol")]
-    [SerializeField] Transform[] patrolPoints = null;
-    List<Vector3> patrolPointsPos = new List<Vector3>();
-    int currentPatrolIndex = 0;
+    private List<Vector3> _patrolPointsPos = new List<Vector3>();
+    private int _currentPatrolIndex = 0;
 
     public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
         base.Init(ctx, data);
 
-        currentPatrolIndex = 0;
+        _patrolPointsPos.Clear();
+        _currentPatrolIndex = 0;
 
-        patrolPointsPos.Clear();
-
-        foreach (var p in patrolPoints) { patrolPointsPos.Add(p.position); }
+        if (data is PatternMoveData patternData)
+        {
+            var patrolPoints = patternData.GetPoints(ctx);
+            if (patrolPoints != null)
+            {
+                foreach (var p in patrolPoints)
+                {
+                    _patrolPointsPos.Add(p.position);
+                }
+            }
+        }
     }
 
     public override void OnEnter()
@@ -38,28 +43,23 @@ public class PatternMove : EnemyMove
 
     public override void Tick()
     {
-        UpdateState(EnemyState.Attack);
-    }
-
-    protected override void UpdateState(EnemyState state)
-    {
-        base.UpdateState(state);
-
+        base.Tick();
+        
         if (_ctx.CurrentState != EnemyState.Move)
             return;
 
-        if (Utils.GetXZDistance(transform.position, patrolPointsPos[currentPatrolIndex]) < .5f)
+        if (Utils.GetXZDistance(transform.position, _patrolPointsPos[_currentPatrolIndex]) < .5f)
         {
-            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPointsPos.Count;
+            _currentPatrolIndex = (_currentPatrolIndex + 1) % _patrolPointsPos.Count;
             SetDirection();
         }
 
-        if (!_ctx.IsBlocked) ForwardMove();
+        if (!_ctx.IsBlocked) MoveForward();
     }
 
     private void SetDirection()
     {
-        Vector3 targetPosition = patrolPointsPos[currentPatrolIndex];
+        Vector3 targetPosition = _patrolPointsPos[_currentPatrolIndex];
         Vector3 direction = Utils.GetXZDirectionVector(targetPosition, transform.position);
         transform.rotation = Quaternion.LookRotation(direction);
     }
