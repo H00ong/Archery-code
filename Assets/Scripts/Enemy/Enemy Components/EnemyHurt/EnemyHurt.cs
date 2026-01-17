@@ -1,4 +1,3 @@
-using Enemies;
 using Enemy;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -11,12 +10,12 @@ public class EnemyHurt : MonoBehaviour, IEnemyBehavior
 
     public virtual void OnEnter()
     {
-        ctx.SetHurtTrigger(false);
+        ctx.SetHurtEndTrigger(false);
     }
 
     public virtual void OnExit()
     {
-        ctx.SetHurtTrigger(false);
+        ctx.SetHurtEndTrigger(false);
     }
 
     public virtual void Tick()
