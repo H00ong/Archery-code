@@ -2,76 +2,73 @@ using Enemy;
 using Players;
 using UnityEngine;
 
-namespace Enemies
+namespace Enemy
 {
     public interface IEnemyBehavior
     {
-        public void Init(EnemyController ctx, BaseModuleData data = null); 
-        public void Tick(); 
-        public void OnEnter(); 
+        public void Init(EnemyController ctx, BaseModuleData data = null);
+        public void Tick();
+        public void OnEnter();
         public void OnExit();
     }
 
-    public interface IAnimationListener 
+    public interface IAnimationListener
     {
-        public void OnAnimEvent();    
+        public void OnAnimEvent();
     }
 
-    [System.Serializable]
     public class EnemyMove : MonoBehaviour, IEnemyBehavior
     {
-        [Header("Default Tuning")]
-        [SerializeField] protected float defaultMoveTime = 4f;
-        [SerializeField] protected float defaultMoveSpeed = 1f;
-    
         protected EnemyController _ctx;
-        protected EnemyStats _stats;
         protected PlayerController _player;
+        
         protected float _moveTimer;
+        protected float _duration;
+        protected float _defaultMoveSpeed = 3.0f;
 
-        public virtual void Init(EnemyController ctx, BaseModuleData data = null) 
+        public virtual void Init(EnemyController ctx, BaseModuleData data = null)
         {
             _ctx = ctx;
 
-            if (!_ctx.isDebugMode) 
+            if (!_ctx.isDebugMode)
             {
-                _stats = _ctx.stats;
-                defaultMoveSpeed = _stats.baseStats.moveSpeed;
+                _defaultMoveSpeed = _ctx.stats.baseStats.moveSpeed;
             }
 
-            _moveTimer = defaultMoveTime;
+            if (data is MoveModuleData mData)
+            {
+                _duration = mData.duration;
+            }
+            else
+            {
+                _duration = 4.0f; // 기본값
+            }
         }
 
-        public virtual void OnEnter() 
-        {
-            _player = _ctx.player;
-        }
-
-        public virtual void OnExit() 
-        {
-            _ctx.lastPlayerPosition = _player.transform.position;
-        }
-
-        public virtual void Tick() 
-        {
-            UpdateState(EnemyState.Idle);
-        }
-
-        protected virtual void UpdateState(EnemyState state) 
+        public virtual void Tick()
         {
             _moveTimer -= Time.deltaTime;
 
             if (_moveTimer < 0)
             {
-                _moveTimer = defaultMoveTime;
-                _ctx.ChangeState(state);
-                return;
+                // 시간이 다 되면 컨트롤러에게 "나 끝났어" 보고
+                _ctx.OnModuleComplete();
             }
         }
 
-        protected void ForwardMove() 
+        public virtual void OnEnter()
         {
-            transform.position += transform.forward * defaultMoveSpeed * Time.deltaTime;
+            _player = _ctx.player;
+            _moveTimer = _duration;
+        }
+
+        public virtual void OnExit()
+        {
+        }
+
+        protected void MoveForward()
+        {
+            transform.position += transform.forward * _defaultMoveSpeed * Time.deltaTime;
         }
     }
 
@@ -82,8 +79,9 @@ namespace Enemies
         protected EnemyStats _stats;
 
         protected PlayerController _player;
+        protected int _animIndex;
 
-        public virtual void Init(EnemyController ctx, BaseModuleData data = null) 
+        public virtual void Init(EnemyController ctx, BaseModuleData data = null)
         {
             _ctx = ctx;
 
@@ -91,30 +89,37 @@ namespace Enemies
             {
                 _stats = _ctx.stats;
             }
-        
-            _ctx.SetAttackTrigger(false);
-        } 
 
-        public virtual void OnEnter() 
+            _ctx.SetAttackEndTrigger(false);
+            
+            if (data is AttackModuleData aData)
+            {
+                _animIndex = aData.attackIndex;
+            }
+        }
+
+        public virtual void OnEnter()
         {
             _player = _ctx.player;
 
             Vector3 dir = Utils.GetXZDirectionVector(_ctx.lastPlayerPosition, transform.position);
             transform.rotation = Quaternion.LookRotation(dir);
 
-            _ctx.SetAttackTrigger(false);
+            _ctx.SetAttackEndTrigger(false);
         }
 
-        public virtual void Tick() 
+        public virtual void Tick()
         {
-        
+            
         }
 
-        public virtual void OnExit() 
+        public virtual void OnExit()
         {
-            _ctx.SetAttackTrigger(false);
+            _ctx.SetAttackEndTrigger(false);
         }
 
-        public virtual void OnAnimEvent() { }
+        public virtual void OnAnimEvent()
+        {
+        }
     }
 }
