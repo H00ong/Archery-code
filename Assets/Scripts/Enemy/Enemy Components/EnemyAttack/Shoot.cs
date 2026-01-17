@@ -1,25 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
-using Enemy;
 using Managers;
 using Objects;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace Enemies.Enemy_Components.EnemyAttack
+namespace Enemy
 {
-    public class Shoot : Enemies.EnemyAttack, IAnimationListener
+    public class Shoot : EnemyAttack, IAnimationListener
     {
-        [Header("Shooting Tuning")]
-        [SerializeField] private float defaultProjectileSpeed = 10f;
-        [SerializeField] private float defaultProjectileLifetime = 10f;
-        [SerializeField] private int defaultProjectileAtk = 1;
+        private readonly float _defaultProjectileLifetime = 10f;
+        
+        private float _projectileSpeed = 10f;
+        private int _projectileAtk = 1;
 
         private AssetReferenceGameObject _projectilePrefab;
         private List<Transform> _shootingPoints;
         
         private PoolManager _poolManager;
-        private Transform _projectileParent;
         
         public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
@@ -28,12 +26,11 @@ namespace Enemies.Enemy_Components.EnemyAttack
             if (!_ctx.isDebugMode)
             {
                 var shootingStats = _stats.shooting;
-                defaultProjectileSpeed = shootingStats.projectileSpeed;
-                defaultProjectileAtk = shootingStats.projectileAtk;
+                _projectileSpeed = shootingStats.projectileSpeed;
+                _projectileAtk = shootingStats.projectileAtk;
             }
 
             _poolManager = PoolManager.Instance;
-            _projectileParent = _poolManager.ProjectilePool;
             
             if (data is not ShootData sData)
             {
@@ -49,7 +46,12 @@ namespace Enemies.Enemy_Components.EnemyAttack
         {
             _player = _ctx.player;
 
-            _ctx.SetAttackTrigger(false);
+            if (_ctx.HasMultiAttackModules)
+            {
+                _ctx.anim.SetFloat(AnimHashes.AttackIndex, _animIndex);
+            }
+            
+            _ctx.SetAttackEndTrigger(false);
         }
         
 
@@ -58,12 +60,13 @@ namespace Enemies.Enemy_Components.EnemyAttack
             StartCoroutine(ShootingCoroutine());
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         IEnumerator ShootingCoroutine()
         {
             foreach (var point in _shootingPoints) 
             {
-                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _projectileParent))
-                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _projectileParent);
+                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.ProjectilePool))
+                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _poolManager.ProjectilePool);
                 
                 Vector3 destDir = Vector3.zero;
 
@@ -75,9 +78,9 @@ namespace Enemies.Enemy_Components.EnemyAttack
                 ShootingInstruction inst = new ShootingInstruction(
                     _ctx.transform.position,
                     _ctx.transform.position + destDir,
-                    defaultProjectileSpeed,
-                    defaultProjectileLifetime,
-                    defaultProjectileAtk
+                    _projectileSpeed,
+                    _defaultProjectileLifetime,
+                    _projectileAtk
                 );
                 
                 Projectile proj = go.GetComponent<Projectile>();

@@ -1,24 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
-using Enemies;
+using Enemy;
 using Managers;
 using Objects;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace Enemy.Enemy_Components.EnemyAttack
+namespace Enemy
 {
-    public class FlyingShoot : Enemies.EnemyAttack, IAnimationListener
+    public class FlyingShoot : Enemy.EnemyAttack, IAnimationListener
     {
-        [Header("Flying Shooting Tuning")]
-        [SerializeField] private float defaultFlyingProjectileSpeed = 10f;
-        [SerializeField] private float defaultProjectileLifetime = 10f;
-        [SerializeField] private int defaultFlyingProjectileAtk = 5;
+        private readonly float _projectileLifeTime = 10f;
         
         private AssetReferenceGameObject _projectilePrefab;
-        private List<Transform> _shootingPoints;
-
+        private float _flyingProjectileSpeed = 10f; 
+        private int _flyingProjectileAtk = 5;
         private PoolManager _poolManager;
+        
+        private List<Transform> _shootingPoints;
 
         public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
@@ -27,8 +26,8 @@ namespace Enemy.Enemy_Components.EnemyAttack
             if (!_ctx.isDebugMode)
             {
                 var shootingStats = _stats.flyingShooting;
-                defaultFlyingProjectileSpeed = shootingStats.flyingProjectileSpeed;
-                defaultFlyingProjectileAtk = shootingStats.flyingProjectileAtk;
+                _flyingProjectileSpeed = shootingStats.flyingProjectileSpeed;
+                _flyingProjectileAtk = shootingStats.flyingProjectileAtk;
             }
 
             _poolManager = PoolManager.Instance;
@@ -41,6 +40,17 @@ namespace Enemy.Enemy_Components.EnemyAttack
             
             _projectilePrefab = fData.projectilePrefab;
             _shootingPoints = fData.GetShootingPoint(ctx);
+            _animIndex = fData.attackIndex;
+        }
+
+        public override void OnEnter()
+        {
+            base.OnEnter();
+
+            if (_ctx.HasMultiAttackModules)
+            {
+                _ctx.anim.SetFloat(AnimHashes.AttackIndex, _animIndex);
+            }
         }
 
         public override void OnAnimEvent()
@@ -48,6 +58,7 @@ namespace Enemy.Enemy_Components.EnemyAttack
             StartCoroutine(FlyingShootingCoroutine());
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         IEnumerator FlyingShootingCoroutine()
         {
             foreach (var point in  _shootingPoints)
@@ -60,9 +71,9 @@ namespace Enemy.Enemy_Components.EnemyAttack
                 var inst = new ShootingInstruction(
                     point.position,
                     _player.transform.position,
-                    defaultFlyingProjectileSpeed,
-                    defaultProjectileLifetime,
-                    defaultFlyingProjectileAtk
+                    _flyingProjectileSpeed,
+                    _projectileLifeTime,
+                    _flyingProjectileAtk
                 );
                 
                 proj.InitProjectile(inst);
