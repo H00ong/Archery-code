@@ -1,4 +1,3 @@
-using Enemies;
 using Enemy;
 using UnityEngine;
 
@@ -6,14 +5,14 @@ public class EnemyAnimationEvent : MonoBehaviour
 {
     private EnemyController _enemy => GetComponentInParent<EnemyController>();
 
-    private void AttackTrigger()
+    private void AttackEndTrigger()
     {
-        _enemy.SetAttackTrigger(true);
+        _enemy.SetAttackEndTrigger(true);
     }
 
     private void HurtTrigger() 
     {
-        _enemy.SetHurtTrigger(true);
+        _enemy.SetHurtEndTrigger(true);
     }
 
     private void AttackMoveTriggerActive() 

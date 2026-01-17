@@ -3,25 +3,11 @@ using System.Collections.Generic;
 using Enemy;
 using UnityEngine;
 
-namespace Enemies
+namespace Enemy
 {
     public static class EnemyTagUtil
     {
         public static readonly EnemyTag[] AllTags = (EnemyTag[])System.Enum.GetValues(typeof(EnemyTag));
-        public static readonly List<EnemyTag> AllActionTags = new List<EnemyTag>();
-        
-        static EnemyTagUtil()
-        {
-            foreach (var tag in AllTags)
-            {
-                if (tag == EnemyTag.None) continue;
-                
-                if ((tag & EnemyTag.ActionMask) != 0)
-                {
-                    AllActionTags.Add(tag);
-                }
-            }
-        }
         
         public static EnemyTag ParseTagsToMask(IEnumerable<string> tags)
         {

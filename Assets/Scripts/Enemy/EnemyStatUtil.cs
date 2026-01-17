@@ -3,7 +3,7 @@ using Enemy;
 using Map;
 using UnityEngine;
 
-namespace Enemies
+namespace Enemy
 {
     public static class EnemyStatUtil
     {
