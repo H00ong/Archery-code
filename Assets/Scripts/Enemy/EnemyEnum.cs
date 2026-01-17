@@ -8,6 +8,13 @@ namespace Enemy
         Dead,
         Hurt
     }
+    
+    public enum EnemyPointType
+    {
+        FlyingShootingMuzzle,
+        NormalShootingMuzzle,
+        PatrolPoint
+    }
 
     public enum EnemyName
     {
@@ -39,13 +46,15 @@ namespace Enemy
         MeleeAttack = 1 << 6,
         Shoot = 1 << 7,
         FlyingShoot = 1 << 8,
+        FollowMeleeAttack = 1 << 9,
         
         // Attributes
         Fire = 1 << 26,
         Ice = 1 << 27,
         Poison = 1 << 28,
         
-        ActionMask = MeleeAttack | Shoot | FlyingShoot,
+        MoveMask = FollowMove | PatternMove | RandomMove,
+        AttackMask = MeleeAttack | Shoot | FlyingShoot | FollowMeleeAttack,
         AttributeMask = Fire | Ice | Poison,
     }
 }

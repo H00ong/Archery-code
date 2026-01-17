@@ -1,48 +1,44 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Enemies;
 using Managers;
 using Map;
 using Players;
 using UnityEngine;
-using UnityEngine.ResourceManagement.ResourceProviders.Simulation;
 
 namespace Enemy
 {
-    public enum EnemyPointType
-    {
-        FlyingShootingMuzzle,
-        NormalShootingMuzzle,
-    }
-    
     public class EnemyController : MonoBehaviour
     {
-        protected static readonly Dictionary<EnemyState, int> StateAnimHashes = new()
+        public static readonly Dictionary<EnemyState, int> StateAnimHashes = new()
         {
-            { EnemyState.Idle,   Animator.StringToHash("Idle")   },
-            { EnemyState.Hurt,   Animator.StringToHash("Hurt")   },
+            { EnemyState.Idle, Animator.StringToHash("Idle") },
+            { EnemyState.Hurt, Animator.StringToHash("Hurt") },
             { EnemyState.Attack, Animator.StringToHash("Attack") },
-            { EnemyState.Dead,   Animator.StringToHash("Dead")   },
-            { EnemyState.Move,   Animator.StringToHash("Move")   },
+            { EnemyState.Dead, Animator.StringToHash("Dead") },
+            { EnemyState.Move, Animator.StringToHash("Move") },
         };
-    
-        [Header("Debug")]
+
+        [Header("Debug")] 
         public bool isDebugMode = true;
 
-        [Header("Identity")]
+        [Header("Identity")] 
         [SerializeField] private EnemyName enemyName;
         [SerializeField] public EnemyTag enemyTags;
         public EnemyStats stats;
         public EnemyState CurrentState { get; protected set; }
+        public bool IsBoss => EnemyTagUtil.Has(enemyTags, EnemyTag.Boss);
 
         [Header("Modules")]
+        public EnemyBrain brain;
         [SerializeField] protected EnemyIdle idle;
         [SerializeField] protected EnemyMove move;
         [SerializeField] protected EnemyHurt hurt;
         [SerializeField] protected EnemyDie die;
-        public List<EnemyAttack> attacks = new List<EnemyAttack>();
 
+        private readonly List<EnemyAttack> attacks = new List<EnemyAttack>();
+        private readonly Dictionary<EnemyTag, IEnemyBehavior> _modules = new Dictionary<EnemyTag, IEnemyBehavior>();
+        
         [Header("Components")]
         public Health health;
         public Animator anim;
@@ -50,8 +46,11 @@ namespace Enemy
         public Collider enemyCollider;
         public EnemyReferenceHub enemyReference;
 
+        [Header("Idle Tuning")]
+        [SerializeField] protected float defaultIdleTime = 10f;
+        
         [Header("Default Tuning")]
-        [SerializeField] protected float defaultAttackSpeed; // attack anim speed;
+        [SerializeField] protected float defaultAttackSpeed;
         [SerializeField] protected int defaultAtk;
 
         [Header("Collision")]
@@ -64,18 +63,16 @@ namespace Enemy
         [HideInInspector] public PlayerController player;
         
         private EnemyData _enemyData;
-        private PoolManager _poolManager;
         private DataManager _dataManager;
 
         public bool IsBlocked { get; private set; }
         public bool AttackMoveTrigger { get; set; }
         public bool HurtEndTrigger { get; set; }
         public bool AttackEndTrigger { get; set; }
-
-        private readonly Dictionary<EnemyTag, EnemyAttack> _attackDict = new Dictionary<EnemyTag, EnemyAttack>();
+        public bool HasMultiAttackModules => attacks.Count > 1;
+        
     
         protected Action OnEnter, OnExit, OnTick;
-        protected Action OnAttackEnter, OnAttackExit, OnAttackTick;
         protected Dictionary<EnemyState, (Action enter, Action exit, Action tick)> ActionTable;
     
         #region Unity Cycle
@@ -113,8 +110,7 @@ namespace Enemy
 
             if (AttackEndTrigger)
             {
-                ChangeState(EnemyState.Idle);
-                return;
+                OnModuleComplete();
             }
 
             OnTick?.Invoke();
@@ -144,7 +140,6 @@ namespace Enemy
         private void SetupManager()
         {
             _dataManager = DataManager.Instance;
-            _poolManager = PoolManager.Instance;
             player = PlayerController.Instance;
         }
 
@@ -154,7 +149,8 @@ namespace Enemy
             if (!health) health = GetComponent<Health>();
             if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
-            if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>(); 
+            if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>();
+            
             enemyReference.Init();
         }
 
@@ -196,53 +192,12 @@ namespace Enemy
 
         protected virtual void InitMoveModule()
         {
-            foreach (var (tag, type) in EnemyBehaviorFactory.MoveFactory)
-            {
-                if (EnemyTagUtil.Has(enemyTags, tag))
-                {
-                    move = (EnemyMove)gameObject.GetOrAddComponent(type);
-                    move.Init(this);
-                    break;
-                }
-            }
-        
-            if (!move)
-            {
-                Debug.LogError("No Enemy Move Tag");
-            }
+            move = EnemyBehaviorFactory.CreateMoveModules(this, enemyName, enemyTags, _modules);
         }
 
         protected void InitAttackModule()
         {
-            var relevantData = new Dictionary<EnemyTag, BaseModuleData>();
-            EnemyTag myAttributes = enemyTags & EnemyTag.AttributeMask;
-            
-            foreach (var actionTag in EnemyTagUtil.AllActionTags)
-            {
-                if (EnemyTagUtil.Has(enemyTags, actionTag))
-                {
-                    BaseModuleData foundData = null;
-                    
-                    EnemyTag specificTag = actionTag | myAttributes;
-                    var key1 = new EnemyKey(this.enemyName, specificTag);
-                    foundData = EnemyManager.Instance.GetModuleData(key1);
-                    
-                    // 찾은 데이터 등록 (딕셔너리에는 순수 ActionTag를 키로 저장)
-                    if (foundData != null)
-                    {
-                        relevantData.TryAdd(actionTag, foundData);
-                    }
-                }
-            }
-
-            EnemyBehaviorFactory.CreateAttackModules(this, enemyTags, attacks, _attackDict, relevantData);
-
-            foreach (var atk in attacks)
-            {
-                OnAttackEnter += atk.OnEnter;
-                OnAttackTick += atk.Tick;
-                OnAttackExit += atk.OnExit;
-            }
+            EnemyBehaviorFactory.CreateAttackModules(this, enemyName, enemyTags, _modules, attacks);
         }
 
         protected void ClearAction() 
@@ -250,10 +205,6 @@ namespace Enemy
             OnEnter = null;
             OnTick = null;
             OnExit = null;
-
-            OnAttackEnter = null;
-            OnAttackExit = null;
-            OnAttackTick = null;
 
             health.OnDie -= this.OnDie;
             health.OnHit -= this.OnHit;
@@ -263,23 +214,25 @@ namespace Enemy
         {
             ClearAction();
             InitMoveModule();
+            InitAttackModule();
 
-            // 기본 모듈 초기화 (기존 코드 유지)
-            idle = gameObject.GetOrAddComponent<EnemyIdle>(); idle.Init(this);
-            die = gameObject.GetOrAddComponent<EnemyDie>(); die.Init(this);
+            idle = gameObject.GetOrAddComponent<EnemyIdle>();
+            idle.SetIdleTime(defaultIdleTime);
+            idle.Init(this);
+            
+            die = gameObject.GetOrAddComponent<EnemyDie>();   die.Init(this);
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
-            health = gameObject.GetOrAddComponent<Health>(); health.InitializeHealth(1);
+            health = gameObject.GetOrAddComponent<Health>();  health.InitializeHealth(1);
 
             health.OnHit += this.OnHit;
             health.OnDie += this.OnDie;
 
-            // ActionTable 재설정 (기존 코드 유지)
             ActionTable = new Dictionary<EnemyState, (Action enter, Action exit, Action tick)> {
-                { EnemyState.Idle,   (enter: idle.OnEnter,   exit: idle.OnExit,      tick: idle.Tick) },
-                { EnemyState.Move,   (enter: move.OnEnter,   exit: move.OnExit,      tick: move.Tick) },
-                { EnemyState.Attack, (enter: OnAttackEnter,  exit: OnAttackExit,     tick: OnAttackTick)},
-                { EnemyState.Hurt,   (enter: hurt.OnEnter,   exit: hurt.OnExit,      tick: hurt.Tick)},
-                { EnemyState.Dead,   (enter: die.OnEnter,    exit: die.OnExit,       tick: die.Tick)},
+                { EnemyState.Idle,   (enter: idle.OnEnter,        exit: idle.OnExit,                tick: idle.Tick) },
+                { EnemyState.Move,   (enter: move.OnEnter,        exit: move.OnExit,                tick: move.Tick) },
+                { EnemyState.Attack, (enter: attacks[0].OnEnter,  exit: attacks[0].OnExit,          tick: attacks[0].Tick)},
+                { EnemyState.Hurt,   (enter: hurt.OnEnter,        exit: hurt.OnExit,                tick: hurt.Tick)},
+                { EnemyState.Dead,   (enter: die.OnEnter,         exit: die.OnExit,                 tick: die.Tick)},
             };
         }
         #endregion
@@ -293,20 +246,20 @@ namespace Enemy
 
         #region Animation Events
 
-        public void Ability(EnemyTag attackTypeTag) 
+        public void Ability(EnemyTag attackTypeTag)
         {
-            if (_attackDict.TryGetValue(attackTypeTag, out var attack))
-            {
-                attack.OnAnimEvent();
-            }
+            if (!_modules.TryGetValue(attackTypeTag, out var attack)) return;
+            if (attack is not EnemyAttack enemyAttack) return;
+            
+            enemyAttack.OnAnimEvent();
         }
     
-        public void SetHurtTrigger(bool active) 
+        public void SetHurtEndTrigger(bool active) 
         {
             HurtEndTrigger = active;
         }
 
-        public void SetAttackTrigger(bool active) 
+        public void SetAttackEndTrigger(bool active) 
         {
             AttackEndTrigger = active;
         }
@@ -330,6 +283,16 @@ namespace Enemy
 
         #endregion
 
+        #region State Methods
+
+        public void OnModuleComplete()
+        {
+            if (CurrentState == EnemyState.Dead) return;
+            
+            ChangeState(brain.GetNextAction(CurrentState));
+        }
+
+
         private void InitState(EnemyState initState) 
         {
             CurrentState = initState;
@@ -340,33 +303,42 @@ namespace Enemy
         public virtual void ChangeState(EnemyState next)
         {
             if (CurrentState == next) return;
-
             if (CurrentState == EnemyState.Dead) return;
-
-            anim.SetBool(StateAnimHashes[CurrentState], false);
-            anim.SetBool(StateAnimHashes[next], true);
-
+            
             OnExit?.Invoke();
+            anim.SetBool(StateAnimHashes[CurrentState], false);
+            
             CurrentState = next;
+            
+            if (CurrentState == EnemyState.Attack)
+            {
+                ChooseAttackModule();
+            }
+
             (OnEnter, OnExit, OnTick) = ActionTable[next];
             OnEnter?.Invoke();
+            anim.SetBool(StateAnimHashes[next], true);
         }
-
-        public virtual void TakeDamage() 
+        
+        private void ChooseAttackModule()
         {
-            if (health.IsDead())
-            {
-                ColliderActive(false);
-                RigidbodyActive(false);
-                ChangeState(EnemyState.Dead);
-            }
-            else
+            if (attacks.Count <= 1) return;
+
+            var currentAttackIndex = 1; //UnityEngine.Random.Range(0, attacks.Count);
+            var selectedAttack = attacks[currentAttackIndex];
+            
+            ActionTable[EnemyState.Attack] = (selectedAttack.OnEnter, selectedAttack.OnExit, selectedAttack.Tick);
+        }
+        #endregion
+
+        protected virtual void OnHit()
+        {
+            if (!IsBoss)
             {
                 ChangeState(EnemyState.Hurt);
             }
         }
 
-        protected virtual void OnHit() => ChangeState(EnemyState.Hurt);
         protected virtual void OnDie() => ChangeState(EnemyState.Dead);
 
 

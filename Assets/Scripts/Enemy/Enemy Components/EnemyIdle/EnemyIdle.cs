@@ -1,24 +1,28 @@
-using Enemies;
 using Enemy;
 using UnityEngine;
 
 [System.Serializable]
 public class EnemyIdle : MonoBehaviour, IEnemyBehavior
 {
-    [Header("Idle Tuning")]
-    [SerializeField] float defaultIdleTime = 10f;
-    float idleTimer = 0f;
+    private float _defaultIdleTime;
+    private float _idleTimer;
     
-    EnemyController ctx;
+    private EnemyController _ctx;
+    
+    public void SetIdleTime(float idleTime)
+    {
+        _defaultIdleTime = idleTime;
+    }
+    
     public void Init(EnemyController ctx, BaseModuleData data = null) 
     {
-        this.ctx = ctx;
-        idleTimer = defaultIdleTime;
+        _ctx = ctx;
+        _idleTimer = _defaultIdleTime;
     }
 
     public void OnEnter()
     {
-        idleTimer = defaultIdleTime;
+        _idleTimer = _defaultIdleTime;
     }
 
     public void OnExit()
@@ -27,12 +31,12 @@ public class EnemyIdle : MonoBehaviour, IEnemyBehavior
 
     public void Tick()
     {
-        idleTimer -= Time.deltaTime;
+        _idleTimer -= Time.deltaTime;
 
-        if (idleTimer < 0)
+        if (_idleTimer < 0)
         {
-            idleTimer = defaultIdleTime;
-            ctx.ChangeState(EnemyState.Move);
+            _idleTimer = _defaultIdleTime;
+            _ctx.ChangeState(EnemyState.Move);
         }
     }
 }
