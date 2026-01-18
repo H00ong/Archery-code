@@ -71,11 +71,6 @@ namespace Players
             Anim.SetBool(animBoolHashes[newState], true);
         }
 
-        public void TakeDamage(int damage) 
-        {
-            Hurt.TakeDamage(damage);
-        }
-
         public void TakeHeal(int amount, out bool valid) 
         {
             Hurt.TakeHeal(amount, out valid);

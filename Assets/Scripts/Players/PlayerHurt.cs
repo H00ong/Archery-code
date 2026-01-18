@@ -11,16 +11,29 @@ namespace Players
         public void Init()
         {
             if (playerHealth == null) playerHealth = GetComponent<Health>();
+
+            // Health 이벤트 구독
+            playerHealth.OnDie += OnPlayerDie;
+            playerHealth.OnHit += OnPlayerHit;
         }
 
-        public void TakeDamage(float damage)
+        private void OnDestroy()
         {
-            playerHealth.TakeDamage(damage);
-
-            if (playerHealth.IsDead()) 
+            if (playerHealth != null)
             {
-                playerManager.ChangePlayerState(PlayerState.Dead);
+                playerHealth.OnDie -= OnPlayerDie;
+                playerHealth.OnHit -= OnPlayerHit;
             }
+        }
+
+        private void OnPlayerDie()
+        {
+            playerManager.ChangePlayerState(PlayerState.Dead);
+        }
+
+        private void OnPlayerHit()
+        {
+            // 피격 시 효과 (애니메이션, 사운드 등)
         }
 
         public void TakeHeal(int healAmount, out bool valid) 
@@ -38,8 +51,8 @@ namespace Players
 
             if (!hitRoot.TryGetComponent<EnemyController>(out var enemy)) return;
             float atk = enemy.GetAtk();
-
-            TakeDamage(atk);
+            var damageInfo = new DamageInfo(atk, DamageType.Normal, hitRoot);
+            playerHealth.TakeDamage(damageInfo);
         }
 
 #if UNITY_EDITOR
