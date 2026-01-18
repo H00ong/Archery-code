@@ -6,8 +6,9 @@ namespace System
 {
     public class LevelUpFlow : MonoBehaviour
     {
-        [SerializeField] private SkillChoicePopupView skillChoicePopup;
-        [SerializeField] private Transform popupContainer;
+        [SerializeField] private SkillChoicePopup skillChoicePopup;
+
+        private SkillChoicePopupPresenter _presenter;
 
         private void OnEnable()
         {
@@ -21,13 +22,18 @@ namespace System
 
         private void ShowSkillChoicePopup()
         {
-            var popup = Instantiate(skillChoicePopup, popupContainer);
-            var presenter = new SkillChoicePopupPresenter( 
-                skillPopup: popup, 
+            EnsurePresenterCreated();
+            _presenter.Show();
+        }
+
+        private void EnsurePresenterCreated()
+        {
+            if (_presenter != null) return;
+
+            _presenter = new SkillChoicePopupPresenter(
+                skillChoicePopup: skillChoicePopup,
                 playerSkill: PlayerController.Instance.Skill
             );
-
-            presenter.Show();
         }
 
         private void Update()

@@ -2,6 +2,7 @@ using Managers;
 using Players;
 using UnityEngine;
 
+// TODO : Event Bus로 플레이어 입력 관리 전환
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
@@ -56,8 +57,10 @@ public class InputManager : MonoBehaviour
 
     private void OnEnable()
     {
-        ActivePlayerInput();
+        DeactivePlayerInput();
 
+        EventBus.Subscribe(EventType.StageCombatStarted, ActivePlayerInput);
+        EventBus.Subscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Subscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Subscribe(EventType.SkillChosen, ActivePlayerInput);
     }
@@ -66,6 +69,8 @@ public class InputManager : MonoBehaviour
     {
         DeactivePlayerInput();
 
+        EventBus.Unsubscribe(EventType.StageCombatStarted, ActivePlayerInput);
+        EventBus.Unsubscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.SkillChosen, ActivePlayerInput);
     }
