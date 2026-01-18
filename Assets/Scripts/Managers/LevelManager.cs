@@ -59,7 +59,7 @@ namespace Managers
 
             CheckLevelUp();
         }
-
+        
         private void CheckLevelUp()
         {
             if (_isLevelingUp) return;
@@ -79,6 +79,14 @@ namespace Managers
         private void OnSkillChosen()
         {
             _isLevelingUp = false;
+            // 다음 프레임에 CheckLevelUp을 실행하여
+            // 다른 SkillChosen 핸들러들이 먼저 완료되도록 보장
+            StartCoroutine(CheckLevelUpNextFrame());
+        }
+
+        private System.Collections.IEnumerator CheckLevelUpNextFrame()
+        {
+            yield return null; // 다음 프레임까지 대기
             CheckLevelUp();
         }
 
