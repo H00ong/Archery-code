@@ -5,6 +5,7 @@ using Managers;
 using Map;
 using Players;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Enemy
 {
@@ -48,6 +49,9 @@ namespace Enemy
 
         [Header("Idle Tuning")]
         [SerializeField] protected float defaultIdleTime = 10f;
+        
+        [Header("Drop Item")]
+        [SerializeField] public AssetReferenceGameObject expItemPrefab;
         
         [Header("Default Tuning")]
         [SerializeField] protected float defaultAttackSpeed;
