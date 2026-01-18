@@ -91,6 +91,7 @@ namespace Managers
 
             Debug.Log($"Level Up! Current Level: {currentLevel}");
 
+            EventBus.Publish(EventType.LevelUp);
             ShowSkillChoicePopup();
         }
 
