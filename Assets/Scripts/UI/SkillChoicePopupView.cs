@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace UI
 {
-    public class SkillChoicePopupView : MonoBehaviour
+    public class SkillChoicePopup : MonoBehaviour
     {
         [SerializeField] private SkillView uiSkillPrefab;
 

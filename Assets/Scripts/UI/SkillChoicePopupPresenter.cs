@@ -6,22 +6,26 @@ namespace UI
 {
     public class SkillChoicePopupPresenter
     {
-        private readonly SkillChoicePopupView _skillChoicePopup;
+        private readonly SkillChoicePopup _skillChoicePopup;
         private readonly PlayerSkill _playerSkill;
         private readonly List<SkillPresenter> _skillChoicePresenter = new();
 
-        public SkillChoicePopupPresenter(SkillChoicePopupView skillPopup, PlayerSkill playerSkill)
+        public SkillChoicePopupPresenter(SkillChoicePopup skillChoicePopup, PlayerSkill playerSkill)
         {
-            _skillChoicePopup = skillPopup; 
+            _skillChoicePopup = skillChoicePopup; 
             _playerSkill = playerSkill; 
         }
 
         public void Show()
         {
-            var choices = _playerSkill.GetRandomChoices(3);
-            var skillUiObjects = _skillChoicePopup.BuildCards(choices.Count);
+            _skillChoicePresenter.Clear();
+            
+            int count = 3;
 
-            for (int i = 0; i < choices.Count; i++)
+            var choices = _playerSkill.GetRandomChoices(count);
+            var skillUiObjects = _skillChoicePopup.BuildCards(count);
+
+            for (int i = 0; i < count; i++)
                 _skillChoicePresenter.Add(new SkillPresenter(skillUiObjects[i], choices[i], OnChosen));
 
             _skillChoicePopup.Open();
@@ -30,8 +34,8 @@ namespace UI
         private void OnChosen(SkillDefinition def)
         {
             _playerSkill.AcquireSkill(def);
-            EventBus.Publish(EventType.SkillChosen);
             _skillChoicePopup.Close();
+            EventBus.Publish(EventType.SkillChosen);
         }
     }
 }
