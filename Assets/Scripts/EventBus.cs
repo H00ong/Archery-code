@@ -30,5 +30,4 @@ public enum EventType
     StageCombatStarted,
     StageCleared,
     StageLoadingStarted,
-    StageLoadingCleared,
 }

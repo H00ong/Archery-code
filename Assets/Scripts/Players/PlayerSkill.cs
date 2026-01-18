@@ -8,13 +8,13 @@ namespace Players
     {
         [Header("Skills")]
         [SerializeField] private List<SkillDefinition> skills = new();
-        public List<SkillDefinition> availableSkills = new();
+        public List<SkillDefinition> availableSkills => skills;
 
         public readonly Dictionary<PlayerSkillId, PlayerSkillModuleBase> acquiredSkillModule = new();
 
         public void Init()
         {
-            availableSkills = skills;
+            
         }
 
         public void AcquireSkill(SkillDefinition so)
