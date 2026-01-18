@@ -177,7 +177,7 @@ public class OrbManager : MonoBehaviour
         {
             var obj = orbConfig.Orbs[i];
 
-            obj.InitilaizeOrb(_orbPivot, orbConfig.Clockwise);
+            obj.InitilaizeOrb(_orbPivot, orbConfig.Clockwise, _type);
             SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
             obj.gameObject.SetActive(true);
         }

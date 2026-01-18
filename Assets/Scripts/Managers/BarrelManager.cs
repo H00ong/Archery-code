@@ -203,7 +203,8 @@ namespace Managers
             meteor.Init
             (
                 pos: Utils.GetXZPosition(pos),
-                atk: atk
+                atk: atk,
+                barrelType: type
             );
 
             go.SetActive(true);

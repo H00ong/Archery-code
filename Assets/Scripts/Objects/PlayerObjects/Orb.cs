@@ -1,4 +1,5 @@
 using Enemy;
+using Players;
 using UnityEditor.Rendering;
 using UnityEngine;
 
@@ -6,6 +7,8 @@ public class Orb : MonoBehaviour
 {
     [SerializeField] float _rotateSpeed = 40f;
     [SerializeField] int orbAtk = 1;
+    [SerializeField] OrbType orbType = OrbType.Common;
+    
     float rotateSpeed;
     private Transform rotatePivot;
 
@@ -14,10 +17,11 @@ public class Orb : MonoBehaviour
         Rotate();
     }
 
-    public void InitilaizeOrb(Transform _pivot, bool clockwise) 
+    public void InitilaizeOrb(Transform _pivot, bool clockwise, OrbType type = OrbType.Common) 
     {
         rotatePivot = _pivot;
         rotateSpeed = clockwise ? _rotateSpeed : -_rotateSpeed;
+        orbType = type;
     }
 
     private void Rotate() 
@@ -31,7 +35,21 @@ public class Orb : MonoBehaviour
 
         if (damagable != null) 
         {
-            damagable.TakeDamage(orbAtk);
+            DamageType damageType = ConvertOrbTypeToDamageType(orbType);
+            var damageInfo = new DamageInfo(orbAtk, damageType, gameObject);
+            damageInfo.hitPoint = other.ClosestPoint(transform.position);
+            damagable.TakeDamage(damageInfo);
         }
+    }
+
+    private DamageType ConvertOrbTypeToDamageType(OrbType type)
+    {
+        return type switch
+        {
+            OrbType.Venom => DamageType.Venom,
+            OrbType.Blaze => DamageType.Fire,
+            OrbType.Ice => DamageType.Ice,
+            _ => DamageType.Normal
+        };
     }
 }
