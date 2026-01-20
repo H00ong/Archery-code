@@ -72,14 +72,18 @@ public class StageManager : MonoBehaviour
         }
     }
 
+    private void UpdateStageIndex() => CurrentStageIndex++;
+
     private void OnEnable()
     {
         EventBus.Subscribe(EventType.StageLoadingStarted, StartStageLoadingSequence);
+        EventBus.Subscribe(EventType.StageCleared, UpdateStageIndex);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe(EventType.StageLoadingStarted, StartStageLoadingSequence);
+        EventBus.Unsubscribe(EventType.StageCleared, UpdateStageIndex);
     }
 
     public void Init(MapData mapData)
@@ -129,14 +133,19 @@ public class StageManager : MonoBehaviour
         
         mapManager.ActivateRandomMap(IsBossStage);
     }
-
+ 
     private void PositionPlayer()
     {
         var mapManager = MapManager.Instance;
-        var player = PlayerController.Instance;
         
-        var playerPos = mapManager.GetPlayerSpawnPoint();
-        player.transform.position = playerPos.position;
+        var player = PlayerController.Instance.transform;
+        var playerContainter = player.parent;
+        
+        var spawnPos = mapManager.GetPlayerSpawnPoint();
+        spawnPos.gameObject.SetActive(true);
+
+        playerContainter.position = spawnPos.position;
+        player.position = spawnPos.position;
     }
 
     private IEnumerator SpawnEnemy()

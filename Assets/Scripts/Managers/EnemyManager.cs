@@ -140,11 +140,14 @@ namespace Managers
                 list.Add(controller);
             }
 
-            foreach (var enemy in list)
+            for(int i = 0; i < list.Count; i++)
             {
-                enemy.gameObject.SetActive(true);
-                enemy.InitializeEnemy();
+                var enemy = list[i];
 
+                enemy.gameObject.SetActive(true);
+                spawnPoints[i].gameObject.SetActive(true);
+                
+                enemy.InitializeEnemy(); 
                 Enemies.Add(enemy);
             }
         }
