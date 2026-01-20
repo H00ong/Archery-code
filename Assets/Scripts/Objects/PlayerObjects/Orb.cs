@@ -3,30 +3,47 @@ using Players;
 using UnityEditor.Rendering;
 using UnityEngine;
 
+public readonly struct OrbInitConfig
+{
+    public readonly Transform Pivot;
+    public readonly bool Clockwise;
+    public readonly OrbType Type;
+    public readonly int Damage;
+
+    public OrbInitConfig(Transform pivot, bool clockwise, OrbType type, int damage)
+    {
+        Pivot = pivot;
+        Clockwise = clockwise;
+        Type = type;
+        Damage = damage;
+    }
+}
+
 public class Orb : MonoBehaviour
 {
-    [SerializeField] float _rotateSpeed = 40f;
-    [SerializeField] int orbAtk = 1;
-    [SerializeField] OrbType orbType = OrbType.Common;
+    [SerializeField] float defaultRotateSpeed = 40f;
     
-    float rotateSpeed;
-    private Transform rotatePivot;
+    private int _damage;
+    private OrbType _orbType;
+    private float _rotateSpeed;
+    private Transform _rotatePivot;
 
     void Update()
     {
         Rotate();
     }
 
-    public void InitilaizeOrb(Transform _pivot, bool clockwise, OrbType type = OrbType.Common) 
+    public void Initialize(OrbInitConfig config) 
     {
-        rotatePivot = _pivot;
-        rotateSpeed = clockwise ? _rotateSpeed : -_rotateSpeed;
-        orbType = type;
+        _rotatePivot = config.Pivot;
+        _rotateSpeed = config.Clockwise ? defaultRotateSpeed : -defaultRotateSpeed;
+        _orbType = config.Type;
+        _damage = config.Damage;
     }
 
     private void Rotate() 
     {
-        transform.RotateAround(rotatePivot.position, Vector3.up, rotateSpeed * Time.deltaTime);
+        transform.RotateAround(_rotatePivot.position, Vector3.up, _rotateSpeed * Time.deltaTime);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -35,21 +52,22 @@ public class Orb : MonoBehaviour
 
         if (damagable != null) 
         {
-            DamageType damageType = ConvertOrbTypeToDamageType(orbType);
-            var damageInfo = new DamageInfo(orbAtk, damageType, gameObject);
+            EffectType damageType = ConvertOrbTypeToDamageType(_orbType);
+            var damageInfo = new DamageInfo(_damage, damageType, gameObject);
             damageInfo.hitPoint = other.ClosestPoint(transform.position);
             damagable.TakeDamage(damageInfo);
+            Debug.Log($"[Orb] Hit {other.gameObject.name} | Type: {_orbType} | Damage: {_damage}");
         }
     }
 
-    private DamageType ConvertOrbTypeToDamageType(OrbType type)
+    private EffectType ConvertOrbTypeToDamageType(OrbType type)
     {
         return type switch
         {
-            OrbType.Venom => DamageType.Venom,
-            OrbType.Blaze => DamageType.Fire,
-            OrbType.Ice => DamageType.Ice,
-            _ => DamageType.Normal
+            OrbType.Venom => EffectType.Venom,
+            OrbType.Blaze => EffectType.Fire,
+            OrbType.Ice => EffectType.Ice,
+            _ => EffectType.Normal
         };
     }
 }

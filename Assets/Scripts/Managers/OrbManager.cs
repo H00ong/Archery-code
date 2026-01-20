@@ -20,6 +20,8 @@ public class OrbManager : MonoBehaviour
     [SerializeField] Transform _orbPivot;
     [SerializeField] private string _label;
     [SerializeField] float _defaultDistance;
+    [SerializeField] private int _orbDamage = 1;
+    
     int _generatedOrbSetCount = 0;
     bool _clockwise = true;
 
@@ -57,8 +59,7 @@ public class OrbManager : MonoBehaviour
 
     private void CreateOrbObjDict()
     {
-        if (_orbObjDict == null) _orbObjDict = new();
-        else _orbObjDict.Clear();
+        _orbSoDict.Clear();
 
         foreach (OrbType type in Enum.GetValues(typeof(OrbType)))
         {
@@ -177,7 +178,8 @@ public class OrbManager : MonoBehaviour
         {
             var obj = orbConfig.Orbs[i];
 
-            obj.InitilaizeOrb(_orbPivot, orbConfig.Clockwise, _type);
+            var config = new OrbInitConfig(_orbPivot, orbConfig.Clockwise, _type, _orbDamage);
+            obj.Initialize(config);
             SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
             obj.gameObject.SetActive(true);
         }
