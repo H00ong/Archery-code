@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   orbType: 1
   orb:
-    m_AssetGUID: 94b577467521ed748986ee00dc21b750
+    m_AssetGUID: 7f93662f8f177b04eba99ea08999a701
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
