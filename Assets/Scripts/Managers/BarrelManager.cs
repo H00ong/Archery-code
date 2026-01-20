@@ -21,6 +21,7 @@ namespace Managers
         [SerializeField] private string addressableAssetLabel;
         [SerializeField] private float barrelGenerateTime = 5f;
         [SerializeField] private int atk = 1;
+        [SerializeField] private float yOffset = 1f;
 
         private Dictionary<BarrelType, BarrelScriptable> _barrelSoDict = new();
         private readonly Dictionary<BarrelType, BarrelConfig> _barrelConfigDict = new();
@@ -32,20 +33,18 @@ namespace Managers
         private PoolManager _poolManager;
         private EnemyManager _enemyManager;
 
-        private void Init()
+        private void Start()
         {
-            StartCoroutine(EnsureBarrelDictReady());
-
-            EventBus.Subscribe(EventType.StageCombatStarted, MeteorAttack);
-            EventBus.Subscribe(EventType.StageCombatStarted, GetBoundsOfMap);
-
             _poolManager = PoolManager.Instance;
             _enemyManager = EnemyManager.Instance;
         }
     
         private void OnEnable()
         {
-            Init();
+            StartCoroutine(EnsureBarrelDictReady());
+
+            EventBus.Subscribe(EventType.StageCombatStarted, MeteorAttack);
+            EventBus.Subscribe(EventType.StageCombatStarted, GetBoundsOfMap);
         }
 
         private void OnDisable()
@@ -62,6 +61,7 @@ namespace Managers
         private void GetBoundsOfMap() 
         {
             var go = MapManager.Instance.currentMap;
+            
             if (!go) 
             {
                 Debug.LogError("CurrentMap is null");
@@ -92,14 +92,14 @@ namespace Managers
             var assetRef = _barrelSoDict[type].barrelPrefab;
 
             if(!_poolManager.TryGetObject(assetRef, out var go, _poolManager.EffectPool))
-                yield return PoolManager.Instance.GetObject(assetRef, inst => go = inst, PoolManager.Instance.EffectPool);
+                yield return _poolManager.GetObject(assetRef, inst => go = inst, _poolManager.EffectPool);
         
             bool isInside = false;
             Vector3 pos = Vector3.zero;
 
             while (!isInside)
             {
-                RandomPointInBounds(_currentMapBound);
+                pos = RandomPointInBounds(_currentMapBound);
 
                 if (NavMesh.SamplePosition(pos, out var hit, 1f, NavMesh.AllAreas))
                 {
@@ -200,12 +200,14 @@ namespace Managers
                 yield return PoolManager.Instance.GetObject(_barrelSoDict[type].meteorPrefab, inst => go = inst, _poolManager.EffectPool);
 
             var meteor = go.GetComponent<Meteor>();
-            meteor.Init
-            (
-                pos: Utils.GetXZPosition(pos),
-                atk: atk,
-                barrelType: type
+            float y = MapManager.Instance.currentMap.transform.position.y + yOffset;
+
+            var meteorConfig = new MeteorInitConfig(
+                position: Utils.GetXZPosition(pos) + new Vector3(0, y, 0),
+                damage: atk,
+                type: type
             );
+            meteor.Initialize(meteorConfig);
 
             go.SetActive(true);
         }
