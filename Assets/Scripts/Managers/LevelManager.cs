@@ -59,7 +59,7 @@ namespace Managers
 
             CheckLevelUp();
         }
-        
+
         private void CheckLevelUp()
         {
             if (_isLevelingUp) return;
@@ -107,13 +107,13 @@ namespace Managers
         {
             EnsurePresenterCreated();
             _presenter.Show();
-        }
+        }   
 
         private void EnsurePresenterCreated()
         {
             if (_presenter != null) return;
 
-            _presenter = new SkillChoicePopupPresenter(
+                _presenter = new SkillChoicePopupPresenter(
                 skillChoicePopup: skillChoicePopup,
                 playerSkill: PlayerController.Instance.Skill
             );
