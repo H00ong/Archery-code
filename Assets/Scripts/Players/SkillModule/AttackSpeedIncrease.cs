@@ -18,6 +18,13 @@ public class AttackSpeedIncrease : PlayerSkillModuleBase, IPlayerUpgrader
         Apply();
     }
 
+    public override void UpdateSkill()
+    {
+        base.UpdateSkill();
+        
+        Apply();
+    }
+
     public void Apply()
     {
         playerSkill.UpgradeAttackSpeed(AttackSpeedModifier);

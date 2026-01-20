@@ -25,6 +25,8 @@ public class VenomOrb : PlayerSkillModuleBase, IOrbGenerator
 
     public override void UpdateSkill()
     {
+        base.UpdateSkill();
+        
         orbManager.GenerateOrb(type, OrbCount);
     }
 }

@@ -25,6 +25,8 @@ public class IceOrb : PlayerSkillModuleBase, IOrbGenerator
 
     public override void UpdateSkill()
     {
+        base.UpdateSkill();
+        
         _orbManager.GenerateOrb(_type, OrbCount);
     }
 }
