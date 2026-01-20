@@ -51,7 +51,7 @@ namespace Players
 
             if (!hitRoot.TryGetComponent<EnemyController>(out var enemy)) return;
             float atk = enemy.GetAtk();
-            var damageInfo = new DamageInfo(atk, DamageType.Normal, hitRoot);
+            var damageInfo = new DamageInfo(atk, EffectType.Normal, hitRoot);
             playerHealth.TakeDamage(damageInfo);
         }
 

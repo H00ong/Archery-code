@@ -56,26 +56,22 @@ public class Health : MonoBehaviour, IDamageable
     {
         switch (damageInfo.type)
         {
-            case DamageType.Fire:
-                // Fire: 짧고 강한 지속 데미지
+            case EffectType.Fire:
                 if (_dotCoroutine != null) StopCoroutine(_dotCoroutine);
                 _dotCoroutine = StartCoroutine(FireDotCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
                 break;
 
-            case DamageType.Venom:
-                // Venom: 길고 약한 지속 데미지
+            case EffectType.Venom:
                 if (_dotCoroutine != null) StopCoroutine(_dotCoroutine);
                 _dotCoroutine = StartCoroutine(VenomDotCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
                 break;
 
-            case DamageType.Ice:
-                // Ice: 애니메이션/이동 속도 저하
+            case EffectType.Ice:
                 StartCoroutine(IceSlowCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
                 break;
 
-            case DamageType.Normal:
+            case EffectType.Normal:
             default:
-                // Normal: 추가 효과 없음
                 break;
         }
     }
@@ -144,7 +140,7 @@ public class Health : MonoBehaviour, IDamageable
 
         if (currentHealth < maxHealth)
         {
-            currentHealth += amount;            
+            currentHealth += amount;
 
             if(currentHealth > maxHealth)
                 currentHealth = maxHealth;
