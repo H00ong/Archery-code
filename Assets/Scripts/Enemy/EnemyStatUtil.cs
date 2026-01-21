@@ -25,9 +25,9 @@ namespace Enemy
             var st = BuildStageMultipliers(stageIndex, isBoss, map.stageGrowth);
             var mp = BuildMapMultipliers(isBoss, isMelee, isRanged, map.mapModifiers);
 
-            ComputeBaseStats(e.@base, st, mp, ref stats, isBoss);
+             ComputeBaseStats(e.@base, st, mp, stats, isBoss);
 
-            ApplyProjectileStats(e, hasShooter, hasFlyingShoooter: hasFlyingShooter, st, mp, ref stats, isBoss);
+            ApplyProjectileStats(e, hasShooter, hasFlyingShoooter: hasFlyingShooter, st, mp, stats, isBoss);
 
             return stats;
         }
@@ -106,7 +106,7 @@ namespace Enemy
             return m;
         }
 
-        private static void ComputeBaseStats(EnemyBase b, in StageMulPack st, in MapMulPack mp, ref EnemyStats outStats, bool isBoss = false)
+        private static void ComputeBaseStats(EnemyBase b, in StageMulPack st, in MapMulPack mp, EnemyStats outStats, bool isBoss = false)
         {
             float hpStage = isBoss ? st.hpStage * st.bossHpPerBoss : st.hpStage;
             float atkStage = isBoss ? st.atkStage * st.bossAtkPerBoss : st.atkStage;
@@ -122,7 +122,7 @@ namespace Enemy
 
         private static void ApplyProjectileStats(
             EnemyData e, bool hasShooter, bool hasFlyingShoooter,
-            in StageMulPack st, in MapMulPack mp, ref EnemyStats outStats, bool isBoss = false)
+            in StageMulPack st, in MapMulPack mp, EnemyStats outStats, bool isBoss = false)
         {
             float atkStage = isBoss ? st.atkStage * st.bossAtkPerBoss : st.atkStage;
             float atkMap = isBoss ? mp.bossMapAtk : mp.mapAtk;
@@ -145,30 +145,32 @@ namespace Enemy
 
 
     [Serializable]
-    public struct BaseStats
+    public class BaseStats
     {
-        public int hp, atk;
+        public int hp;
+        public int atk;
         public float moveSpeed;
-    };
+    }
 
     [Serializable]
-    public struct ShootingStats
+    public class ShootingStats
     {
         public int projectileAtk;
         public float projectileSpeed;
-    };
+    }
+
     [Serializable]
-    public struct FlyingShootingStats
+    public class FlyingShootingStats
     {
         public int flyingProjectileAtk;
         public float flyingProjectileSpeed;
-    };
+    }
 
     [Serializable]
-    public struct EnemyStats
+    public class EnemyStats
     {
-        public BaseStats baseStats;
-        public ShootingStats shooting;
-        public FlyingShootingStats flyingShooting;
-    };
+        public BaseStats baseStats = new();
+        public ShootingStats shooting = new();
+        public FlyingShootingStats flyingShooting = new();
+    }
 }

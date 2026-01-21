@@ -10,7 +10,7 @@ public class EnemyAnimationEvent : MonoBehaviour
         _enemy.SetAttackEndTrigger(true);
     }
 
-    private void HurtTrigger() 
+    private void HurtEndTrigger() 
     {
         _enemy.SetHurtEndTrigger(true);
     }

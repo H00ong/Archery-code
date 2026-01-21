@@ -7,6 +7,7 @@ using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
+
 namespace Enemy
 {
     public class EnemyController : MonoBehaviour
@@ -48,7 +49,7 @@ namespace Enemy
         public EnemyReferenceHub enemyReference;
 
         [Header("Idle Tuning")]
-        [SerializeField] protected float defaultIdleTime = 10f;
+        [SerializeField] protected float defaultIdleTime = 2f;
         
         [Header("Drop Item")]
         [SerializeField] public AssetReferenceGameObject expItemPrefab;
@@ -204,7 +205,7 @@ namespace Enemy
             EnemyBehaviorFactory.CreateAttackModules(this, enemyName, enemyTags, _modules, attacks);
         }
 
-        protected void ClearAction() 
+        protected void ClearAction()
         {
             OnEnter = null;
             OnTick = null;
@@ -282,7 +283,7 @@ namespace Enemy
         {
             yield return new WaitForSeconds(.5f);
 
-            EnemyManager.Instance.RemoveEnemy(this);
+            PoolManager.Instance.ReturnObject(gameObject);
         }
 
         #endregion
@@ -348,6 +349,8 @@ namespace Enemy
 
         protected virtual void OnDrawGizmos()
         {
+            if (blockCheck == null) return;
+            
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(blockCheck.position, sphereCastRadius);
         }

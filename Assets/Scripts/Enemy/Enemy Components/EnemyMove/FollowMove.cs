@@ -36,8 +36,6 @@ public class FollowMove : EnemyMove
 
     public override void Tick()
     {
-        base.Tick();
-        
         if (_ctx.CurrentState != EnemyState.Move) return;
 
         Vector3 dir = Utils.GetDirectionVector(_player.transform, transform);

@@ -13,8 +13,10 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
         _poolManager = PoolManager.Instance;
     }
 
-    public virtual void OnEnter() 
+    public virtual void OnEnter()
     {
+        EnemyManager.Instance.RemoveEnemy(_ctx);
+        
         _ctx.ColliderActive(false);
         _ctx.RigidbodyActive(false);
         
@@ -40,7 +42,6 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
         
     public virtual void OnExit()
     {
-        
     }
 
     public virtual void Tick()

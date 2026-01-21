@@ -51,7 +51,6 @@ namespace Enemy
 
             if (_moveTimer < 0)
             {
-                // 시간이 다 되면 컨트롤러에게 "나 끝났어" 보고
                 _ctx.OnModuleComplete();
             }
         }

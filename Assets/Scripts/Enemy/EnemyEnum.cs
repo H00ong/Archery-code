@@ -23,8 +23,15 @@ namespace Enemy
         Bird,
         Octopus,
         Box,
+        Cactus,
         TurtleShell,
-        SkeletonMinion
+        SkeletonMinion,
+        MeleeGolem,
+        RangedGolem,
+        Mushroom,
+        Orc,
+
+
     }
 
     [System.Flags]

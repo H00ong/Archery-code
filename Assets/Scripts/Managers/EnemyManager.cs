@@ -162,8 +162,6 @@ namespace Managers
 
             Enemies.Remove(enemy);
 
-            PoolManager.Instance.ReturnObject(enemy.gameObject);
-
             if (Enemies.Count <= 0)
             {
                 StageManager.Instance.HandleCommand(StageCommandType.AllEnemiesDefeated);
