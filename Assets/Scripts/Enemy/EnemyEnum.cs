@@ -26,6 +26,7 @@ namespace Enemy
         Cactus,
         TurtleShell,
         SkeletonMinion,
+        SkeletonWarrior,
         MeleeGolem,
         RangedGolem,
         Mushroom,
