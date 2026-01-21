@@ -31,7 +31,7 @@ namespace Enemy
         RangedGolem,
         Mushroom,
         Orc,
-
+        Stingray,
 
     }
 
