@@ -60,9 +60,9 @@ namespace Enemy
         Fire = 1 << 26,
         Ice = 1 << 27,
         Poison = 1 << 28,
+        Lightning = 1 << 29,
+        Magma = 1 << 30,
         
-        MoveMask = FollowMove | PatternMove | RandomMove,
-        AttackMask = MeleeAttack | Shoot | FlyingShoot | FollowMeleeAttack,
-        AttributeMask = Fire | Ice | Poison,
+        AttributeMask = Fire | Ice | Poison | Lightning | Magma,
     }
 }
