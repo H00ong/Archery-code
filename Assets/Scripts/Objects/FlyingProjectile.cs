@@ -14,7 +14,7 @@ namespace Objects
             var dest = instruction.Destination;
             var time = instruction.Lifetime;
             var speed = instruction.Speed;
-            var dmg = instruction.Damage;
+            var dmg = instruction.DamageInfo;
 
             var distance = Utils.GetXZDistance(dest, pos);
             var flyTime = distance / instruction.Speed;
