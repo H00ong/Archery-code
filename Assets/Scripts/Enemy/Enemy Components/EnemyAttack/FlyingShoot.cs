@@ -68,12 +68,14 @@ namespace Enemy
 
                 FlyingProjectile proj = go.GetComponent<FlyingProjectile>();
                 
+                var damageInfo = new DamageInfo(_flyingProjectileAtk, EffectType.Normal, _ctx.gameObject);
+                
                 var inst = new ShootingInstruction(
                     point.position,
                     _player.transform.position,
                     _flyingProjectileSpeed,
                     _projectileLifeTime,
-                    _flyingProjectileAtk
+                    damageInfo
                 );
                 
                 proj.InitProjectile(inst);
