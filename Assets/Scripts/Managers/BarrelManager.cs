@@ -202,10 +202,12 @@ namespace Managers
             var meteor = go.GetComponent<Meteor>();
             float y = MapManager.Instance.currentMap.transform.position.y + yOffset;
 
+            var effectType = Utils.BarrelTypeToEffectType(type);
+            var damageInfo = new DamageInfo(atk, effectType);
+
             var meteorConfig = new MeteorInitConfig(
                 position: Utils.GetXZPosition(pos) + new Vector3(0, y, 0),
-                damage: atk,
-                type: type
+                damageInfo: damageInfo
             );
             meteor.Initialize(meteorConfig);
 

@@ -178,7 +178,10 @@ public class OrbManager : MonoBehaviour
         {
             var obj = orbConfig.Orbs[i];
 
-            var config = new OrbInitConfig(_orbPivot, orbConfig.Clockwise, _type, _orbDamage);
+            var effectType = Utils.OrbTypeToEffectType(_type);
+            var damageInfo = new DamageInfo(_orbDamage, effectType);
+
+            var config = new OrbInitConfig(_orbPivot, orbConfig.Clockwise, damageInfo);
             obj.Initialize(config);
             SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
             obj.gameObject.SetActive(true);
