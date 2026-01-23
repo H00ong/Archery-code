@@ -35,7 +35,7 @@ public class Health : MonoBehaviour, IDamageable
         if (!isLive) return;
 
         // 기본 데미지 적용
-        int finalDamage = Mathf.RoundToInt(damageInfo.amount);
+        int finalDamage = Mathf.RoundToInt(damageInfo.damageAmount);
         currentHealth -= finalDamage;
 
         // 속성별 효과 적용
@@ -52,30 +52,29 @@ public class Health : MonoBehaviour, IDamageable
         OnDie?.Invoke();
     }
 
-    private void ApplyDamageEffect(DamageInfo damageInfo)
+    public virtual void TakeHeal(int amount, out bool valid)
     {
-        switch (damageInfo.type)
+        if (!isLive)
+            valid = false;
+
+        if (currentHealth < maxHealth)
         {
-            case EffectType.Fire:
-                if (_dotCoroutine != null) StopCoroutine(_dotCoroutine);
-                _dotCoroutine = StartCoroutine(FireDotCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
-                break;
+            currentHealth += amount;
 
-            case EffectType.Venom:
-                if (_dotCoroutine != null) StopCoroutine(_dotCoroutine);
-                _dotCoroutine = StartCoroutine(VenomDotCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
-                break;
+            if (currentHealth > maxHealth)
+                currentHealth = maxHealth;
 
-            case EffectType.Ice:
-                StartCoroutine(IceSlowCoroutine(damageInfo.effectDuration, damageInfo.effectValue));
-                break;
-
-            case EffectType.Normal:
-            default:
-                break;
+            valid = true;
         }
+
+        valid = false;
     }
 
+    private void ApplyDamageEffect(DamageInfo damageInfo)
+    {
+    }
+
+    #region Effect
     private IEnumerator FireDotCoroutine(float duration, float damagePerTick)
     {
         float elapsed = 0f;
@@ -132,22 +131,5 @@ public class Health : MonoBehaviour, IDamageable
         yield return new WaitForSeconds(duration);
         _currentSlowRate = 0f;
     }
-
-    public virtual void TakeHeal(int amount, out bool valid) 
-    {
-        if (!isLive)
-            valid = false;
-
-        if (currentHealth < maxHealth)
-        {
-            currentHealth += amount;
-
-            if(currentHealth > maxHealth)
-                currentHealth = maxHealth;
-
-            valid = true;
-        }
-
-        valid = false;
-    }
+    #endregion
 }

@@ -6,9 +6,7 @@ using UnityEngine;
 namespace Enemy
 {
     public static class EnemyTagUtil
-    {
-        public static readonly EnemyTag[] AllTags = (EnemyTag[])System.Enum.GetValues(typeof(EnemyTag));
-        
+    {   
         public static EnemyTag ParseTagsToMask(IEnumerable<string> tags)
         {
             if (tags == null) return EnemyTag.None;

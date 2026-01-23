@@ -160,7 +160,7 @@ public class StageManager : MonoBehaviour
         else
         {
             // TODO : Enemy 생성 count 설정 필요
-            var count = 3;
+            var count = 1;
             yield return enemyManager.SpawnEnemy(count);
         }
     }

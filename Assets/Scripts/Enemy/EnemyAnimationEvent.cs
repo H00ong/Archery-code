@@ -25,12 +25,7 @@ public class EnemyAnimationEvent : MonoBehaviour
         _enemy.SetAttackMoveTrigger(false);
     }
 
-    public void Ability(string tagOfString) 
-    {
-        var tag = EnemyTagUtil.ParseTagsToMask(tagOfString);
-
-        _enemy.Ability(tag);
-    }
+    public void Ability(EnemyTag tag) => _enemy.Ability(tag);
 
     private void Die() 
     {
