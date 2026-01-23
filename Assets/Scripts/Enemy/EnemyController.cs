@@ -365,7 +365,8 @@ namespace Enemy
             if (!idle) GetComponent<EnemyIdle>();
             if(!die) GetComponent<EnemyDie>();
             if(!hurt) GetComponent<EnemyHurt>();
-            if(!move) GetComponent<EnemyMove>();
+            if (!move) GetComponent<EnemyMove>();
+            obstacleLayer = LayerMask.GetMask("Obstacle");
         }
 #endif
     }
