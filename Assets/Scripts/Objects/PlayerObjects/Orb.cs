@@ -7,15 +7,13 @@ public readonly struct OrbInitConfig
 {
     public readonly Transform Pivot;
     public readonly bool Clockwise;
-    public readonly OrbType Type;
-    public readonly int Damage;
+    public readonly DamageInfo DamageInfo;
 
-    public OrbInitConfig(Transform pivot, bool clockwise, OrbType type, int damage)
+    public OrbInitConfig(Transform pivot, bool clockwise, DamageInfo damageInfo)
     {
         Pivot = pivot;
         Clockwise = clockwise;
-        Type = type;
-        Damage = damage;
+        DamageInfo = damageInfo;
     }
 }
 
@@ -23,8 +21,7 @@ public class Orb : MonoBehaviour
 {
     [SerializeField] float defaultRotateSpeed = 40f;
     
-    private int _damage;
-    private OrbType _orbType;
+    private DamageInfo _damageInfo;
     private float _rotateSpeed;
     private Transform _rotatePivot;
 
@@ -33,12 +30,12 @@ public class Orb : MonoBehaviour
         Rotate();
     }
 
-    public void Initialize(OrbInitConfig config) 
+    public void Initialize(OrbInitConfig config)
     {
         _rotatePivot = config.Pivot;
         _rotateSpeed = config.Clockwise ? defaultRotateSpeed : -defaultRotateSpeed;
-        _orbType = config.Type;
-        _damage = config.Damage;
+        _damageInfo = config.DamageInfo;
+        _damageInfo.attackSource = gameObject;
     }
 
     private void Rotate() 
@@ -52,22 +49,8 @@ public class Orb : MonoBehaviour
 
         if (damagable != null) 
         {
-            EffectType damageType = ConvertOrbTypeToDamageType(_orbType);
-            var damageInfo = new DamageInfo(_damage, damageType, gameObject);
-            damageInfo.hitPoint = other.ClosestPoint(transform.position);
-            damagable.TakeDamage(damageInfo);
-            Debug.Log($"[Orb] Hit {other.gameObject.name} | Type: {_orbType} | Damage: {_damage}");
+            damagable.TakeDamage(_damageInfo);
+            Debug.Log($"[Orb] Hit {other.gameObject.name} | Type: {_damageInfo.type} | Damage: {_damageInfo.damageAmount}");
         }
-    }
-
-    private EffectType ConvertOrbTypeToDamageType(OrbType type)
-    {
-        return type switch
-        {
-            OrbType.Venom => EffectType.Venom,
-            OrbType.Blaze => EffectType.Fire,
-            OrbType.Ice => EffectType.Ice,
-            _ => EffectType.Normal
-        };
     }
 }

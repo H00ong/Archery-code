@@ -8,14 +8,12 @@ using UnityEngine;
 public readonly struct MeteorInitConfig
 {
     public readonly Vector3 Position;
-    public readonly int Damage;
-    public readonly BarrelType Type;
+    public readonly DamageInfo DamageInfo;
 
-    public MeteorInitConfig(Vector3 position, int damage, BarrelType type)
+    public MeteorInitConfig(Vector3 position, DamageInfo damageInfo)
     {
         Position = position;
-        Damage = damage;
-        Type = type;
+        DamageInfo = damageInfo;
     }
 }
 
@@ -27,8 +25,7 @@ public class Meteor : MonoBehaviour
     [SerializeField] LayerMask enemyLayer;
     [SerializeField] float attackRange = 1f;
 
-    int _atk;
-    BarrelType _barrelType;
+    DamageInfo _damageInfo;
     float _timer = 0f;
     
     private HashSet<IDamageable> _hitEnemies = new HashSet<IDamageable>();
@@ -44,8 +41,8 @@ public class Meteor : MonoBehaviour
         transform.position = config.Position;
         transform.rotation = Quaternion.identity;
 
-        _atk = config.Damage;
-        _barrelType = config.Type;
+        _damageInfo = config.DamageInfo;
+        _damageInfo.attackSource = gameObject;
         _timer = 0f;
     }
 
@@ -69,25 +66,11 @@ public class Meteor : MonoBehaviour
                 
                 if (enemy != null && _hitEnemies.Add(enemy))
                 {
-                    EffectType damageType = ConvertBarrelTypeToDamageType(_barrelType);
-                    var damageInfo = new DamageInfo(_atk, damageType, gameObject);
-                    damageInfo.hitPoint = cd.ClosestPoint(transform.position);
-                    enemy.TakeDamage(damageInfo);
-                    Debug.Log($"[Meteor] Hit {cd.gameObject.name} | Type: {_barrelType} | Damage: {_atk}");
+                    enemy.TakeDamage(_damageInfo);
+                    Debug.Log($"[Meteor] Hit {cd.gameObject.name} | Type: {_damageInfo.type} | Damage: {_damageInfo.damageAmount}");
                 }
             }
         }
-    }
-
-    private EffectType ConvertBarrelTypeToDamageType(BarrelType type)
-    {
-        return type switch
-        {
-            BarrelType.Venom => EffectType.Venom,
-            BarrelType.Blaze => EffectType.Fire,
-            BarrelType.Ice => EffectType.Ice,
-            _ => EffectType.Normal
-        };
     }
 
     IEnumerator TerminateCoroutine()
