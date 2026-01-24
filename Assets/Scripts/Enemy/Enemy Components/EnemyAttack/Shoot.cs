@@ -47,14 +47,12 @@ namespace Enemy
 
         public override void OnEnter()
         {
-            _player = _ctx.player;
+            base.OnEnter();
 
             if (_ctx.HasMultiAttackModules)
             {
                 _ctx.anim.SetFloat(AnimHashes.AttackIndex, _animIndex);
             }
-
-            _ctx.SetAttackEndTrigger(false);
         }
 
 
@@ -93,7 +91,7 @@ namespace Enemy
         {
             if (_playerTargeting)
             {
-                return _player.transform.position;
+                return _ctx.lastPlayerPosition;
             }
             else
             {

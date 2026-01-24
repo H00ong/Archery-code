@@ -100,6 +100,7 @@ namespace Enemy
         public virtual void OnEnter()
         {
             _player = _ctx.player;
+            _ctx.lastPlayerPosition = _player.transform.position;
 
             Vector3 dir = Utils.GetXZDirectionVector(_ctx.lastPlayerPosition, transform.position);
             transform.rotation = Quaternion.LookRotation(dir);
