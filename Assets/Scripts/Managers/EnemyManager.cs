@@ -60,7 +60,7 @@ namespace Managers
 
                         if (!_globalModuleData.TryAdd(key, data))
                         {
-                            Debug.LogWarning($"[EnemyManager] Duplicate Key: {key}");
+                            Debug.LogWarning($"[EnemyManager] Duplicate module key detected: {key}. Existing module: {_globalModuleData[key]}, New module: {data}");
                         }
                     }
                 }
