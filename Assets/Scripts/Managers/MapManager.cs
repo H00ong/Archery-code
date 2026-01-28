@@ -34,6 +34,10 @@ namespace Managers
         private List<AssetReferenceGameObject> _currentEnemyList;
         private List<AssetReferenceGameObject> _currentBossList;
         private AssetReferenceGameObject _currentBossMapRef;
+        
+        // EnemyIdentity 기반 리스트
+        private List<EnemyIdentity> _currentEnemyIdentityList;
+        private List<EnemyIdentity> _currentBossIdentityList;
 
         private readonly List<GameObject> _preloadedMaps = new List<GameObject>();
         private GameObject _preloadedBossMap;
@@ -135,17 +139,21 @@ namespace Managers
 
             currentMapType = (MapType)_currentMapData.mapType;
 
-            if (!_mapDict.TryGetValue(currentMapType, out var scriptable))
+            if (!_mapDict.TryGetValue(currentMapType, out var mapSo))
             {
                 Debug.LogError($"MapScriptable not found for type: {currentMapType}");
             }
 
-            if (scriptable == null) return;
+            if (mapSo == null) return;
             
-            _currentMapList = scriptable.mapList;
-            _currentEnemyList = scriptable.enemyList;
-            _currentBossList = scriptable.bossList;
-            _currentBossMapRef = scriptable.bossMap;
+            _currentMapList = mapSo.mapList;
+            _currentEnemyList = mapSo.enemyList;
+            _currentBossList = mapSo.bossList;
+            _currentBossMapRef = mapSo.bossMap;
+            
+            // EnemyIdentity 기반 리스트 초기화
+            _currentEnemyIdentityList = mapSo.enemyIdentityList;
+            _currentBossIdentityList = mapSo.bossIdentityList;
         }
 
         #endregion
@@ -280,6 +288,39 @@ namespace Managers
             
             return _currentEnemyList[idx];
         }
+        
+        /// <summary>
+        /// EnemyIdentity 기반으로 랜덤 적 정보 반환
+        /// </summary>
+        public EnemyIdentity GetEnemyIdentity()
+        {
+            if (_currentEnemyIdentityList == null || _currentEnemyIdentityList.Count == 0)
+                return null;
+                
+            var count = _currentEnemyIdentityList.Count;
+            var idx = UnityEngine.Random.Range(0, count);
+            
+            return _currentEnemyIdentityList[idx];
+        }
+        
+        /// <summary>
+        /// EnemyIdentity 기반으로 보스 정보 반환
+        /// </summary>
+        public EnemyIdentity GetBossIdentity(int index)
+        {
+            if (_currentBossIdentityList == null || _currentBossIdentityList.Count == 0)
+                return null;
+                
+            if (index < 0 || index >= _currentBossIdentityList.Count)
+                return null;
+                
+            return _currentBossIdentityList[index];
+        }
+        
+        /// <summary>
+        /// EnemyIdentity 리스트가 설정되어 있는지 확인
+        /// </summary>
+        public bool HasEnemyIdentityList => _currentEnemyIdentityList != null && _currentEnemyIdentityList.Count > 0;
 
         #endregion
 

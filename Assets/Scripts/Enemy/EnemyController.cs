@@ -47,6 +47,7 @@ namespace Enemy
         public Rigidbody rigidBody;
         public Collider enemyCollider;
         public EnemyReferenceHub enemyReference;
+        public EnemyVisual enemyVisual;
 
         [Header("Idle Tuning")]
         [SerializeField] protected float defaultIdleTime = 2f;
@@ -128,10 +129,17 @@ namespace Enemy
         #endregion
 
         #region Initialization
-        public void InitializeEnemy()
+        public void InitializeEnemy(EnemyIdentity identity = null)
         {
-            SetupManager();
             CacheComponent();
+
+            // EnemyIdentity가 제공되면 tag와 visual 주입
+            if (identity != null)
+            {
+                ApplyIdentity(identity);
+            }
+            
+            SetupManager();
             RigidbodyActive(true);
             ColliderActive(true);
             ApplyEnemyData();
@@ -140,6 +148,18 @@ namespace Enemy
             anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
         
             InitState(EnemyState.Idle);
+        }
+        
+        private void ApplyIdentity(EnemyIdentity identity)
+        {
+            // Tag 주입
+            enemyTags = identity.Tag;
+            
+            // Visual 주입
+            if (enemyVisual != null)
+            {
+                enemyVisual.ApplyMaterials(identity.ObjectMat, identity.AccessoryMat);
+            }
         }
 
         private void SetupManager()
@@ -151,10 +171,11 @@ namespace Enemy
         private void CacheComponent()
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
-            if (!health) health = GetComponent<Health>();
-            if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
+            if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
+            if (!health) health = GetComponent<Health>();
             if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>();
+            if (!enemyVisual) enemyVisual = GetComponent<EnemyVisual>();
             
             enemyReference.Init();
         }

@@ -94,7 +94,18 @@ namespace Managers
             MapManager mapManager = MapManager.Instance;
             PoolManager pool = PoolManager.Instance;
             
-            var bossRef = mapManager.GetBossAssetRef(index);
+            // EnemyIdentity 기반 보스 스폰 시도
+            EnemyIdentity bossIdentity = mapManager.GetBossIdentity(index);
+            AssetReferenceGameObject bossRef;
+            
+            if (bossIdentity != null)
+            {
+                bossRef = bossIdentity.Prefab;
+            }
+            else
+            {
+                bossRef = mapManager.GetBossAssetRef(index);
+            }
 
             if (!pool.TryGetObject(bossRef, out var boss, pool.EnemyPool))
                 yield return pool.GetObject(bossRef, inst => boss = inst, pool.EnemyPool);
@@ -111,8 +122,8 @@ namespace Managers
 
             var controller = boss.GetComponent<EnemyController>();
             
-            // 데이터가 이미 로드되어 있으므로 InitializeEnemy 내부에서 GetModuleData 호출 시 문제 없음
-            controller.InitializeEnemy(); 
+            // EnemyIdentity가 있으면 전달, 없으면 기존 방식
+            controller.InitializeEnemy(bossIdentity); 
 
             Enemies.Add(controller);
         }
@@ -124,12 +135,26 @@ namespace Managers
             MapManager mapManager = MapManager.Instance;
             PoolManager pool = PoolManager.Instance;
             
-            var list = new List<EnemyController>();
+            var list = new List<(EnemyController controller, EnemyIdentity identity)>();
             var spawnPoints = mapManager.GetEnemySpawnPoint(count);
+
+            // EnemyIdentity 기반 스폰 여부 확인
+            bool useIdentity = mapManager.HasEnemyIdentityList;
 
             for (int i = 0; i < count; i++)
             {
-                var enemyRef = mapManager.GetEnemeyAssetRef();
+                AssetReferenceGameObject enemyRef;
+                EnemyIdentity identity = null;
+                
+                if (useIdentity)
+                {
+                    identity = mapManager.GetEnemyIdentity();
+                    enemyRef = identity.Prefab;
+                }
+                else
+                {
+                    enemyRef = mapManager.GetEnemeyAssetRef();
+                }
 
                 if (!pool.TryGetObject(enemyRef, out var enemy, pool.EnemyPool))
                     yield return pool.GetObject(enemyRef, inst => enemy = inst, pool.EnemyPool);
@@ -137,17 +162,17 @@ namespace Managers
                 var controller = enemy.GetComponent<EnemyController>();
                 controller.transform.position = spawnPoints[i].position;
 
-                list.Add(controller);
+                list.Add((controller, identity));
             }
 
             for(int i = 0; i < list.Count; i++)
             {
-                var enemy = list[i];
+                var (enemy, identity) = list[i];
 
                 enemy.gameObject.SetActive(true);
                 spawnPoints[i].gameObject.SetActive(true);
                 
-                enemy.InitializeEnemy(); 
+                enemy.InitializeEnemy(identity); 
                 Enemies.Add(enemy);
             }
         }
