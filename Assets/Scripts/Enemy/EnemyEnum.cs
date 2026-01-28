@@ -35,7 +35,7 @@ namespace Enemy
         Mushroom,
         Orc,
         Stingray,
-
+        StoneMonster,
     }
 
     [System.Flags]
