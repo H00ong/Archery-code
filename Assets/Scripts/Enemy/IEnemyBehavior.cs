@@ -21,10 +21,13 @@ namespace Enemy
     {
         protected EnemyController _ctx;
         protected PlayerController _player;
-        
+
         protected float _moveTimer;
         protected float _duration;
-        protected float _defaultMoveSpeed = 3.0f;
+        private float _defaultMoveSpeed = 3.0f;
+        private float _moveSpeed;
+        private float _originalAnimSpeed;
+        
 
         public virtual void Init(EnemyController ctx, BaseModuleData data = null)
         {
@@ -35,6 +38,8 @@ namespace Enemy
                 _defaultMoveSpeed = _ctx.stats.baseStats.moveSpeed;
             }
 
+            _moveSpeed = _defaultMoveSpeed;
+
             if (data is MoveModuleData mData)
             {
                 _duration = mData.duration;
@@ -43,6 +48,11 @@ namespace Enemy
             {
                 _duration = 4.0f; // 기본값
             }
+
+            _originalAnimSpeed = _ctx.anim.speed;
+
+            _ctx.health.OnStatusChanged -= ChangeMoveSpeed;
+            _ctx.health.OnStatusChanged += ChangeMoveSpeed;
         }
 
         public virtual void Tick()
@@ -63,13 +73,31 @@ namespace Enemy
 
         public virtual void OnExit()
         {
+            
         }
 
         protected void MoveForward()
         {
-            transform.position += transform.forward * _defaultMoveSpeed * Time.deltaTime;
+            transform.position += transform.forward * _moveSpeed * Time.deltaTime;
+        }
+
+        private void ChangeMoveSpeed(DamageInfo damageInfo, bool isStart)
+        {
+            if (damageInfo.type != EffectType.Ice) return;
+        
+            if (isStart)
+            {
+                _moveSpeed = _defaultMoveSpeed * (1f - damageInfo.effectValue);
+                _ctx.anim.speed = _originalAnimSpeed * (1f - damageInfo.effectValue);
+            }
+            else
+            {
+                _moveSpeed = _defaultMoveSpeed;
+                _ctx.anim.speed = _originalAnimSpeed;
+            }
         }
     }
+    
 
     [System.Serializable]
     public class EnemyAttack : MonoBehaviour, IEnemyBehavior, IAnimationListener
