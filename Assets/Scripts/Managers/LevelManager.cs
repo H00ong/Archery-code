@@ -94,13 +94,22 @@ namespace Managers
         {
             _isLevelingUp = true;
             currentExp -= RequiredExp;
-            
+
             currentLevel++;
 
             Debug.Log($"Level Up! Current Level: {currentLevel}");
 
             EventBus.Publish(EventType.LevelUp);
             ShowSkillChoicePopup();
+        }
+
+        // Debug용
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F1))
+            {
+                AddExp(RequiredExp);
+            }
         }
 
         private void ShowSkillChoicePopup()
