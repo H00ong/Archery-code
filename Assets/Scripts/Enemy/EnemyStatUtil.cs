@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Enemy;
 using Map;
 using UnityEngine;
@@ -7,7 +8,9 @@ namespace Enemy
 {
     public static class EnemyStatUtil
     {
-        public static EnemyStats GetEnemyStats(EnemyData e, EnemyTag tag, MapData map, int stageIndex)
+        public static EnemyStats CalculateStat(
+            EnemyData e, EnemyTag tag, MapData map, int stageIndex,
+            IReadOnlyDictionary<EffectType, EffectConfig> cachedMapEffects = null)
         {
             var stats = new EnemyStats();
             if (e == null || map == null || e.@base == null)
@@ -28,6 +31,9 @@ namespace Enemy
              ComputeBaseStats(e.@base, st, mp, stats, isBoss);
 
             ApplyProjectileStats(e, hasShooter, hasFlyingShoooter: hasFlyingShooter, st, mp, stats, isBoss);
+
+            // 맵 이펙트 설정 참조 연결 (Flyweight)
+            stats.offensiveEffects = cachedMapEffects;
 
             return stats;
         }
@@ -172,5 +178,37 @@ namespace Enemy
         public BaseStats baseStats = new();
         public ShootingStats shooting = new();
         public FlyingShootingStats flyingShooting = new();
+
+        /// <summary>
+        /// 맵에 설정된 효과 정보 (모든 적이 공유하는 Flyweight 참조)
+        /// </summary>
+        public IReadOnlyDictionary<EffectType, EffectConfig> offensiveEffects;
+
+        /// <summary>
+        /// BaseStats는 깊은 복사, offensiveEffects는 얕은 복사(참조 공유)
+        /// </summary>
+        public EnemyStats Clone()
+        {
+            return new EnemyStats
+            {
+                baseStats = new BaseStats
+                {
+                    hp = baseStats.hp,
+                    atk = baseStats.atk,
+                    moveSpeed = baseStats.moveSpeed
+                },
+                shooting = new ShootingStats
+                {
+                    projectileAtk = shooting.projectileAtk,
+                    projectileSpeed = shooting.projectileSpeed
+                },
+                flyingShooting = new FlyingShootingStats
+                {
+                    flyingProjectileAtk = flyingShooting.flyingProjectileAtk,
+                    flyingProjectileSpeed = flyingShooting.flyingProjectileSpeed
+                },
+                offensiveEffects = offensiveEffects // 얕은 복사 (Flyweight 참조 공유)
+            };
+        }
     }
 }
