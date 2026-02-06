@@ -1,6 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine.Serialization;
 
+[System.Serializable]
+public class EffectConfig
+{
+    public EffectType effectType;
+    public float duration;
+    public float damagePerTick;
+    public float tickInterval;
+    public float effectValue;   // 슬로우 비율 등
+}
+
 namespace Map
 {
     public enum MapType
@@ -24,6 +34,7 @@ namespace Map
         public MapModifiers mapModifiers;
         public StageGrowth stageGrowth;
         public List<int> enemyCountGrid;
+        public List<EffectConfig> enemyEffects;
     }
 
     [System.Serializable]
