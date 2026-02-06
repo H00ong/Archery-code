@@ -30,6 +30,33 @@ namespace Enemy
         }
 
         public static bool Has(EnemyTag mask, EnemyTag t) => (mask & t) != 0;
+
+        // EnemyTag와 EffectType 매핑 테이블
+        public static readonly (EnemyTag tag, EffectType effect)[] TagEffectMap = new[]
+        {
+            (EnemyTag.Fire, EffectType.Fire),
+            (EnemyTag.Ice, EffectType.Ice),
+            (EnemyTag.Poison, EffectType.Poison),
+            (EnemyTag.Lightning, EffectType.Lightning),
+            (EnemyTag.Magma, EffectType.Magma),
+        };
+
+        /// <summary>
+        /// EnemyTag를 EffectType으로 변환
+        /// </summary>
+        public static EffectType ToEffectType(EnemyTag tags)
+        {
+            EnemyTag attributeTags = tags & EnemyTag.AttributeMask;
+            EffectType result = EffectType.Normal;
+
+            foreach (var (tag, effect) in TagEffectMap)
+            {
+                if (Has(attributeTags, tag))
+                    result |= effect;
+            }
+
+            return result;
+        }
     }
 
     public struct EnemyKey : IEquatable<EnemyKey>

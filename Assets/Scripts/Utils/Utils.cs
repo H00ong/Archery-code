@@ -72,8 +72,24 @@ public static class Utils
     }
 
     public static bool HasEffectType(EffectType mask, EffectType t) => (mask & t) != 0;
-    
-    public static bool HasFlag(Enemy.EnemyTag mask, Enemy.EnemyTag t) => (mask & t) != 0;
+
+    // 모든 효과 타입 리스트 (Normal 제외)
+    public static readonly EffectType[] AllEffectTypes = new[]
+    {
+        EffectType.Fire,
+        EffectType.Poison,
+        EffectType.Ice,
+        EffectType.Lightning,
+        EffectType.Magma,
+        EffectType.Dark
+    };
+
+    // 도트 데미지를 주는 효과 타입
+    public static readonly EffectType[] DotEffectTypes = new[]
+    {
+        EffectType.Fire,
+        EffectType.Poison
+    };
 
     public static EffectType BarrelTypeToEffectType(Players.BarrelType type)
     {
