@@ -1,33 +1,83 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+
+public class EffectState
+{
+    public bool isActive;
+    public float timer;
+    public float tickTimer;
+    public DamageInfo damageInfo;
+
+    public EffectState()
+    {
+        Reset();
+    }
+
+    public void Reset()
+    {
+        isActive = false;
+        timer = 0f;
+        tickTimer = 0f;
+        damageInfo = default;
+    }
+}
 
 public class Health : MonoBehaviour, IDamageable
 {
     public event Action OnDie;
     public event Action OnHit;
+    public event Action<DamageInfo, bool> OnStatusChanged;
 
     public int maxHealth = 100;
     protected int currentHealth;
     protected bool isLive = true;
 
-    // 상태이상 관련
-    private Coroutine _dotCoroutine;
-    private float _currentSlowRate = 0f;
+    // 효과 상태 Dictionary
+    private Dictionary<EffectType, EffectState> _effectStates;
 
-    public float CurrentSlowRate => _currentSlowRate;
+    private void Awake()
+    {
+        InitializeEffectStates();
+    }
+
+    private void InitializeEffectStates()
+    {
+        _effectStates = new Dictionary<EffectType, EffectState>
+        {
+            { EffectType.Fire, new() },
+            { EffectType.Poison, new() },
+            { EffectType.Ice, new() },
+        };
+    }
 
     public void InitializeHealth(int maxHealth = 100)
     {
         this.maxHealth = maxHealth;
         currentHealth = maxHealth;
+
         isLive = true;
-        _currentSlowRate = 0f;
+        
+        ResetAllEffects();
     }
 
     public bool IsDead()
     {
         return !isLive;
+    }
+
+    private void Update()
+    {
+        if (!isLive) return;
+
+        // 도트 효과 업데이트
+        foreach (var effectType in Utils.DotEffectTypes)
+        {
+            UpdateDotEffect(effectType);
+        }
+
+        UpdateIceEffect();
     }
 
     public void TakeDamage(DamageInfo damageInfo)
@@ -72,64 +122,110 @@ public class Health : MonoBehaviour, IDamageable
 
     private void ApplyDamageEffect(DamageInfo damageInfo)
     {
+        foreach (var effectType in Utils.DotEffectTypes)
+        {
+            if (Utils.HasEffectType(damageInfo.type, effectType))
+            {
+                ApplyDotEffect(damageInfo);
+            }
+        }
+
+        if (Utils.HasEffectType(damageInfo.type, EffectType.Ice))
+        {
+            ApplyIceEffect(damageInfo);
+        }
     }
 
     #region Effect
-    private IEnumerator FireDotCoroutine(float duration, float damagePerTick)
+    private void ResetAllEffects()
     {
-        float elapsed = 0f;
-        float tickInterval = 0.3f; // 빠른 틱
-
-        while (elapsed < duration)
+        foreach (var state in _effectStates.Values)
         {
-            yield return new WaitForSeconds(tickInterval);
-            elapsed += tickInterval;
-
-            if (!isLive) yield break;
-
-            currentHealth -= Mathf.RoundToInt(damagePerTick);
-            if (currentHealth <= 0)
-            {
-                currentHealth = 0;
-                isLive = false;
-                OnDie?.Invoke();
-                yield break;
-            }
-            OnHit?.Invoke();
+            state.Reset();
         }
-        _dotCoroutine = null;
     }
 
-    private IEnumerator VenomDotCoroutine(float duration, float damagePerTick)
+    private void ApplyDotEffect(DamageInfo damageInfo)
     {
-        float elapsed = 0f;
-        float tickInterval = 1.0f; // 느린 틱
+        if (!_effectStates.TryGetValue(damageInfo.type, out var state)) return;
 
-        while (elapsed < duration)
+        if (!state.isActive)
         {
-            yield return new WaitForSeconds(tickInterval);
-            elapsed += tickInterval;
-
-            if (!isLive) yield break;
-
-            currentHealth -= Mathf.RoundToInt(damagePerTick);
-            if (currentHealth <= 0)
-            {
-                currentHealth = 0;
-                isLive = false;
-                OnDie?.Invoke();
-                yield break;
-            }
-            OnHit?.Invoke();
+            state.isActive = true;
+            state.damageInfo = damageInfo;
+            OnStatusChanged?.Invoke(state.damageInfo, true);
         }
-        _dotCoroutine = null;
+
+        state.timer = 0f;
+        state.tickTimer = 0f;
+        state.damageInfo = damageInfo;
     }
 
-    private IEnumerator IceSlowCoroutine(float duration, float slowRate)
+    private void UpdateDotEffect(EffectType type)
     {
-        _currentSlowRate = slowRate;
-        yield return new WaitForSeconds(duration);
-        _currentSlowRate = 0f;
+        if (!_effectStates.TryGetValue(type, out var state)) return;
+        if (!state.isActive) return;
+
+        state.timer += Time.deltaTime;
+        state.tickTimer += Time.deltaTime;
+
+        if (state.tickTimer >= state.damageInfo.tickInterval)
+        {
+            state.tickTimer -= state.damageInfo.tickInterval;
+            ApplyDotDamage(state.damageInfo.dotDamageAmount);
+        }
+
+        if (state.timer >= state.damageInfo.effectDuration)
+        {
+            state.isActive = false;
+            OnStatusChanged?.Invoke(state.damageInfo, false);
+        }
+    }
+
+    // Ice 효과 적용
+    private void ApplyIceEffect(DamageInfo damageInfo)
+    {
+        if (!_effectStates.TryGetValue(EffectType.Ice, out var state)) return;
+
+        if (!state.isActive)
+        {
+            state.isActive = true;
+            state.damageInfo = damageInfo;
+            OnStatusChanged?.Invoke(state.damageInfo, true);
+        }
+        
+        state.timer = 0f;
+    }
+
+    // Ice 효과 업데이트
+    private void UpdateIceEffect()
+    {
+        if (!_effectStates.TryGetValue(EffectType.Ice, out var state)) return;
+        if (!state.isActive) return;
+
+        state.timer += Time.deltaTime;
+
+        if (state.timer >= state.damageInfo.effectDuration)
+        {
+            state.isActive = false;
+            OnStatusChanged?.Invoke(state.damageInfo, false);
+        }
+    }
+
+    // 도트 데미지 적용 공통 함수
+    private void ApplyDotDamage(float damage)
+    {
+        if (!isLive) return;
+
+        currentHealth -= Mathf.RoundToInt(damage);
+        
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            isLive = false;
+            OnDie?.Invoke();
+            return;
+        }
     }
     #endregion
 }
