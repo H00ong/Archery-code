@@ -118,6 +118,10 @@ public class StageManager : MonoBehaviour
     {
         LoadMap();
 
+        // 맵 데이터 캐싱 초기화 (스테이지별 배율 적용)
+        var mapData = MapManager.Instance.CurrentMapData;
+        EnemyManager.Instance.SetUpEnemyEffects(mapData, CurrentStageIndex);
+
         // Player setting
         PositionPlayer();
         

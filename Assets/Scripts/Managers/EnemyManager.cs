@@ -5,6 +5,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Enemy;
 using Game.Stage.Management;
+using Map;
 
 namespace Managers
 {
@@ -22,6 +23,15 @@ namespace Managers
         // 로딩 상태 확인용 플래그 & 핸들
         private bool _isModuleLoaded = false;
         private AsyncOperationHandle<IList<BaseModuleData>> _loadHandle;
+
+        // ── Flyweight 캐싱 ──
+        // 맵에 설정된 효과 정보 (모든 적이 공유)
+        private readonly Dictionary<EffectType, EffectConfig> _cachedMapEffects = new();
+
+        private MapData _currentMapData;
+        private int _currentStageIndex;
+
+        public IReadOnlyDictionary<EffectType, EffectConfig> CachedMapEffects => _cachedMapEffects;
 
         private void Awake()
         {
@@ -51,7 +61,7 @@ namespace Managers
             if (_loadHandle.Status == AsyncOperationStatus.Succeeded)
             {
                 _globalModuleData.Clear();
-                
+
                 foreach (var data in _loadHandle.Result)
                 {
                     if (data)
@@ -64,6 +74,7 @@ namespace Managers
                         }
                     }
                 }
+                
                 _isModuleLoaded = true;
                 Debug.Log($"[EnemyManager] Loaded {_globalModuleData.Count} modules.");
             }
@@ -73,6 +84,61 @@ namespace Managers
         {
             return _globalModuleData.GetValueOrDefault(key);
         }
+
+        #region Flyweight Caching
+
+        /// <summary>
+        /// 맵/스테이지 전환 시 호출. 맵 이펙트 캐싱 + 적 Stat 캐시 초기화.
+        /// </summary>
+        public void SetUpEnemyEffects(MapData mapData, int stageIndex)
+        {
+            _currentMapData = mapData;
+            _currentStageIndex = stageIndex;
+
+            _cachedMapEffects.Clear();
+
+            if (mapData.enemyEffects != null)
+            {
+                foreach (var effect in mapData.enemyEffects)
+                {
+                    _cachedMapEffects[effect.effectType] = effect;
+                }
+            }
+        }
+
+        public EnemyStats GetStat(EnemyName name, EnemyTag tag)
+        {
+            var enemyData = DataManager.Instance.GetEnemyData(name, tag);
+            if (enemyData == null)
+            {
+                Debug.LogWarning($"[EnemyManager] EnemyData not found: {name} | {tag}");
+                return new EnemyStats();
+            }
+
+            var stats = EnemyStatUtil.CalculateStat(
+                enemyData, tag, _currentMapData, _currentStageIndex, _cachedMapEffects);
+
+            // 디버그 로그: 최종 스탯 확인
+            Debug.Log($"[EnemyManager] GetStat for {name} | Tag: {tag}\n" +
+                      $"  Base - HP: {stats.baseStats.hp}, ATK: {stats.baseStats.atk}, MoveSpeed: {stats.baseStats.moveSpeed}\n" +
+                      $"  Shooting - ProjectileATK: {stats.shooting.projectileAtk}, ProjectileSpeed: {stats.shooting.projectileSpeed}\n" +
+                      $"  FlyingShooting - FlyingProjectileATK: {stats.flyingShooting.flyingProjectileAtk}, FlyingProjectileSpeed: {stats.flyingShooting.flyingProjectileSpeed}\n" +
+                      $"  OffensiveEffects Count: {stats.offensiveEffects?.Count ?? 0}");
+            
+            if (stats.offensiveEffects != null && stats.offensiveEffects.Count > 0)
+            {
+                foreach (var effect in stats.offensiveEffects)
+                {
+                    Debug.Log($"    Effect - Type: {effect.Key}, Duration: {effect.Value.duration}, " +
+                              $"DamagePerTick: {effect.Value.damagePerTick}, TickInterval: {effect.Value.tickInterval}, " +
+                              $"EffectValue: {effect.Value.effectValue}");
+                }
+            }
+
+            return stats.Clone();
+        }
+
+        #endregion
 
         public void ClearAllEnemies()
         {
@@ -86,66 +152,66 @@ namespace Managers
 
             Enemies.Clear();
         }
+
+        #region Spawn Helpers
+
+        /// <summary>
+        /// 단일 적 스폰 헬퍼 (Pool에서 가져오기 + 위치 설정)
+        /// </summary>
+        private IEnumerator SpawnSingleEnemyAsync(
+            AssetReferenceGameObject enemyRef, 
+            Vector3 position,
+            EnemyIdentity identity,
+            System.Action<EnemyController> onSpawned)
+        {
+            var pool = PoolManager.Instance;
+
+            if (!pool.TryGetObject(enemyRef, out var enemyObj, pool.EnemyPool))
+                yield return pool.GetObject(enemyRef, inst => enemyObj = inst, pool.EnemyPool);
+
+            if (!enemyObj)
+            {
+                Debug.LogError("[EnemyManager] Failed to spawn enemy");
+                yield break;
+            }
+
+            var controller = enemyObj.GetComponent<EnemyController>();
+            controller.transform.position = position;
+
+            onSpawned?.Invoke(controller);
+
+            enemyObj.SetActive(true);
+            controller.InitializeEnemy(identity);
+            Enemies.Add(controller);
+        }
+
+        #endregion
         
         public IEnumerator SpawnBossEnemey(int index)
         {
             yield return new WaitUntil(() => _isModuleLoaded);
 
-            MapManager mapManager = MapManager.Instance;
-            PoolManager pool = PoolManager.Instance;
-            
-            // EnemyIdentity 기반 보스 스폰 시도
-            EnemyIdentity bossIdentity = mapManager.GetBossIdentity(index);
-            AssetReferenceGameObject bossRef;
-            
-            if (bossIdentity != null)
-            {
-                bossRef = bossIdentity.Prefab;
-            }
-            else
-            {
-                bossRef = mapManager.GetBossAssetRef(index);
-            }
-
-            if (!pool.TryGetObject(bossRef, out var boss, pool.EnemyPool))
-                yield return pool.GetObject(bossRef, inst => boss = inst, pool.EnemyPool);
-
-            if (!boss)
-            {
-                Debug.LogError("Boss is null");
-                yield break;
-            }
+            var mapManager = MapManager.Instance;
+            var bossIdentity = mapManager.GetBossIdentity(index);
+            var bossRef = bossIdentity != null ? bossIdentity.Prefab : mapManager.GetBossAssetRef(index);
             var spawnPoint = mapManager.GetBossSpawnPoint();
 
-            boss.transform.position = spawnPoint.position;
-            boss.SetActive(true);
-
-            var controller = boss.GetComponent<EnemyController>();
-            
-            // EnemyIdentity가 있으면 전달, 없으면 기존 방식
-            controller.InitializeEnemy(bossIdentity); 
-
-            Enemies.Add(controller);
+            yield return SpawnSingleEnemyAsync(bossRef, spawnPoint.position, bossIdentity, null);
         }
 
         public IEnumerator SpawnEnemy(int count)
         {
             yield return new WaitUntil(() => _isModuleLoaded);
 
-            MapManager mapManager = MapManager.Instance;
-            PoolManager pool = PoolManager.Instance;
-            
-            var list = new List<(EnemyController controller, EnemyIdentity identity)>();
+            var mapManager = MapManager.Instance;
             var spawnPoints = mapManager.GetEnemySpawnPoint(count);
-
-            // EnemyIdentity 기반 스폰 여부 확인
-            bool useIdentity = mapManager.HasEnemyIdentityList;
+            var useIdentity = mapManager.HasEnemyIdentityList;
 
             for (int i = 0; i < count; i++)
             {
-                AssetReferenceGameObject enemyRef;
                 EnemyIdentity identity = null;
-                
+                AssetReferenceGameObject enemyRef;
+
                 if (useIdentity)
                 {
                     identity = mapManager.GetEnemyIdentity();
@@ -156,24 +222,12 @@ namespace Managers
                     enemyRef = mapManager.GetEnemeyAssetRef();
                 }
 
-                if (!pool.TryGetObject(enemyRef, out var enemy, pool.EnemyPool))
-                    yield return pool.GetObject(enemyRef, inst => enemy = inst, pool.EnemyPool);
-
-                var controller = enemy.GetComponent<EnemyController>();
-                controller.transform.position = spawnPoints[i].position;
-
-                list.Add((controller, identity));
-            }
-
-            for(int i = 0; i < list.Count; i++)
-            {
-                var (enemy, identity) = list[i];
-
-                enemy.gameObject.SetActive(true);
-                spawnPoints[i].gameObject.SetActive(true);
-                
-                enemy.InitializeEnemy(identity); 
-                Enemies.Add(enemy);
+                var spawnPoint = spawnPoints[i];
+                yield return SpawnSingleEnemyAsync(
+                    enemyRef, 
+                    spawnPoint.position, 
+                    identity, 
+                    _ => spawnPoint.gameObject.SetActive(true));
             }
         }
 
