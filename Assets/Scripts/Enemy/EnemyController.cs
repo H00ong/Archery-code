@@ -67,9 +67,6 @@ namespace Enemy
         
         [HideInInspector] public Vector3 lastPlayerPosition;
         [HideInInspector] public PlayerController player;
-        
-        private EnemyData _enemyData;
-        private DataManager _dataManager;
 
         public bool IsBlocked { get; private set; }
         public bool AttackMoveTrigger { get; set; }
@@ -165,7 +162,6 @@ namespace Enemy
 
         private void SetupManager()
         {
-            _dataManager = DataManager.Instance;
             player = PlayerController.Instance;
         }
 
@@ -185,23 +181,7 @@ namespace Enemy
         {
             if (!isDebugMode)
             {
-                _enemyData = _dataManager.GetEnemyData(enemyName, enemyTags);
-                if (_enemyData == null)
-                {
-                    Debug.LogError("Enemy data is null");
-                    return;
-                }
-
-                MapData mapData = MapManager.Instance.CurrentMapData;
-                if (mapData == null)
-                {
-                    Debug.LogError("Map data is null");
-                    return;
-                }
-
-                int stageIndex = StageManager.Instance.CurrentStageIndex;
-
-                stats = EnemyStatUtil.GetEnemyStats(_enemyData, enemyTags, mapData, stageIndex);
+                stats = EnemyManager.Instance.GetStat(enemyName, enemyTags);
                 return;
             }
         }
