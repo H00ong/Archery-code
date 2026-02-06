@@ -158,6 +158,7 @@ namespace Enemy
             // Visual 주입
             if (enemyVisual != null)
             {
+                enemyVisual.Initialize();
                 enemyVisual.ApplyMaterials(identity.ObjectMat, identity.AccessoryMat);
             }
         }
@@ -248,7 +249,7 @@ namespace Enemy
             
             die = gameObject.GetOrAddComponent<EnemyDie>();   die.Init(this);
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
-            health = gameObject.GetOrAddComponent<Health>();  health.InitializeHealth(1);
+            health = gameObject.GetOrAddComponent<Health>();  health.InitializeHealth(10);
 
             health.OnHit += this.OnHit;
             health.OnDie += this.OnDie;
