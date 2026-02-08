@@ -1,27 +1,31 @@
-using Game.Player.Attack;
 using System.Collections.Generic;
+using Game.Player.Attack;
 using Players.SkillModule;
 using UnityEngine;
 using static UnityEditorInternal.ReorderableList;
 
 public class HorizontalShot : PlayerSkillModuleBase, IShootContributor
 {
-    [SerializeField, Min(0f)] private float interval = 1f;
+    [SerializeField, Min(0f)]
+    private float interval = 1f;
 
     private int GetBulletCount(int lvl)
     {
         return lvl + 1;
     }
-    
+
     public void AddBullet(List<ShotInstruction> bulletList, ShotInstruction inst)
     {
-        if (bulletList == null) return;
+        if (bulletList == null)
+            return;
 
         int count = GetBulletCount(Level);
-        if (count <= 0) return;
+        if (count <= 0)
+            return;
 
         int need = bulletList.Count + count;
-        if (bulletList.Capacity < need) bulletList.Capacity = need;
+        if (bulletList.Capacity < need)
+            bulletList.Capacity = need;
 
         Vector3 origin = inst.ShootingPos;
         Vector3 dir = inst.ShootingDir;
@@ -35,12 +39,9 @@ public class HorizontalShot : PlayerSkillModuleBase, IShootContributor
             float offset = (i - half) * interval;
             Vector3 pos = origin + right * offset;
 
-            bulletList.Add(new ShotInstruction
-            {
-                ShootingDir = inst.ShootingDir,
-                ShootingPos = pos
-            });
+            bulletList.Add(
+                new ShotInstruction { ShootingDir = inst.ShootingDir, ShootingPos = pos }
+            );
         }
     }
 }
-

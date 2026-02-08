@@ -3,6 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface IDamageable
+{
+    void TakeDamage(DamageInfo damageInfo);
+    bool IsDead();
+}
+
 public class EffectState
 {
     public bool isActive;
@@ -35,7 +41,7 @@ public class Health : MonoBehaviour, IDamageable
     protected bool isLive = true;
 
     // 효과 상태 Dictionary
-    private Dictionary<EffectType, EffectState> _effectStates;
+    private Dictionary<EffectType, EffectState> effectStates;
 
     private void Awake()
     {
@@ -44,7 +50,7 @@ public class Health : MonoBehaviour, IDamageable
 
     private void InitializeEffectStates()
     {
-        _effectStates = new Dictionary<EffectType, EffectState>
+        effectStates = new Dictionary<EffectType, EffectState>
         {
             { EffectType.Fire, new() },
             { EffectType.Poison, new() },
@@ -58,7 +64,7 @@ public class Health : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
 
         isLive = true;
-        
+
         ResetAllEffects();
     }
 
@@ -69,7 +75,8 @@ public class Health : MonoBehaviour, IDamageable
 
     private void Update()
     {
-        if (!isLive) return;
+        if (!isLive)
+            return;
 
         // 도트 효과 업데이트
         foreach (var effectType in Utils.DotEffectTypes)
@@ -82,7 +89,8 @@ public class Health : MonoBehaviour, IDamageable
 
     public void TakeDamage(DamageInfo damageInfo)
     {
-        if (!isLive) return;
+        if (!isLive)
+            return;
 
         // 기본 데미지 적용
         int finalDamage = Mathf.RoundToInt(damageInfo.damageAmount);
@@ -139,7 +147,7 @@ public class Health : MonoBehaviour, IDamageable
     #region Effect
     private void ResetAllEffects()
     {
-        foreach (var state in _effectStates.Values)
+        foreach (var state in effectStates.Values)
         {
             state.Reset();
         }
@@ -147,7 +155,8 @@ public class Health : MonoBehaviour, IDamageable
 
     private void ApplyDotEffect(DamageInfo damageInfo)
     {
-        if (!_effectStates.TryGetValue(damageInfo.type, out var state)) return;
+        if (!effectStates.TryGetValue(damageInfo.type, out var state))
+            return;
 
         if (!state.isActive)
         {
@@ -163,8 +172,10 @@ public class Health : MonoBehaviour, IDamageable
 
     private void UpdateDotEffect(EffectType type)
     {
-        if (!_effectStates.TryGetValue(type, out var state)) return;
-        if (!state.isActive) return;
+        if (!effectStates.TryGetValue(type, out var state))
+            return;
+        if (!state.isActive)
+            return;
 
         state.timer += Time.deltaTime;
         state.tickTimer += Time.deltaTime;
@@ -185,7 +196,8 @@ public class Health : MonoBehaviour, IDamageable
     // Ice 효과 적용
     private void ApplyIceEffect(DamageInfo damageInfo)
     {
-        if (!_effectStates.TryGetValue(EffectType.Ice, out var state)) return;
+        if (!effectStates.TryGetValue(EffectType.Ice, out var state))
+            return;
 
         if (!state.isActive)
         {
@@ -193,15 +205,17 @@ public class Health : MonoBehaviour, IDamageable
             state.damageInfo = damageInfo;
             OnStatusChanged?.Invoke(state.damageInfo, true);
         }
-        
+
         state.timer = 0f;
     }
 
     // Ice 효과 업데이트
     private void UpdateIceEffect()
     {
-        if (!_effectStates.TryGetValue(EffectType.Ice, out var state)) return;
-        if (!state.isActive) return;
+        if (!effectStates.TryGetValue(EffectType.Ice, out var state))
+            return;
+        if (!state.isActive)
+            return;
 
         state.timer += Time.deltaTime;
 
@@ -215,10 +229,11 @@ public class Health : MonoBehaviour, IDamageable
     // 도트 데미지 적용 공통 함수
     private void ApplyDotDamage(float damage)
     {
-        if (!isLive) return;
+        if (!isLive)
+            return;
 
         currentHealth -= Mathf.RoundToInt(damage);
-        
+
         if (currentHealth <= 0)
         {
             currentHealth = 0;

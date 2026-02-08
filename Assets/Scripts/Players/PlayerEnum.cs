@@ -1,4 +1,4 @@
-namespace Players 
+namespace Players
 {
     public enum OrbType
     {
@@ -38,7 +38,7 @@ namespace Players
         IceBarrelGenerate,
     }
 
-    public enum SkillRarity 
+    public enum SkillRarity
     {
         Common,
         Rare,

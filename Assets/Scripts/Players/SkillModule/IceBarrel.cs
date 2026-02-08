@@ -6,9 +6,9 @@ using UnityEngine;
 
 public class IceBarrel : PlayerSkillModuleBase, IPickupBarrel
 {
-    BarrelManager _barrelManager;
-    BarrelType _type = BarrelType.Ice;
-    int BarrelCount => Level;
+    private BarrelManager _barrelManager;
+    private BarrelType _type = BarrelType.Ice;
+    private int BarrelCount => Level;
 
     public override void Init(PlayerSkill _skill)
     {
