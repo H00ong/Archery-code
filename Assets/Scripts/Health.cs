@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using Stat;
 using UnityEngine;
 
 public interface IDamageable
@@ -37,14 +37,18 @@ public class Health : MonoBehaviour, IDamageable
     public event Action<DamageInfo, bool> OnStatusChanged;
 
     public int maxHealth = 100;
-    protected int currentHealth;
-    protected bool isLive = true;
+    private int currentHealth;
+    private bool isLive = true;
+
+    // 방어 스탯 캐싱
+    private BaseStat _stat;
 
     // 효과 상태 Dictionary
     private Dictionary<EffectType, EffectState> effectStates;
 
     private void Awake()
     {
+        _stat = GetComponent<BaseStat>();
         InitializeEffectStates();
     }
 
@@ -92,8 +96,10 @@ public class Health : MonoBehaviour, IDamageable
         if (!isLive)
             return;
 
-        // 기본 데미지 적용
-        int finalDamage = Mathf.RoundToInt(damageInfo.damageAmount);
+        // 물리 방어력 적용: finalDamage = damage * (100 / (100 + armor))
+        int armor = _stat != null ? _stat.Armor : 0;
+        float reduced = damageInfo.damageAmount * (100f / (100f + armor));
+        int finalDamage = Mathf.RoundToInt(reduced);
         currentHealth -= finalDamage;
 
         // 속성별 효과 적용
@@ -180,13 +186,19 @@ public class Health : MonoBehaviour, IDamageable
         state.timer += Time.deltaTime;
         state.tickTimer += Time.deltaTime;
 
-        if (state.tickTimer >= state.damageInfo.tickInterval)
+        var effectData = state.damageInfo.GetEffectData(type);
+        if (effectData == null) return;
+
+        if (state.tickTimer >= effectData.tickInterval)
         {
-            state.tickTimer -= state.damageInfo.tickInterval;
-            ApplyDotDamage(state.damageInfo.dotDamageAmount);
+            state.tickTimer -= effectData.tickInterval;
+
+            // 마법 저항력으로 DOT 데미지 감소 (약한 공식: 50 / (50 + MR))
+            float dotDmg = ApplyMagicResistanceToDot(effectData.dotDamage);
+            ApplyDotDamage(dotDmg);
         }
 
-        if (state.timer >= state.damageInfo.effectDuration)
+        if (state.timer >= effectData.duration)
         {
             state.isActive = false;
             OnStatusChanged?.Invoke(state.damageInfo, false);
@@ -201,8 +213,9 @@ public class Health : MonoBehaviour, IDamageable
 
         if (!state.isActive)
         {
+            // MR로 슬로우 효과 감소 적용한 DamageInfo 저장
             state.isActive = true;
-            state.damageInfo = damageInfo;
+            state.damageInfo = CreateMRReducedDamageInfo(damageInfo, EffectType.Ice);
             OnStatusChanged?.Invoke(state.damageInfo, true);
         }
 
@@ -219,7 +232,11 @@ public class Health : MonoBehaviour, IDamageable
 
         state.timer += Time.deltaTime;
 
-        if (state.timer >= state.damageInfo.effectDuration)
+        var iceData = state.damageInfo.GetEffectData(EffectType.Ice);
+        
+        if (iceData == null) return;
+
+        if (state.timer >= iceData.duration)
         {
             state.isActive = false;
             OnStatusChanged?.Invoke(state.damageInfo, false);
@@ -242,5 +259,52 @@ public class Health : MonoBehaviour, IDamageable
             return;
         }
     }
+    #endregion
+
+    #region Damage Reduction
+
+    /// <summary>
+    /// DamageInfo의 특정 EffectType에 대해 MR 감소를 적용한 복사본을 만든다.
+    /// Ice의 경우 effectValue(슬로우 비율)를 줄인다.
+    /// </summary>
+    private DamageInfo CreateMRReducedDamageInfo(DamageInfo original, EffectType effectType)
+    {
+        var copy = new DamageInfo(original.damageAmount, original.type, original.attackSource);
+        // 원본의 effectDataMap을 복사
+        foreach (var kvp in original.effectDataMap)
+            copy.effectDataMap[kvp.Key] = kvp.Value.Clone();
+
+        var data = copy.GetEffectData(effectType);
+        if (data != null)
+            data.value = ApplyMagicResistanceToEffect(data.value);
+
+        return copy;
+    }
+
+    /// <summary>
+    /// DOT 데미지에 마법 저항력 적용 (약한 공식).
+    /// reducedDot = dot * (50 / (50 + MR))
+    /// 일반 방어 공식(100 기준)보다 감소 폭이 작아 DOT가 지나치게 약해지지 않는다.
+    /// </summary>
+    private float ApplyMagicResistanceToDot(float dotDamage)
+    {
+        int mr = _stat != null ? _stat.MagicResistance : 0;
+        if (mr <= 0) return dotDamage;
+        return dotDamage * (50f / (50f + mr));
+    }
+
+    /// <summary>
+    /// Ice 슬로우 등 효과 수치에 마법 저항력 적용.
+    /// reducedValue = value * (80 / (80 + MR))
+    /// MR이 높아도 슬로우가 완전히 사라지지 않되 체감 가능하게 줄어든다.
+    /// 예) MR=20 → 0.3 슬로우 → 약 0.24 (≈20% 감소)
+    /// </summary>
+    private float ApplyMagicResistanceToEffect(float effectValue)
+    {
+        int mr = _stat != null ? _stat.MagicResistance : 0;
+        if (mr <= 0) return effectValue;
+        return effectValue * (80f / (80f + mr));
+    }
+
     #endregion
 }

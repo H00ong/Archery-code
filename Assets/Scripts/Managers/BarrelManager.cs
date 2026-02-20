@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Map;
 using Players;
+using Stat;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AI;
@@ -20,7 +21,7 @@ namespace Managers
     {
         [SerializeField] private string addressableAssetLabel;
         [SerializeField] private float barrelGenerateTime = 5f;
-        [SerializeField] private int atk = 1;
+        [SerializeField] private float meteorDamageModifier = 1f;
         [SerializeField] private float yOffset = 1f;
 
         private Dictionary<BarrelType, BarrelScriptable> _barrelSoDict = new();
@@ -202,8 +203,10 @@ namespace Managers
             var meteor = go.GetComponent<Meteor>();
             float y = MapManager.Instance.currentMap.transform.position.y + yOffset;
 
+            var stat = PlayerController.Instance.Stat;
             var effectType = Utils.BarrelTypeToEffectType(type);
-            var damageInfo = new DamageInfo(atk, effectType);
+            float damage = stat.AttackPower * meteorDamageModifier;
+            var damageInfo = new DamageInfo(damage, effectType, stat);
 
             var meteorConfig = new MeteorInitConfig(
                 position: Utils.GetXZPosition(pos) + new Vector3(0, y, 0),

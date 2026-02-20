@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using Game.Player;
+using Stat;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Players
 {
@@ -19,14 +18,18 @@ namespace Players
 
         [HideInInspector] public PlayerState currentState = PlayerState.Idle;
         
+        /// <summary> 플레이어 3단 레이어 스탯 (Base + Equipment + InGameBuff) </summary>
+        public PlayerStat Stat { get; private set; }
+        
         public PlayerData Data { get; private set; }
         public PlayerMovement Move { get; private set; }
         public PlayerAttack Attack { get; private set; }
-        public PlayerHurt Hurt { get; private set; } 
+        public PlayerHurt Hurt { get; private set; }
         public PlayerSkill Skill { get; private set; }
+        public Health Health { get; private set; }
+        public Animator Anim { get; private set; }
 
         public bool IsPlayerDead => currentState == PlayerState.Dead;
-        public Animator Anim { get; private set; }
         
         private void Awake()
         {
@@ -45,20 +48,22 @@ namespace Players
         {
             Attack.Init();
             Skill.Init();
+            Health.InitializeHealth(Stat.MaxHP);
         }
 
         private void InitComponent()
         {
             Anim = GetComponentInChildren<Animator>();
-            
-            if (Data == null)   Data = GetComponent<PlayerData>();
-            if (Move == null)   Move = GetComponent<PlayerMovement>();
-            if (Attack == null) Attack = GetComponent<PlayerAttack>();  
-            if (Hurt == null)   Hurt = GetComponent<PlayerHurt>();      
-            if (Skill == null)  Skill = GetComponent<PlayerSkill>();   
+            Data ??= GetComponent<PlayerData>();
+            Move ??= GetComponent<PlayerMovement>();
+            Attack ??= GetComponent<PlayerAttack>();
+            Hurt ??= GetComponent<PlayerHurt>();
+            Skill ??= GetComponent<PlayerSkill>();
+            Stat ??= GetComponent<PlayerStat>();
+            Health ??= GetComponent<Health>();
         }
 
-        public void ChangePlayerState(PlayerState newState) 
+        public void ChangePlayerState(PlayerState newState)
         {
             UpdateAnimation(newState);
 
@@ -69,11 +74,6 @@ namespace Players
         {
             Anim.SetBool(animBoolHashes[currentState], false);
             Anim.SetBool(animBoolHashes[newState], true);
-        }
-
-        public void TakeHeal(int amount, out bool valid) 
-        {
-            Hurt.TakeHeal(amount, out valid);
         }
     }
 }

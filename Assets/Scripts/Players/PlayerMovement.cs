@@ -1,5 +1,6 @@
 using Game.Player;
 using Players;
+using Stat;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -7,10 +8,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Required Managers")]
     [SerializeField] PlayerController playerManager;
     [Header("Player Movement Info")]
-    [SerializeField] float defaultMoveSpeed = 5f;
     [SerializeField] float sphereCastRadius = 0.5f;
     [SerializeField] LayerMask obstacleLayer;
-    public float Movespeed { get; set; }
+
+    private PlayerStat _stat;
 
     private void Start()
     {
@@ -19,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void Init() 
     {
-        Movespeed = defaultMoveSpeed;        
+        _stat = PlayerController.Instance.Stat;
     }
 
 
@@ -34,12 +35,15 @@ public class PlayerMovement : MonoBehaviour
         if (Physics.OverlapSphere(collisionPos, sphereCastRadius, obstacleLayer).Length > 0)
             return;
 
-        transform.position += moveDir * Movespeed * Time.deltaTime;
+        transform.position += moveDir * _stat.MoveSpeed * Time.deltaTime;
     }
 
     #region Skill Methods
 
-    public void UpdateMoveSpeed(float _modifier) => Movespeed = defaultMoveSpeed * (1 + _modifier);
+    public void UpdateMoveSpeed(float _modifier)
+    {
+        _stat.ApplyMoveSpeedModifier(_modifier);
+    }
 
     #endregion
 

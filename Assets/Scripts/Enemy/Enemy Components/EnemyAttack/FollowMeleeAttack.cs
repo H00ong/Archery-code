@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class FollowMeleeAttack : MeleeAttack, IAnimationListener    
+    public class FollowMeleeAttack : MeleeAttack, IAnimationListener
     {
         private float _attackRange = 1.5f;
         private float _chaseDuration = 3f;
@@ -19,7 +19,7 @@ namespace Enemy
 
             if (!_ctx.isDebugMode)
             {
-                _moveSpeed = ctx.stats.baseStats.moveSpeed;
+                _moveSpeed = ctx.stat.MoveSpeed;
             }
 
             if (data is not FollowMeleeAttackData fmData)

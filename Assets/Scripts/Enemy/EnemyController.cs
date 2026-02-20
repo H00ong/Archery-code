@@ -25,9 +25,11 @@ namespace Enemy
         public bool isDebugMode = true;
 
         [Header("Identity")] 
-        [SerializeField] private EnemyName enemyName;
+        [SerializeField] public EnemyName enemyName;
         [SerializeField] public EnemyTag enemyTags;
-        public EnemyStats stats;
+        private EnemyStat _stat;
+        
+        public EnemyStat stat => _stat;
         public EnemyState CurrentState { get; protected set; }
         public bool IsBoss => EnemyTagUtil.Has(enemyTags, EnemyTag.Boss);
 
@@ -133,13 +135,13 @@ namespace Enemy
             // EnemyIdentity가 제공되면 tag와 visual 주입
             if (identity != null)
             {
-                ApplyIdentity(identity);
+                SetIdentity(identity);
             }
             
             SetupManager();
             RigidbodyActive(true);
             ColliderActive(true);
-            ApplyEnemyData();
+            SetStat();
             InitModule();
 
             anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
@@ -147,7 +149,7 @@ namespace Enemy
             InitState(EnemyState.Idle);
         }
         
-        private void ApplyIdentity(EnemyIdentity identity)
+        private void SetIdentity(EnemyIdentity identity)
         {
             // Tag 주입
             enemyTags = identity.Tag;
@@ -177,11 +179,12 @@ namespace Enemy
             enemyReference.Init();
         }
 
-        protected virtual void ApplyEnemyData()
+        protected virtual void SetStat()
         {
             if (!isDebugMode)
             {
-                stats = EnemyManager.Instance.GetStat(enemyName, enemyTags);
+                _stat = gameObject.GetOrAddComponent<EnemyStat>();
+                EnemyManager.Instance.SetEnemyStat(enemyName, enemyTags, _stat);
                 return;
             }
         }
@@ -247,6 +250,8 @@ namespace Enemy
         #region Overridable Methods
         public int GetAtk()
         {
+            if (!isDebugMode && _stat != null)
+                return _stat.AttackPower;
             return defaultAtk;
         }
         #endregion

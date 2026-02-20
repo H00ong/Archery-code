@@ -24,14 +24,8 @@ namespace Managers
         private bool _isModuleLoaded = false;
         private AsyncOperationHandle<IList<BaseModuleData>> _loadHandle;
 
-        // ── Flyweight 캐싱 ──
-        // 맵에 설정된 효과 정보 (모든 적이 공유)
-        private readonly Dictionary<EffectType, EffectConfig> _cachedMapEffects = new();
-
         private MapData _currentMapData;
         private int _currentStageIndex;
-
-        public IReadOnlyDictionary<EffectType, EffectConfig> CachedMapEffects => _cachedMapEffects;
 
         private void Awake()
         {
@@ -85,57 +79,34 @@ namespace Managers
             return _globalModuleData.GetValueOrDefault(key);
         }
 
-        #region Flyweight Caching
+        #region Stat Caching
 
         /// <summary>
-        /// 맵/스테이지 전환 시 호출. 맵 이펙트 캐싱 + 적 Stat 캐시 초기화.
+        /// 맵/스테이지 전환 시 호출
         /// </summary>
-        public void SetUpEnemyEffects(MapData mapData, int stageIndex)
+        public void SetData(MapData mapData, int stageIndex)
         {
             _currentMapData = mapData;
             _currentStageIndex = stageIndex;
-
-            _cachedMapEffects.Clear();
-
-            if (mapData.enemyEffects != null)
-            {
-                foreach (var effect in mapData.enemyEffects)
-                {
-                    _cachedMapEffects[effect.effectType] = effect;
-                }
-            }
         }
 
-        public EnemyStats GetStat(EnemyName name, EnemyTag tag)
+        public void SetEnemyStat(EnemyName name, EnemyTag tag, EnemyStat stat)
         {
             var enemyData = DataManager.Instance.GetEnemyData(name, tag);
             if (enemyData == null)
             {
                 Debug.LogWarning($"[EnemyManager] EnemyData not found: {name} | {tag}");
-                return new EnemyStats();
+                
             }
 
-            var stats = EnemyStatUtil.CalculateStat(
-                enemyData, tag, _currentMapData, _currentStageIndex, _cachedMapEffects);
+            EnemyStatUtil.CalculateStat(
+                stat, enemyData, tag, _currentMapData, _currentStageIndex);
 
             // 디버그 로그: 최종 스탯 확인
             Debug.Log($"[EnemyManager] GetStat for {name} | Tag: {tag}\n" +
-                      $"  Base - HP: {stats.baseStats.hp}, ATK: {stats.baseStats.atk}, MoveSpeed: {stats.baseStats.moveSpeed}\n" +
-                      $"  Shooting - ProjectileATK: {stats.shooting.projectileAtk}, ProjectileSpeed: {stats.shooting.projectileSpeed}\n" +
-                      $"  FlyingShooting - FlyingProjectileATK: {stats.flyingShooting.flyingProjectileAtk}, FlyingProjectileSpeed: {stats.flyingShooting.flyingProjectileSpeed}\n" +
-                      $"  OffensiveEffects Count: {stats.offensiveEffects?.Count ?? 0}");
-            
-            if (stats.offensiveEffects != null && stats.offensiveEffects.Count > 0)
-            {
-                foreach (var effect in stats.offensiveEffects)
-                {
-                    Debug.Log($"    Effect - Type: {effect.Key}, Duration: {effect.Value.duration}, " +
-                              $"DamagePerTick: {effect.Value.damagePerTick}, TickInterval: {effect.Value.tickInterval}, " +
-                              $"EffectValue: {effect.Value.effectValue}");
-                }
-            }
-
-            return stats.Clone();
+                      $"  Base - HP: {stat.MaxHP}, ATK: {stat.AttackPower}, MoveSpeed: {stat.MoveSpeed}\n" +
+                      $"  Shooting - ProjectileATK: {stat.shooting.projectileAtk}, ProjectileSpeed: {stat.shooting.projectileSpeed}\n" +
+                      $"  FlyingShooting - FlyingProjectileATK: {stat.flyingShooting.flyingProjectileAtk}, FlyingProjectileSpeed: {stat.flyingShooting.flyingProjectileSpeed}");
         }
 
         #endregion
@@ -159,7 +130,7 @@ namespace Managers
         /// 단일 적 스폰 헬퍼 (Pool에서 가져오기 + 위치 설정)
         /// </summary>
         private IEnumerator SpawnSingleEnemyAsync(
-            AssetReferenceGameObject enemyRef, 
+            AssetReferenceGameObject enemyRef,
             Vector3 position,
             EnemyIdentity identity,
             System.Action<EnemyController> onSpawned)
@@ -224,9 +195,9 @@ namespace Managers
 
                 var spawnPoint = spawnPoints[i];
                 yield return SpawnSingleEnemyAsync(
-                    enemyRef, 
-                    spawnPoint.position, 
-                    identity, 
+                    enemyRef,
+                    spawnPoint.position,
+                    identity,
                     _ => spawnPoint.gameObject.SetActive(true));
             }
         }

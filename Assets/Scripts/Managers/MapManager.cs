@@ -137,7 +137,7 @@ namespace Managers
                 return;
             }
 
-            currentMapType = (MapType)_currentMapData.mapType;
+            currentMapType = _currentMapData.mapType;
 
             if (!_mapDict.TryGetValue(currentMapType, out var mapSo))
             {

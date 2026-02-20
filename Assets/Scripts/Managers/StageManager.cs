@@ -2,7 +2,6 @@ using Game.Stage.Management;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Enemy;
 using Managers;
 using Map;
 using Players;
@@ -120,7 +119,7 @@ public class StageManager : MonoBehaviour
 
         // 맵 데이터 캐싱 초기화 (스테이지별 배율 적용)
         var mapData = MapManager.Instance.CurrentMapData;
-        EnemyManager.Instance.SetUpEnemyEffects(mapData, CurrentStageIndex);
+        EnemyManager.Instance.SetData(mapData, CurrentStageIndex);
 
         // Player setting
         PositionPlayer();
