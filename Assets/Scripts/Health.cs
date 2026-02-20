@@ -68,8 +68,6 @@ public class Health : MonoBehaviour, IDamageable
         currentHealth = maxHealth;
 
         isLive = true;
-
-        ResetAllEffects();
     }
 
     public bool IsDead()
@@ -151,13 +149,6 @@ public class Health : MonoBehaviour, IDamageable
     }
 
     #region Effect
-    private void ResetAllEffects()
-    {
-        foreach (var state in effectStates.Values)
-        {
-            state.Reset();
-        }
-    }
 
     private void ApplyDotEffect(DamageInfo damageInfo)
     {
