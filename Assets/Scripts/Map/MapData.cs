@@ -1,9 +1,11 @@
 using System.Collections.Generic;
-using UnityEngine.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 [System.Serializable]
 public class EffectConfig
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public EffectType effectType;
     public float duration;
     public float damagePerTick;
@@ -29,7 +31,8 @@ namespace Map
     [System.Serializable]
     public class MapData
     {
-        public int mapType;
+        [JsonConverter(typeof(StringEnumConverter))]
+        public MapType mapType;
         public int stageCount;
         public MapModifiers mapModifiers;
         public StageGrowth stageGrowth;
