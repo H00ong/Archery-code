@@ -1,13 +1,13 @@
 using Game.Player;
 using System.Collections;
 using Managers;
-using Players;
 using UnityEngine;
+using Players;
 
 public class Barrel : MonoBehaviour
 {
     [SerializeField] float _lifeTime = 20f;
-    [SerializeField] BarrelType _type;
+    [SerializeField] EffectType _type;
     private BarrelManager _barrelManager;
 
     private void OnEnable()
@@ -15,7 +15,7 @@ public class Barrel : MonoBehaviour
         StartCoroutine(TerminateCoroutine());
     }
 
-    public void Init(BarrelType type) 
+    public void Init(EffectType type) 
     {
         _type = type;
 

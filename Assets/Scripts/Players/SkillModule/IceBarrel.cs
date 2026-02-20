@@ -1,13 +1,11 @@
-using Game.Player;
 using Managers;
 using Players;
 using Players.SkillModule;
-using UnityEngine;
 
 public class IceBarrel : PlayerSkillModuleBase, IPickupBarrel
 {
     private BarrelManager _barrelManager;
-    private BarrelType _type = BarrelType.Ice;
+    private EffectType _type = EffectType.Ice;
     private int BarrelCount => Level;
 
     public override void Init(PlayerSkill _skill)

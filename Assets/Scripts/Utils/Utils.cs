@@ -91,17 +91,4 @@ public static class Utils
         EffectType.Poison
     };
 
-    public static EffectType BarrelTypeToEffectType(Players.BarrelType type)
-    {
-        return type switch
-        {
-            Players.BarrelType.Venom => EffectType.Poison,
-            Players.BarrelType.Blaze => EffectType.Fire,
-            Players.BarrelType.Ice => EffectType.Ice,
-            Players.BarrelType.Lightning => EffectType.Lightning,
-            _ => EffectType.Normal
-        };
-    }
-
-
 }

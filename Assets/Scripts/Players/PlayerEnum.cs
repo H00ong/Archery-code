@@ -1,14 +1,5 @@
 namespace Players
 {
-    public enum BarrelType
-    {
-        Common,
-        Venom,
-        Blaze,
-        Ice,
-        Lightning,
-    }
-
     public enum PlayerState
     {
         Idle,

@@ -12,7 +12,7 @@ namespace Managers
 {
     public sealed class BarrelConfig
     {
-        public BarrelType Type;
+        public EffectType Type;
         public int AttackCountPerBarrel = 0;
         public float Timer = 0f;
     }
@@ -24,9 +24,9 @@ namespace Managers
         [SerializeField] private float meteorDamageModifier = 1f;
         [SerializeField] private float yOffset = 1f;
 
-        private Dictionary<BarrelType, BarrelScriptable> _barrelSoDict = new();
-        private readonly Dictionary<BarrelType, BarrelConfig> _barrelConfigDict = new();
-        private Queue<BarrelType> _attackQueue = new();
+        private Dictionary<EffectType, BarrelScriptable> _barrelSoDict = new();
+        private readonly Dictionary<EffectType, BarrelConfig> _barrelConfigDict = new();
+        private Queue<EffectType> _attackQueue = new();
 
         private AsyncOperationHandle<IList<BarrelScriptable>> _handle; 
         private Bounds _currentMapBound;
@@ -88,7 +88,7 @@ namespace Managers
             }
         }
 
-        private IEnumerator GenerateBarrel(BarrelType type)
+        private IEnumerator GenerateBarrel(EffectType type)
         {
             var assetRef = _barrelSoDict[type].barrelPrefab;
 
@@ -128,7 +128,7 @@ namespace Managers
             if (_barrelSoDict is { Count: > 0 })
                 yield break;
 
-            _barrelSoDict ??= new Dictionary<BarrelType, BarrelScriptable>();
+            _barrelSoDict ??= new Dictionary<EffectType, BarrelScriptable>();
 
             _handle = Addressables.LoadAssetsAsync<BarrelScriptable>(
                 addressableAssetLabel,
@@ -143,7 +143,7 @@ namespace Managers
             }
         }
 
-        public void UpdateBarrelSkill(BarrelType type, int count)
+        public void UpdateBarrelSkill(EffectType type, int count)
         {
             if (_barrelConfigDict.TryGetValue(type, out var barrelConfig))
             {
@@ -159,7 +159,7 @@ namespace Managers
             }
         }
 
-        public void BarrelAttackActive(BarrelType type)
+        public void BarrelAttackActive(EffectType type)
         {
             var config = _barrelConfigDict[type];
             int count = config.AttackCountPerBarrel;
@@ -175,7 +175,7 @@ namespace Managers
 
         private void MeteorAttack() 
         {
-            _attackQueue ??= new Queue<BarrelType>();
+            _attackQueue ??= new Queue<EffectType>();
 
             if (_attackQueue.Count <= 0) return;
 
@@ -193,7 +193,7 @@ namespace Managers
             }
         }
 
-        private IEnumerator AttackCoroutine(BarrelType type, Vector3 pos)
+        private IEnumerator AttackCoroutine(EffectType type, Vector3 pos)
         {
             GameObject go = null;
 
@@ -204,9 +204,8 @@ namespace Managers
             float y = MapManager.Instance.currentMap.transform.position.y + yOffset;
 
             var stat = PlayerController.Instance.Stat;
-            var effectType = Utils.BarrelTypeToEffectType(type);
             float damage = stat.AttackPower * meteorDamageModifier;
-            var damageInfo = new DamageInfo(damage, effectType, stat);
+            var damageInfo = new DamageInfo(damage, type, stat);
 
             var meteorConfig = new MeteorInitConfig(
                 position: Utils.GetXZPosition(pos) + new Vector3(0, y, 0),
