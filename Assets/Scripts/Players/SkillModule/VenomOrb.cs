@@ -1,12 +1,10 @@
-using Game.Player;
 using Players;
 using Players.SkillModule;
-using UnityEngine;
 
 public class VenomOrb : PlayerSkillModuleBase, IOrbGenerator
 {
     OrbManager orbManager;
-    OrbType type = OrbType.Venom;
+    EffectType type = EffectType.Poison;
     int OrbCount => 2 * Level;
 
     public override void Init(PlayerSkill _skill)

@@ -103,15 +103,5 @@ public static class Utils
         };
     }
 
-    public static EffectType OrbTypeToEffectType(Players.OrbType type)
-    {
-        return type switch
-        {
-            Players.OrbType.Venom => EffectType.Poison,
-            Players.OrbType.Blaze => EffectType.Fire,
-            Players.OrbType.Ice => EffectType.Ice,
-            Players.OrbType.Lightning => EffectType.Lightning,
-            _ => EffectType.Normal
-        };
-    }
+
 }

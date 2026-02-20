@@ -1,41 +1,41 @@
-using Enemy;
 using Players;
-using UnityEditor.Rendering;
+using Stat;
 using UnityEngine;
 
 public readonly struct OrbInitConfig
 {
-    public readonly Transform Pivot;
-    public readonly bool Clockwise;
-    public readonly DamageInfo DamageInfo;
+    public readonly Transform pivot;
+    public readonly float rotateSpeed;
+    public readonly EffectType effectType;
+    public readonly float damageModifier;
 
-    public OrbInitConfig(Transform pivot, bool clockwise, DamageInfo damageInfo)
+    public OrbInitConfig(Transform pivot, float rotateSpeed, EffectType effectType, float damageModifier)
     {
-        Pivot = pivot;
-        Clockwise = clockwise;
-        DamageInfo = damageInfo;
+        this.pivot = pivot;
+        this.rotateSpeed = rotateSpeed;
+        this.effectType = effectType;
+        this.damageModifier = damageModifier;
     }
 }
 
 public class Orb : MonoBehaviour
 {
-    [SerializeField] float defaultRotateSpeed = 40f;
-    
-    private DamageInfo _damageInfo;
     private float _rotateSpeed;
     private Transform _rotatePivot;
+    private EffectType _effectType;
+    private float _damageModifier;
 
     void Update()
     {
         Rotate();
     }
 
-    public void Initialize(OrbInitConfig config)
+    public void InitializeOrb(OrbInitConfig config)
     {
-        _rotatePivot = config.Pivot;
-        _rotateSpeed = config.Clockwise ? defaultRotateSpeed : -defaultRotateSpeed;
-        _damageInfo = config.DamageInfo;
-        _damageInfo.attackSource = gameObject;
+        _rotatePivot = config.pivot;
+        _rotateSpeed = config.rotateSpeed;
+        _effectType = config.effectType;
+        _damageModifier = config.damageModifier;
     }
 
     private void Rotate() 
@@ -49,8 +49,12 @@ public class Orb : MonoBehaviour
 
         if (damagable != null) 
         {
-            damagable.TakeDamage(_damageInfo);
-            Debug.Log($"[Orb] Hit {other.gameObject.name} | Type: {_damageInfo.type} | Damage: {_damageInfo.damageAmount}");
+            var stat = PlayerController.Instance.Stat;
+            float damage = stat.AttackPower * _damageModifier;
+            var damageInfo = new DamageInfo(damage, _effectType, stat, gameObject);
+
+            damagable.TakeDamage(damageInfo);
+            Debug.Log($"[Orb] Hit {other.gameObject.name} | Type: {damageInfo.type} | Damage: {damageInfo.damageAmount}");
         }
     }
 }

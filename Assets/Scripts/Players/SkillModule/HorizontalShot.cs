@@ -27,8 +27,8 @@ public class HorizontalShot : PlayerSkillModuleBase, IShootContributor
         if (bulletList.Capacity < need)
             bulletList.Capacity = need;
 
-        Vector3 origin = inst.ShootingPos;
-        Vector3 dir = inst.ShootingDir;
+        Vector3 origin = inst.shootingPos;
+        Vector3 dir = inst.shootingDir;
         Vector3 up = Vector3.up;
         Vector3 right = Vector3.Cross(up, dir);
 
@@ -40,7 +40,7 @@ public class HorizontalShot : PlayerSkillModuleBase, IShootContributor
             Vector3 pos = origin + right * offset;
 
             bulletList.Add(
-                new ShotInstruction { ShootingDir = inst.ShootingDir, ShootingPos = pos }
+                new ShotInstruction { shootingDir = inst.shootingDir, shootingPos = pos }
             );
         }
     }

@@ -1,14 +1,5 @@
 namespace Players
 {
-    public enum OrbType
-    {
-        Common,
-        Venom,
-        Blaze,
-        Ice,
-        Lightning,
-    }
-
     public enum BarrelType
     {
         Common,

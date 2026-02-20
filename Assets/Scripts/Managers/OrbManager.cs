@@ -1,39 +1,51 @@
-using Game.Player;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Managers;
 using Players;
+using Stat;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class OrbConfig
 {
-    public List<Orb> Orbs = new();
-    public bool Clockwise;
-    public float Distance = -1;
+    public List<Orb> orbs = new();
+    public float rotateSpeed;
+    public float distance = -1;
 }
 
 public class OrbManager : MonoBehaviour
 {
+    public static OrbManager instance;
+
     [SerializeField] Transform _orbPivot;
     [SerializeField] private string _label;
     [SerializeField] float _defaultDistance;
-    [SerializeField] private int _orbDamage = 1;
+    [SerializeField] float _orbDamageModifier = 1f;
+    [SerializeField] float _defaultRotateSpeed = 40f;
     
     int _generatedOrbSetCount = 0;
-    bool _clockwise = true;
+    float _rotateSpeed = 40f;
 
-    public float GeneratedOrbSetDistance =>
-    _defaultDistance + .5f * (_generatedOrbSetCount - 1);
-
-    Dictionary<OrbType, OrbScriptable> _orbSoDict = new();
-    Dictionary<OrbType, OrbConfig> _orbObjDict = new();
+    Dictionary<EffectType, OrbScriptable> _orbSoDict = new();
+    Dictionary<EffectType, OrbConfig> _orbObjDict = new();
 
     AsyncOperationHandle<IList<OrbScriptable>> _handle;
 
     PoolManager _poolManager;
+
+    private void Awake()
+    {
+        if (!instance)
+        {
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            Destroy(this);
+        }
+    }
 
     void Start()
     {
@@ -42,6 +54,8 @@ public class OrbManager : MonoBehaviour
 
     private void Init()
     {
+        _rotateSpeed = _defaultRotateSpeed;
+
         Bind();
         StartCoroutine(EnsureOrbDictReady());
         CreateOrbObjDict();
@@ -61,7 +75,7 @@ public class OrbManager : MonoBehaviour
     {
         _orbSoDict.Clear();
 
-        foreach (OrbType type in Enum.GetValues(typeof(OrbType)))
+        foreach (EffectType type in Enum.GetValues(typeof(EffectType)))
         {
             _orbObjDict[type] = new OrbConfig();
         }
@@ -77,7 +91,7 @@ public class OrbManager : MonoBehaviour
 
         _handle = Addressables.LoadAssetsAsync<OrbScriptable>(
             _label,
-            so => _orbSoDict[so.orbType] = so
+            so => _orbSoDict[so.effectType] = so
         );
 
         yield return _handle;
@@ -99,33 +113,35 @@ public class OrbManager : MonoBehaviour
         foreach (var kv in _orbObjDict)
         {
             var orbConfig = kv.Value;
-            foreach (var orb in orbConfig.Orbs)
+            foreach (var orb in orbConfig.orbs)
             {
                 if (orb != null)
                     _poolManager.ReturnObject(orb.gameObject);
             }
 
-            orbConfig.Orbs.Clear();
-            orbConfig.Distance = -1;
+            orbConfig.orbs.Clear();
+            orbConfig.distance = -1;
         }
 
         _orbSoDict.Clear();
 
     }
 
-    public void GenerateOrb(OrbType _type, int _count)
+    public void GenerateOrb(EffectType _type, int _count)
     {
         StartCoroutine(GenerateOrbCoroutine(_type, _count));
     }
 
-    IEnumerator GenerateOrbCoroutine(OrbType _type, int _orbCount)
+    IEnumerator GenerateOrbCoroutine(EffectType _type, int _orbCount)
     {
         int _count = _orbCount;
 
         if (_orbObjDict == null)
+        { 
             CreateOrbObjDict();
+        }
 
-        int beforeCount = _orbObjDict[_type].Orbs.Count;
+        int beforeCount = _orbObjDict[_type].orbs.Count;
 
         if (beforeCount > 0 && _orbCount > beforeCount)
         {
@@ -138,10 +154,12 @@ public class OrbManager : MonoBehaviour
 
         for (int i = 0; i < _count; i++)
         {
-            GameObject go = null;
             var orbSo = _orbSoDict[_type];
 
-            yield return PoolManager.Instance.GetObject(orbSo.orb, inst => go = inst);
+            if (!PoolManager.Instance.TryGetObject(orbSo.orb, out var go))
+            {
+                yield return PoolManager.Instance.GetObject(orbSo.orb, obj => go = obj);
+            }
 
             if (go == null)
             {
@@ -152,41 +170,36 @@ public class OrbManager : MonoBehaviour
             go.transform.SetParent(_orbPivot);
 
             var _orb = go.GetComponent<Orb>();
-            _orbObjDict[_type].Orbs.Add(_orb);
+            _orbObjDict[_type].orbs.Add(_orb);
         }
 
         InitOrbType(_type);
     }
 
-    private void InitOrbType(OrbType _type)
+    private void InitOrbType(EffectType _type)
     {
-        if (!_orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.Orbs == null || orbConfig.Orbs.Count == 0)
+        if (!_orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.orbs == null || orbConfig.orbs.Count == 0)
             return;
         
-        if(orbConfig.Distance <= 0)
+        if(orbConfig.distance <= 0)
         {
-            orbConfig.Distance = GeneratedOrbSetDistance;
             _generatedOrbSetCount++;
-
-            orbConfig.Clockwise = _clockwise;
-            _clockwise = !_clockwise;
+            orbConfig.distance = _defaultDistance + .5f * (_generatedOrbSetCount - 1);
+            orbConfig.rotateSpeed = _rotateSpeed;
+            _rotateSpeed = -_rotateSpeed;
         }
 
-        int count = orbConfig.Orbs.Count;
+        int count = orbConfig.orbs.Count;
 
         for (int i = 0; i < count; i++)
         {
-            var obj = orbConfig.Orbs[i];
+            var orb = orbConfig.orbs[i];
 
-            var effectType = Utils.OrbTypeToEffectType(_type);
-            var damageInfo = new DamageInfo(_orbDamage, effectType);
-
-            var config = new OrbInitConfig(_orbPivot, orbConfig.Clockwise, damageInfo);
-            obj.Initialize(config);
-            SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
-            obj.gameObject.SetActive(true);
+            var config = new OrbInitConfig(_orbPivot, orbConfig.rotateSpeed, _type, _orbDamageModifier);
+            orb.InitializeOrb(config);
+            SetOrbPosition(orb.transform, orbConfig.distance, count, i);
+            orb.gameObject.SetActive(true);
         }
-
     }
 
     private void SetOrbPosition(Transform _obj, float distance, int totalCount, int index)
