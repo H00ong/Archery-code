@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -12,27 +12,22 @@ namespace Managers
     public class EnemyManager : MonoBehaviour
     {
         public static EnemyManager Instance;
-        public List<EnemyController> Enemies = new List<EnemyController>();
+        
 
         [Header("Addressable Settings")]
-        [SerializeField] private string moduleConfigLabel = "enemyModule_config"; 
+        [SerializeField] private string moduleConfigLabel = "enemyModule_config";
 
-        // [중앙 저장소] 태그를 키로 데이터를 보관
-        private Dictionary<EnemyKey, BaseModuleData> _globalModuleData = new();
-        
-        // 로딩 상태 확인용 플래그 & 핸들
         private bool _isModuleLoaded = false;
         private AsyncOperationHandle<IList<BaseModuleData>> _loadHandle;
 
-        private MapData _currentMapData;
-        private int _currentStageIndex;
+        public List<EnemyController> Enemies = new List<EnemyController>();
+        private Dictionary<EnemyKey, BaseModuleData> _enemyModuleData = new();
 
         private void Awake()
         {
             if (!Instance)
             {
                 Instance = this;
-                StartCoroutine(LoadAllModules());
             }
             else if (Instance != this)
             {
@@ -42,19 +37,22 @@ namespace Managers
 
         private void OnDestroy()
         {
-            // 메모리 누수 방지를 위해 핸들 해제
             if (_loadHandle.IsValid())
                 Addressables.Release(_loadHandle);
         }
         
-        private IEnumerator LoadAllModules()
+        public async Awaitable LoadEnemyModulesAsync()
         {
-            _loadHandle = Addressables.LoadAssetsAsync<BaseModuleData>(moduleConfigLabel, null);
-            yield return _loadHandle;
-
-            if (_loadHandle.Status == AsyncOperationStatus.Succeeded)
+            try
             {
-                _globalModuleData.Clear();
+                _loadHandle = Addressables.LoadAssetsAsync<BaseModuleData>(moduleConfigLabel, null);
+                await _loadHandle.Task;
+                destroyCancellationToken.ThrowIfCancellationRequested();
+
+                if (_loadHandle.Status != AsyncOperationStatus.Succeeded)
+                    throw new InvalidOperationException($"[EnemyManager] Addressable load failed for label: {moduleConfigLabel}");
+
+                _enemyModuleData.Clear();
 
                 foreach (var data in _loadHandle.Result)
                 {
@@ -62,51 +60,48 @@ namespace Managers
                     {
                         var key = new EnemyKey(data.targetName, data.targetTag);
 
-                        if (!_globalModuleData.TryAdd(key, data))
+                        if (!_enemyModuleData.TryAdd(key, data))
                         {
-                            Debug.LogWarning($"[EnemyManager] Duplicate module key detected: {key}. Existing module: {_globalModuleData[key]}, New module: {data}");
+                            Debug.LogWarning($"[EnemyManager] Duplicate module key detected: {key}. Existing module: {_enemyModuleData[key]}, New module: {data}");
                         }
                     }
                 }
-                
+
                 _isModuleLoaded = true;
-                Debug.Log($"[EnemyManager] Loaded {_globalModuleData.Count} modules.");
+                Debug.Log($"[EnemyManager] Loaded {_enemyModuleData.Count} modules.");
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[EnemyManager] LoadEnemyModulesAsync canceled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[EnemyManager] LoadEnemyModulesAsync failed: {ex.Message}");
+                throw;
             }
         }
         
         public BaseModuleData GetModuleData(EnemyKey key)
         {
-            return _globalModuleData.GetValueOrDefault(key);
+            return _enemyModuleData.GetValueOrDefault(key);
         }
 
         #region Stat Caching
-
-        /// <summary>
-        /// 맵/스테이지 전환 시 호출
-        /// </summary>
-        public void SetData(MapData mapData, int stageIndex)
-        {
-            _currentMapData = mapData;
-            _currentStageIndex = stageIndex;
-        }
-
         public void SetEnemyStat(EnemyName name, EnemyTag tag, EnemyStat stat)
         {
             var enemyData = DataManager.Instance.GetEnemyData(name, tag);
-            if (enemyData == null)
-            {
-                Debug.LogWarning($"[EnemyManager] EnemyData not found: {name} | {tag}");
-                
-            }
+            var currentMapData = MapManager.Instance.CurrentMapData;
+            var currentStageIndex = StageManager.Instance.CurrentStageIndex;
 
             EnemyStatUtil.CalculateStat(
-                stat, enemyData, tag, _currentMapData, _currentStageIndex);
+                stat, enemyData, tag, currentMapData, currentStageIndex);
 
             // 디버그 로그: 최종 스탯 확인
             Debug.Log($"[EnemyManager] GetStat for {name} | Tag: {tag}\n" +
-                      $"  Base - HP: {stat.MaxHP}, ATK: {stat.AttackPower}, MoveSpeed: {stat.MoveSpeed}\n" +
-                      $"  Shooting - ProjectileATK: {stat.shooting.projectileAtk}, ProjectileSpeed: {stat.shooting.projectileSpeed}\n" +
-                      $"  FlyingShooting - FlyingProjectileATK: {stat.flyingShooting.flyingProjectileAtk}, FlyingProjectileSpeed: {stat.flyingShooting.flyingProjectileSpeed}");
+                    $"  Base - HP: {stat.MaxHP}, ATK: {stat.AttackPower}, MoveSpeed: {stat.MoveSpeed}\n" +
+                    $"  Shooting - ProjectileATK: {stat.shooting.projectileAtk}, ProjectileSpeed: {stat.shooting.projectileSpeed}\n" +
+                    $"  FlyingShooting - FlyingProjectileATK: {stat.flyingShooting.flyingProjectileAtk}, FlyingProjectileSpeed: {stat.flyingShooting.flyingProjectileSpeed}");
         }
 
         #endregion
@@ -126,31 +121,28 @@ namespace Managers
 
         #region Spawn Helpers
 
-        /// <summary>
-        /// 단일 적 스폰 헬퍼 (Pool에서 가져오기 + 위치 설정)
-        /// </summary>
-        private IEnumerator SpawnSingleEnemyAsync(
+        private async Awaitable SpawnSingleEnemyAsync(
             AssetReferenceGameObject enemyRef,
             Vector3 position,
             EnemyIdentity identity,
-            System.Action<EnemyController> onSpawned)
+            System.Action onSpawned)
         {
             var pool = PoolManager.Instance;
 
-            if (!pool.TryGetObject(enemyRef, out var enemyObj, pool.EnemyPool))
-                yield return pool.GetObject(enemyRef, inst => enemyObj = inst, pool.EnemyPool);
+            if (!pool.TryGetObject(enemyRef, out var enemyObj, pool.enemyPool))
+                enemyObj = await pool.GetObjectAsync(enemyRef, pool.enemyPool);
+
+            destroyCancellationToken.ThrowIfCancellationRequested();
 
             if (!enemyObj)
-            {
-                Debug.LogError("[EnemyManager] Failed to spawn enemy");
-                yield break;
-            }
+                throw new InvalidOperationException($"[EnemyManager] Failed to get enemy from pool: {enemyRef}");
 
             var controller = enemyObj.GetComponent<EnemyController>();
+            if (!controller)
+                throw new InvalidOperationException($"[EnemyManager] EnemyController not found on spawned object: {enemyObj.name}");
+
             controller.transform.position = position;
-
-            onSpawned?.Invoke(controller);
-
+            onSpawned?.Invoke();
             enemyObj.SetActive(true);
             controller.InitializeEnemy(identity);
             Enemies.Add(controller);
@@ -158,47 +150,60 @@ namespace Managers
 
         #endregion
         
-        public IEnumerator SpawnBossEnemey(int index)
+        public async Awaitable SpawnBossEnemyAsync(int bossStageIndex)
         {
-            yield return new WaitUntil(() => _isModuleLoaded);
+            try
+            {
+                var mapManager = MapManager.Instance;
+                var bossIdentity = mapManager.GetBossIdentity(bossStageIndex);
+                var bossRef = bossIdentity.Prefab;
+                var spawnPoint = mapManager.GetBossSpawnPoint();
 
-            var mapManager = MapManager.Instance;
-            var bossIdentity = mapManager.GetBossIdentity(index);
-            var bossRef = bossIdentity != null ? bossIdentity.Prefab : mapManager.GetBossAssetRef(index);
-            var spawnPoint = mapManager.GetBossSpawnPoint();
-
-            yield return SpawnSingleEnemyAsync(bossRef, spawnPoint.position, bossIdentity, null);
+                await SpawnSingleEnemyAsync(bossRef, spawnPoint.position, bossIdentity, () => spawnPoint.gameObject.SetActive(true));
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[EnemyManager] SpawnBossEnemyAsync canceled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[EnemyManager] SpawnBossEnemyAsync failed: {ex.Message}");
+                throw;
+            }
         }
 
-        public IEnumerator SpawnEnemy(int count)
+        public async Awaitable SpawnEnemyAsync(int count)
         {
-            yield return new WaitUntil(() => _isModuleLoaded);
-
-            var mapManager = MapManager.Instance;
-            var spawnPoints = mapManager.GetEnemySpawnPoint(count);
-            var useIdentity = mapManager.HasEnemyIdentityList;
-
-            for (int i = 0; i < count; i++)
+            try
             {
-                EnemyIdentity identity = null;
-                AssetReferenceGameObject enemyRef;
+                var mapManager = MapManager.Instance;
+                var spawnPoints = mapManager.GetEnemySpawnPoints(count);
 
-                if (useIdentity)
-                {
-                    identity = mapManager.GetEnemyIdentity();
-                    enemyRef = identity.Prefab;
-                }
-                else
-                {
-                    enemyRef = mapManager.GetEnemeyAssetRef();
-                }
+                int availableCount = spawnPoints.Count;
 
-                var spawnPoint = spawnPoints[i];
-                yield return SpawnSingleEnemyAsync(
-                    enemyRef,
-                    spawnPoint.position,
-                    identity,
-                    _ => spawnPoint.gameObject.SetActive(true));
+                for (int i = 0; i < availableCount; i++)
+                {
+                    var identity = mapManager.GetEnemyIdentity();
+                    var enemyRef = identity.Prefab;
+                    var spawnPoint = spawnPoints[i];
+
+                    await SpawnSingleEnemyAsync(
+                        enemyRef,
+                        spawnPoint.position,
+                        identity,
+                        () => spawnPoint.gameObject.SetActive(true));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[EnemyManager] SpawnEnemyAsync canceled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[EnemyManager] SpawnEnemyAsync failed: {ex.Message}");
+                throw;
             }
         }
 
