@@ -232,7 +232,7 @@ namespace Enemy
             
             die = gameObject.GetOrAddComponent<EnemyDie>();   die.Init(this);
             hurt = gameObject.GetOrAddComponent<EnemyHurt>(); hurt.Init(this);
-            health = gameObject.GetOrAddComponent<Health>();  health.InitializeHealth(10);
+            health = gameObject.GetOrAddComponent<Health>();  health.InitializeHealth(stat.MaxHP);
 
             health.OnHit += this.OnHit;
             health.OnDie += this.OnDie;

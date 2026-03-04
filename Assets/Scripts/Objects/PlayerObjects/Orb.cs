@@ -2,14 +2,14 @@ using Players;
 using Stat;
 using UnityEngine;
 
-public readonly struct OrbInitConfig
+public readonly struct OrbConfig
 {
     public readonly Transform pivot;
     public readonly float rotateSpeed;
     public readonly EffectType effectType;
     public readonly float damageModifier;
 
-    public OrbInitConfig(Transform pivot, float rotateSpeed, EffectType effectType, float damageModifier)
+    public OrbConfig(Transform pivot, float rotateSpeed, EffectType effectType, float damageModifier)
     {
         this.pivot = pivot;
         this.rotateSpeed = rotateSpeed;
@@ -30,7 +30,7 @@ public class Orb : MonoBehaviour
         Rotate();
     }
 
-    public void InitializeOrb(OrbInitConfig config)
+    public void InitializeOrb(OrbConfig config)
     {
         _rotatePivot = config.pivot;
         _rotateSpeed = config.rotateSpeed;

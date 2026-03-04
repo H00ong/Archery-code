@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Managers;
 using Objects;
@@ -58,15 +57,17 @@ namespace Enemy
 
         public override void OnAnimEvent()
         {
-            StartCoroutine(ShootingCoroutine());
+            ShootAsync().Forget();
         }
 
-        IEnumerator ShootingCoroutine()
+        async Awaitable ShootAsync()
         {
             foreach (var point in _shootingPoints)
             {
-                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.ProjectilePool))
-                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _poolManager.ProjectilePool);
+                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool))
+                    go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
+
+                destroyCancellationToken.ThrowIfCancellationRequested();
 
                 Vector3 dest = GetDestination(point);
 

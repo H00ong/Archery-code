@@ -14,7 +14,7 @@ public enum TagType
 
 public static class Utils
 {
-    private static readonly Dictionary<TagType, string> Map = new()
+    public static readonly Dictionary<TagType, string> TagMap = new()
     {
         { TagType.Player,           "Player" },
         { TagType.Enemy,            "Enemy" },
@@ -24,7 +24,7 @@ public static class Utils
         { TagType.Floor,            "Floor" },
     };
 
-    public static string ToString(TagType t) => Map[t];
+    public static string ToString(TagType t) => TagMap[t];
 
     public static Component GetOrAddComponent(this GameObject obj, Type type)
     {

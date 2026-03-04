@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Enemy;
 using Managers;
@@ -55,16 +54,24 @@ namespace Enemy
 
         public override void OnAnimEvent()
         {
-            StartCoroutine(FlyingShootingCoroutine());
+            FlyingShootAsync().Forget();
         }
 
         // ReSharper disable Unity.PerformanceAnalysis
-        IEnumerator FlyingShootingCoroutine()
+        async Awaitable FlyingShootAsync()
         {
             foreach (var point in  _shootingPoints)
             {
-                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.ProjectilePool)) 
-                    yield return _poolManager.GetObject(_projectilePrefab, inst => go = inst, _poolManager.ProjectilePool);
+                if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool)) 
+                    go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
+
+                destroyCancellationToken.ThrowIfCancellationRequested();
+
+                if (!go)
+                {
+                    Debug.LogError("[FlyingShoot] FlyingShootAsync: failed to get projectile from pool.");
+                    return;
+                }
 
                 FlyingProjectile proj = go.GetComponent<FlyingProjectile>();
                 

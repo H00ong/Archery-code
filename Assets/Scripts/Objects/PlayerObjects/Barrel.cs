@@ -15,14 +15,17 @@ public class Barrel : MonoBehaviour
         StartCoroutine(TerminateCoroutine());
     }
 
-    public void Init(EffectType type) 
+    private void Start()
     {
-        _type = type;
-
-        _barrelManager = FindAnyObjectByType<BarrelManager>();
+        _barrelManager = BarrelManager.Instance;
     }
 
-    IEnumerator TerminateCoroutine() 
+    public void InitBarrel(EffectType type)
+    {
+        _type = type;
+    }
+
+    IEnumerator TerminateCoroutine()
     {
         yield return new WaitForSeconds(_lifeTime);
 
@@ -31,11 +34,9 @@ public class Barrel : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        GameObject go = Utils.GetCollisionRoot(other);
-
-        if (go.GetComponent<PlayerController>() != null)
+        if (other.CompareTag(Utils.TagMap[TagType.Player]))
         {
-            _barrelManager.BarrelAttackActive(_type);
+            BarrelManager.Instance.MeteorAttackActive(_type);
 
             StopAllCoroutines();
             PoolManager.Instance.ReturnObject(gameObject);
