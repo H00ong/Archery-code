@@ -15,6 +15,7 @@ public class InitManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private async void Start()

@@ -19,7 +19,7 @@ namespace Managers
     {
         public static BarrelManager Instance { get; private set; }
 
-        [SerializeField] private string addressableAssetLabel;
+        [SerializeField] private string addressableAssetLabel = "barrel_config";
         [SerializeField] private float barrelGenerateTime = 5f;
         [SerializeField] private float meteorDamageModifier = 1f;
         [SerializeField] private float meteorYOffset = 1f;
@@ -38,6 +38,7 @@ namespace Managers
             if (Instance == null)
             {
                 Instance = this;
+                DontDestroyOnLoad(gameObject);
             }
             else
             {

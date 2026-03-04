@@ -23,6 +23,7 @@ public class InputManager : MonoBehaviour
 
         Instance = this;
         _playerInput = new PlayerInput();
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Update()

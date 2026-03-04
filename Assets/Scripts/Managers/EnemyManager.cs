@@ -15,7 +15,7 @@ namespace Managers
         
 
         [Header("Addressable Settings")]
-        [SerializeField] private string moduleConfigLabel = "enemyModule_config";
+        [SerializeField] private string moduleConfigLabel = "enemy_module";
 
         private bool _isModuleLoaded = false;
         private AsyncOperationHandle<IList<BaseModuleData>> _loadHandle;
@@ -28,6 +28,7 @@ namespace Managers
             if (!Instance)
             {
                 Instance = this;
+                DontDestroyOnLoad(gameObject);
             }
             else if (Instance != this)
             {

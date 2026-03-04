@@ -17,8 +17,8 @@ public class OrbManager : MonoBehaviour
     public static OrbManager instance;
     private const float OrbDistanceIncrement = 0.5f;
 
-    [SerializeField] Transform _orbPivot;
-    [SerializeField] private string _label;
+    Transform _orbPivot;
+    [SerializeField] private string _label = "orb_config";
     [SerializeField] float _defaultDistance;
     [SerializeField] float _orbDamageModifier = 1f;
     [SerializeField] float _defaultRotateSpeed = 40f;
