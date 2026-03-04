@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Players;
 using UnityEngine;
 
 namespace Stat
@@ -186,6 +187,26 @@ namespace Stat
         // ================================================================
         //  Reset (게임 종료 시 InGame Buff 초기화)
         // ================================================================
+
+        // ================================================================
+        //  Base Layer Overwrite (CharacterSO에서 기본 능력치 덮어쓰기)
+        // ================================================================
+
+        /// <summary>
+        /// CharacterSO의 CharacterBaseStatData를 Base Layer에 적용한다.
+        /// CharacterManager에서 캐릭터 생성 직후 호출된다.
+        /// </summary>
+        public void ApplyBaseStat(CharacterBaseStatData data)
+        {
+            baseMaxHP = data.maxHP;
+            baseAttackPower = data.attackPower;
+            baseMoveSpeed = data.moveSpeed;
+            baseArmor = data.armor;
+            baseMagicResistance = data.magicResistance;
+            baseAttackSpeed = data.attackSpeed;
+            baseProjectileSpeed = data.projectileSpeed;
+            attackEffectType = data.attackEffectType;
+        }
 
         /// <summary>
         /// 게임 종료 시 InGame Buff 수치만 초기화.
