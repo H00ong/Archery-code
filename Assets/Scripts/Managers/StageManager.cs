@@ -116,7 +116,6 @@ public class StageManager : MonoBehaviour
         try
         {
             await CharacterManager.Instance.LoadAndSpawnCharacterAsync();
-            await PlayerController.Instance.Skill.LoadAllSkillsAsync();
 
             LoadMap();
             PositionPlayer();
@@ -148,6 +147,8 @@ public class StageManager : MonoBehaviour
         spawnPos.gameObject.SetActive(true);
 
         playerContainter.position = spawnPos.position;
+        CameraController.Instance.SetPosition(spawnPos.position);
+
         player.gameObject.SetActive(true);
     }
 
