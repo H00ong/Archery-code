@@ -1,75 +1,38 @@
 using System.Collections.Generic;
+using System.Linq;
+using Managers;
 using Players.SkillModule;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Players
 {
     public class PlayerSkill : MonoBehaviour
     {
-        [Header("Addressable Settings")]
-        [SerializeField] private string skillConfigLabel = "skill_config";
-
-        private Dictionary<PlayerSkillId, SkillDefinition> _skillDict = new();
         private List<SkillDefinition> _availableSkills = new();
+
+        /// <summary> 현재 획득 가능한 스킬 목록 </summary>
         public List<SkillDefinition> availableSkills => _availableSkills;
 
+        /// <summary> 이미 배운 스킬 ID → 모듈 매핑 </summary>
         public readonly Dictionary<PlayerSkillId, PlayerSkillModuleBase> acquiredSkillModule = new();
 
-        private bool _isSkillLoaded = false;
-        private AsyncOperationHandle<IList<SkillDefinition>> _loadHandle;
-
-        private void OnDestroy()
+        /// <summary>
+        /// SkillManager의 전체 스킬 목록을 기반으로 availableSkills를 초기화한다.
+        /// CharacterManager에서 캐릭터 스폰 후 PlayerController.Init()을 통해 호출된다.
+        /// SkillManager.LoadAllSkillsAsync()가 완료된 뒤에 호출되어야 한다.
+        /// </summary>
+        public void Init()
         {
-            if (_loadHandle.IsValid())
-                Addressables.Release(_loadHandle);
-        }
-
-        public async Awaitable LoadAllSkillsAsync()
-        {
-            if(_skillDict is { Count: > 0 } && _availableSkills is { Count: > 0 })
+            var skillManager = SkillManager.Instance;
+            if (skillManager == null || !skillManager.IsLoaded)
             {
-                Debug.Log("[PlayerSkill] Skills already loaded, skipping.");
+                Debug.LogError("[PlayerSkill] SkillManager가 준비되지 않았습니다. InitManager에서 LoadAllSkillsAsync()를 먼저 호출하세요.");
                 return;
             }
 
-            _loadHandle = Addressables.LoadAssetsAsync<SkillDefinition>(skillConfigLabel, null);
-            await _loadHandle.Task;
-            destroyCancellationToken.ThrowIfCancellationRequested();
-
-            if (_loadHandle.Status == AsyncOperationStatus.Succeeded)
-            {
-                _skillDict.Clear();
-                _availableSkills.Clear();
-
-                foreach (var skill in _loadHandle.Result)
-                {
-                    if (skill)
-                    {
-                        if (!_skillDict.TryAdd(skill.id, skill))
-                        {
-                            Debug.LogWarning($"[PlayerSkill] Duplicate Skill ID: {skill.id}");
-                        }
-                        else
-                        {
-                            _availableSkills.Add(skill);
-                        }
-                    }
-                }
-                _isSkillLoaded = true;
-                Debug.Log($"[PlayerSkill] Loaded {_skillDict.Count} skills.");
-            }
-            else
-            {
-                _isSkillLoaded = false;
-
-                if(_loadHandle.IsValid())
-                    Addressables.Release(_loadHandle);
-
-                Debug.LogError("[PlayerSkill] Failed to load skills.");
-                throw new System.InvalidOperationException($"[PlayerSkill] Addressable load failed for label: {skillConfigLabel}");
-            }
+            _availableSkills = skillManager.AllSkills.ToList();
+            acquiredSkillModule.Clear();
+            Debug.Log($"[PlayerSkill] {_availableSkills.Count}개 스킬로 초기화 완료.");
         }
 
         public void AcquireSkill(SkillDefinition so)
@@ -84,7 +47,7 @@ namespace Players
 
         private void LearnSkill(SkillDefinition so)
         {
-            if (_skillDict.TryGetValue(so.id, out var skill))
+            if (SkillManager.Instance.SkillDict.TryGetValue(so.id, out var skill))
             {
                 skill.InstallModule(gameObject, this);
                 acquiredSkillModule[so.id] = skill.GetModule();
@@ -106,9 +69,9 @@ namespace Players
 
         public List<SkillDefinition> GetRandomChoices(int count = 3)
         {
-            if (!_isSkillLoaded || _availableSkills.Count == 0)
+            if (_availableSkills.Count == 0)
             {
-                Debug.LogWarning("[PlayerSkill] Skills not loaded yet or no available skills!");
+                Debug.LogWarning("[PlayerSkill] 획득 가능한 스킬이 없습니다!");
                 return new List<SkillDefinition>();
             }
 

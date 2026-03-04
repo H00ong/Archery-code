@@ -37,6 +37,7 @@ namespace Players
             InitComponent();
 
             Attack.Init();
+            Skill.Init();
             Health.InitializeHealth(Stat.MaxHP);
         }
 
