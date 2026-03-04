@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Players.SkillModule;
 using UnityEngine;
@@ -21,21 +20,23 @@ namespace Players
         private bool _isSkillLoaded = false;
         private AsyncOperationHandle<IList<SkillDefinition>> _loadHandle;
 
-        public void Init()
-        {
-            StartCoroutine(LoadAllSkills());
-        }
-
         private void OnDestroy()
         {
             if (_loadHandle.IsValid())
                 Addressables.Release(_loadHandle);
         }
 
-        private IEnumerator LoadAllSkills()
+        public async Awaitable LoadAllSkillsAsync()
         {
+            if(_skillDict is { Count: > 0 } && _availableSkills is { Count: > 0 })
+            {
+                Debug.Log("[PlayerSkill] Skills already loaded, skipping.");
+                return;
+            }
+
             _loadHandle = Addressables.LoadAssetsAsync<SkillDefinition>(skillConfigLabel, null);
-            yield return _loadHandle;
+            await _loadHandle.Task;
+            destroyCancellationToken.ThrowIfCancellationRequested();
 
             if (_loadHandle.Status == AsyncOperationStatus.Succeeded)
             {
@@ -61,7 +62,13 @@ namespace Players
             }
             else
             {
-                Debug.LogError("[PlayerSkill] Failed to load skills!");
+                _isSkillLoaded = false;
+
+                if(_loadHandle.IsValid())
+                    Addressables.Release(_loadHandle);
+
+                Debug.LogError("[PlayerSkill] Failed to load skills.");
+                throw new System.InvalidOperationException($"[PlayerSkill] Addressable load failed for label: {skillConfigLabel}");
             }
         }
 
@@ -120,7 +127,7 @@ namespace Players
         #region Skill methods
 
         public void UpgradeAttackSpeed(float modifier) => PlayerController.Instance.Attack.UpdateAttackSpeed(modifier);
-        public void UpgradeMoveSpeed(float modifier) => PlayerController.Instance.Move.UpdateMoveSpeed(modifier);
+        public void UpgradeMoveSpeed(float modifier) => PlayerController.Instance.Movement.UpdateMoveSpeed(modifier);
 
         #endregion
     }

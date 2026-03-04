@@ -21,8 +21,7 @@ namespace Players
         /// <summary> 플레이어 3단 레이어 스탯 (Base + Equipment + InGameBuff) </summary>
         public PlayerStat Stat { get; private set; }
         
-        public PlayerData Data { get; private set; }
-        public PlayerMovement Move { get; private set; }
+        public PlayerMovement Movement { get; private set; }
         public PlayerAttack Attack { get; private set; }
         public PlayerHurt Hurt { get; private set; }
         public PlayerSkill Skill { get; private set; }
@@ -30,13 +29,22 @@ namespace Players
         public Animator Anim { get; private set; }
 
         public bool IsPlayerDead => currentState == PlayerState.Dead;
-        
-        private void Awake()
+
+
+        public void Init()
+        {
+            SetupSingleton();
+            InitComponent();
+
+            Attack.Init();
+            Health.InitializeHealth(Stat.MaxHP);
+        }
+
+        private void SetupSingleton()
         {
             if (!Instance)
             {
                 Instance = this;
-                InitComponent();
             }
             else if (Instance != this)
             {
@@ -44,19 +52,11 @@ namespace Players
             }
         }
 
-        private void OnEnable()
-        {
-            Attack.Init();
-            Skill.Init();
-            Health.InitializeHealth(Stat.MaxHP);
-        }
-
         private void InitComponent()
         {
             Anim = GetComponentInChildren<Animator>();
-            Data ??= GetComponent<PlayerData>();
-            Move ??= GetComponent<PlayerMovement>();
             Attack ??= GetComponent<PlayerAttack>();
+            Movement ??= GetComponent<PlayerMovement>();
             Hurt ??= GetComponent<PlayerHurt>();
             Skill ??= GetComponent<PlayerSkill>();
             Stat ??= GetComponent<PlayerStat>();
