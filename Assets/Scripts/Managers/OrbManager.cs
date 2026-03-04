@@ -1,53 +1,94 @@
-using Game.Player;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Managers;
-using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 
-public class OrbConfig
+public class OrbPool
 {
-    public List<Orb> Orbs = new();
-    public bool Clockwise;
-    public float Distance = -1;
+    public List<Orb> orbs = new();
+    public float rotateSpeed;
+    public float distance = -1;
 }
 
 public class OrbManager : MonoBehaviour
 {
+    public static OrbManager instance;
+    private const float OrbDistanceIncrement = 0.5f;
+
     [SerializeField] Transform _orbPivot;
     [SerializeField] private string _label;
     [SerializeField] float _defaultDistance;
-    [SerializeField] private int _orbDamage = 1;
+    [SerializeField] float _orbDamageModifier = 1f;
+    [SerializeField] float _defaultRotateSpeed = 40f;
     
     int _generatedOrbSetCount = 0;
-    bool _clockwise = true;
-
-    public float GeneratedOrbSetDistance =>
-    _defaultDistance + .5f * (_generatedOrbSetCount - 1);
-
-    Dictionary<OrbType, OrbScriptable> _orbSoDict = new();
-    Dictionary<OrbType, OrbConfig> _orbObjDict = new();
-
+    float _rotateSpeed;
     AsyncOperationHandle<IList<OrbScriptable>> _handle;
-
     PoolManager _poolManager;
 
-    void Start()
+    Dictionary<EffectType, OrbScriptable> _orbSoDict = new();
+    Dictionary<EffectType, OrbPool> _orbPoolDict = new();
+
+    private void Awake()
     {
-        Init();
+        if (!instance)
+        {
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            Destroy(this);
+        }
     }
 
-    private void Init()
+    public async Awaitable EnsureOrbSoDictReadyAsync()
     {
-        Bind();
-        StartCoroutine(EnsureOrbDictReady());
+        _rotateSpeed = _defaultRotateSpeed;
+
+        FindOrbPivot();
         CreateOrbObjDict();
+
+        try
+        {
+            _handle = Addressables.LoadAssetsAsync<OrbScriptable>(
+            _label,
+            so => _orbSoDict[so.effectType] = so
+            );
+
+            await _handle.Task;
+            destroyCancellationToken.ThrowIfCancellationRequested();
+
+            if (_handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"Load {_label} failed");
+                throw new System.Exception($"Failed to load orb configurations with label: {_label}");
+            }
+        }
+        catch (System.OperationCanceledException)
+        {
+            Debug.LogError($"[OrbManager] Load operation for {_label} was canceled.");
+            throw new System.OperationCanceledException($"Load operation for {_label} was canceled.");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[OrbManager] Exception while loading {_label}: {ex.Message}");
+            throw new System.Exception($"Exception while loading orb configurations with label: {_label}", ex);
+        }
+    }
+    private void ReleaseOrbHandle()
+    {
+        if (_handle.IsValid())
+            Addressables.Release(_handle);
     }
 
-    private void Bind()
+    private void OnDisable()
+    {
+        ClearOrbData();
+    }
+
+    private void FindOrbPivot()
     {
         if (_orbPivot == null)
         {
@@ -61,34 +102,13 @@ public class OrbManager : MonoBehaviour
     {
         _orbSoDict.Clear();
 
-        foreach (OrbType type in Enum.GetValues(typeof(OrbType)))
+        foreach (EffectType type in Enum.GetValues(typeof(EffectType)))
         {
-            _orbObjDict[type] = new OrbConfig();
+            _orbPoolDict[type] = new OrbPool();
         }
     }
 
-    private IEnumerator EnsureOrbDictReady()
-    {
-        if (_orbSoDict != null && _orbSoDict.Count > 0)
-            yield break;
-
-        if (_orbSoDict == null)
-            _orbSoDict = new();
-
-        _handle = Addressables.LoadAssetsAsync<OrbScriptable>(
-            _label,
-            so => _orbSoDict[so.orbType] = so
-        );
-
-        yield return _handle;
-
-        if (_handle.Status != AsyncOperationStatus.Succeeded)
-        {
-            Debug.LogError($"Load {_label} failed");
-        }
-    }
-
-    private void ClearOrbData() 
+    private void ClearOrbData()
     {
         if (_handle.IsValid())
         {
@@ -96,106 +116,111 @@ public class OrbManager : MonoBehaviour
             _handle = default;
         }
 
-        foreach (var kv in _orbObjDict)
+        foreach (var kv in _orbPoolDict)
         {
-            var orbConfig = kv.Value;
-            foreach (var orb in orbConfig.Orbs)
+            var orbPool = kv.Value;
+            foreach (var orb in orbPool.orbs)
             {
                 if (orb != null)
                     _poolManager.ReturnObject(orb.gameObject);
             }
 
-            orbConfig.Orbs.Clear();
-            orbConfig.Distance = -1;
+            orbPool.orbs.Clear();
+            orbPool.distance = -1;
         }
 
         _orbSoDict.Clear();
-
     }
 
-    public void GenerateOrb(OrbType _type, int _count)
+    public async Awaitable GenerateOrbAsync(EffectType type, int orbCount)
     {
-        StartCoroutine(GenerateOrbCoroutine(_type, _count));
-    }
-
-    IEnumerator GenerateOrbCoroutine(OrbType _type, int _orbCount)
-    {
-        int _count = _orbCount;
-
-        if (_orbObjDict == null)
+        if (_orbPoolDict == null)
+        {
             CreateOrbObjDict();
-
-        int beforeCount = _orbObjDict[_type].Orbs.Count;
-
-        if (beforeCount > 0 && _orbCount > beforeCount)
-        {
-            _count = _orbCount - beforeCount;
-        }
-        else if (beforeCount > _orbCount)
-        {
-            yield break;
         }
 
-        for (int i = 0; i < _count; i++)
-        {
-            GameObject go = null;
-            var orbSo = _orbSoDict[_type];
+        int count = orbCount - _orbPoolDict[type].orbs.Count;
 
-            yield return PoolManager.Instance.GetObject(orbSo.orb, inst => go = inst);
-
-            if (go == null)
-            {
-                Debug.LogError("Gameobject is null");
-                yield break;
-            }
-
-            go.transform.SetParent(_orbPivot);
-
-            var _orb = go.GetComponent<Orb>();
-            _orbObjDict[_type].Orbs.Add(_orb);
-        }
-
-        InitOrbType(_type);
-    }
-
-    private void InitOrbType(OrbType _type)
-    {
-        if (!_orbObjDict.TryGetValue(_type, out var orbConfig) || orbConfig.Orbs == null || orbConfig.Orbs.Count == 0)
+        if (count <= 0)
             return;
-        
-        if(orbConfig.Distance <= 0)
-        {
-            orbConfig.Distance = GeneratedOrbSetDistance;
-            _generatedOrbSetCount++;
-
-            orbConfig.Clockwise = _clockwise;
-            _clockwise = !_clockwise;
-        }
-
-        int count = orbConfig.Orbs.Count;
 
         for (int i = 0; i < count; i++)
         {
-            var obj = orbConfig.Orbs[i];
+            var orbSo = _orbSoDict[type];
+            GameObject go = null;
+            try
+            {
+                if (!PoolManager.Instance.TryGetObject(orbSo.orb, out go))
+                {
+                    go = await PoolManager.Instance.GetObjectAsync(orbSo.orb);
+                }
 
-            var effectType = Utils.OrbTypeToEffectType(_type);
-            var damageInfo = new DamageInfo(_orbDamage, effectType);
+                destroyCancellationToken.ThrowIfCancellationRequested();
 
-            var config = new OrbInitConfig(_orbPivot, orbConfig.Clockwise, damageInfo);
-            obj.Initialize(config);
-            SetOrbPosition(obj.transform, orbConfig.Distance, count, i);
-            obj.gameObject.SetActive(true);
+                if (go == null)
+                {
+                    Debug.LogError("[OrbManager] GenerateOrbAsync: 오브젝트를 풀에서 가져오지 못했습니다.");
+                    continue;
+                }
+
+                go.transform.SetParent(_orbPivot);
+                var orb = go.GetComponent<Orb>();
+                _orbPoolDict[type].orbs.Add(orb);
+            }
+            catch (System.OperationCanceledException)
+            {
+                if (go != null)
+                    PoolManager.Instance.ReturnObject(go);
+
+                return;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[OrbManager] 구슬 생성 중 치명적 에러 발생: {ex.Message}");
+
+                if (go != null)
+                    PoolManager.Instance.ReturnObject(go);
+
+                continue;
+            }
         }
 
+        InitOrbType(type);
     }
 
-    private void SetOrbPosition(Transform _obj, float distance, int totalCount, int index)
+    private void InitOrbType(EffectType type)
+    {
+        if (!_orbPoolDict.TryGetValue(type, out var orbPool) || orbPool.orbs is { Count : 0 })
+            return;
+
+        if (orbPool.distance <= 0)
+        {
+            _generatedOrbSetCount++;
+            orbPool.distance = _defaultDistance + OrbDistanceIncrement * (_generatedOrbSetCount - 1);
+            orbPool.rotateSpeed = _rotateSpeed;
+            _rotateSpeed *= -1;
+        }
+
+        int count = orbPool.orbs.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            var orb = orbPool.orbs[i];
+
+            var config = new OrbConfig(_orbPivot, orbPool.rotateSpeed, type, _orbDamageModifier);
+            orb.InitializeOrb(config);
+            SetOrbPosition(orb.transform, orbPool.distance, count, i);
+            orb.gameObject.SetActive(true);
+        }
+    }
+
+    private void SetOrbPosition(Transform obj, float distance, int totalCount, int index)
     {
         Transform _pivot = _orbPivot;
 
-        _obj.position = _pivot.position + _pivot.forward * distance;
+        obj.position = _pivot.position + _pivot.forward * distance;
 
         float angle = (360f / totalCount) * index;
-        _obj.RotateAround(_pivot.position, Vector3.up, angle);
+        obj.RotateAround(_pivot.position, Vector3.up, angle);
     }
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 public class IceOrb : PlayerSkillModuleBase, IOrbGenerator
 {
     OrbManager _orbManager;
-    OrbType _type = OrbType.Ice;
+    EffectType _type = EffectType.Ice;
     int OrbCount => 2 * Level;
 
     public override void Init(PlayerSkill _skill)
@@ -20,13 +20,13 @@ public class IceOrb : PlayerSkillModuleBase, IOrbGenerator
 
     public void GenerateOrb()
     {
-        _orbManager.GenerateOrb(_type, OrbCount);
+        _orbManager.GenerateOrbAsync(_type, OrbCount).Forget();
     }
 
     public override void UpdateSkill()
     {
         base.UpdateSkill();
         
-        _orbManager.GenerateOrb(_type, OrbCount);
+        GenerateOrb();
     }
 }

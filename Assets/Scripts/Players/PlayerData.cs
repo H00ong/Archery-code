@@ -2,24 +2,18 @@ using UnityEngine;
 
 namespace Players
 {
-    public class PlayerData : MonoBehaviour
+    public class PlayerData
     {
-        public int Currency { get; private set; }
-        public int Diamond { get; private set; }
+        public CharacterName characterName { get; private set; } = CharacterName.BlueWizard;
 
-        public int HelmetLevel { get; private set; }
-        public int ArmorLevel { get; private set; }
-        public int BootsLevel { get; private set; }
-        public int SwordLevel { get; private set; }
-
-        void Start()
+        public void SetCharacterName(CharacterName characterName)
         {
-        
+            this.characterName = characterName;
         }
 
-        void Update()
+        public PlayerData(CharacterName characterName)
         {
-        
+            this.characterName = characterName;
         }
     }
 }

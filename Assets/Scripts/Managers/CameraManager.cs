@@ -13,6 +13,6 @@ public class CameraManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        transform.position = playerManager.Move.transform.position + Offset;
+        transform.position = playerManager.Movement.transform.position + Offset;
     }
 }

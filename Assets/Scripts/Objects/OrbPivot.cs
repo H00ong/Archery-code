@@ -3,19 +3,14 @@ using UnityEngine;
 
 public class OrbPivot : MonoBehaviour
 {
-    [SerializeField] Transform pivot;
-
-    private void Start()
-    {
-        if(pivot == null)
-            pivot = FindAnyObjectByType<PlayerController>().transform;
-    }
+    private Transform _pivot;
 
     private void Update()
     {
-        if (pivot != null)
-        {
-            transform.position = new Vector3(pivot.position.x, transform.position.y, pivot.position.z);
-        }
+        if (PlayerController.Instance == null)
+            return;
+        
+        _pivot ??= PlayerController.Instance.transform;
+        transform.position = new Vector3(_pivot.position.x, transform.position.y, _pivot.position.z);
     }
 }

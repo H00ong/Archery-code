@@ -1,12 +1,10 @@
-using Game.Player;
 using Players;
 using Players.SkillModule;
-using UnityEngine;
 
 public class VenomOrb : PlayerSkillModuleBase, IOrbGenerator
 {
     OrbManager orbManager;
-    OrbType type = OrbType.Venom;
+    EffectType type = EffectType.Poison;
     int OrbCount => 2 * Level;
 
     public override void Init(PlayerSkill _skill)
@@ -20,13 +18,13 @@ public class VenomOrb : PlayerSkillModuleBase, IOrbGenerator
 
     public void GenerateOrb()
     {
-        orbManager.GenerateOrb(type, OrbCount);
+        orbManager.GenerateOrbAsync(type, OrbCount).Forget();
     }
 
     public override void UpdateSkill()
     {
         base.UpdateSkill();
         
-        orbManager.GenerateOrb(type, OrbCount);
+        orbManager.GenerateOrbAsync(type, OrbCount).Forget();
     }
 }

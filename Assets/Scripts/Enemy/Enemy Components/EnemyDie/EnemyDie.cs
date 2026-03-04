@@ -22,21 +22,44 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
         
         if (_ctx.expItemPrefab != null)
         {
-            StartCoroutine(SpawnExpItem());
+            SpawnExpItemAsync().Forget();
         }
     }
     
-    private System.Collections.IEnumerator SpawnExpItem()
+    private async Awaitable SpawnExpItemAsync()
     {
-        if (!_poolManager.TryGetObject(_ctx.expItemPrefab, out GameObject expItem, _poolManager.Extra))
+        GameObject expItem = null;
+
+        try
         {
-            yield return _poolManager.GetObject(_ctx.expItemPrefab, inst => expItem = inst, _poolManager.Extra);
+            if (!_poolManager.TryGetObject(_ctx.expItemPrefab, out expItem, _poolManager.extra))
+            {
+                expItem = await _poolManager.GetObjectAsync(_ctx.expItemPrefab, _poolManager.extra);
+            }
+
+            destroyCancellationToken.ThrowIfCancellationRequested();
+
+            if (expItem != null)
+            {
+                expItem.transform.position = transform.position;
+                expItem.SetActive(true);
+            }
         }
-        
-        if (expItem != null)
+        catch (System.OperationCanceledException)
         {
-            expItem.transform.position = transform.position;
-            expItem.SetActive(true);
+            if (expItem != null)
+                _poolManager.ReturnObject(expItem);
+
+            return;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[EnemyDie] 중 치명적 에러 발생: {ex.Message}");
+
+            if (expItem != null)
+                _poolManager.ReturnObject(expItem);
+
+            return;
         }
     }
         

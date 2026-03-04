@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -11,21 +10,21 @@ namespace Managers
     {
         public static PoolManager Instance { get; private set; }
 
-        public Transform Inactive;
-        public Transform EffectPool;
-        public Transform ProjectilePool;
-        public Transform EnemyPool;
-        public Transform MapPool;
-        public Transform Extra;
+        public Transform inactive;
+        public Transform effectPool;
+        public Transform projectilePool;
+        public Transform enemyPool;
+        public Transform mapPool;
+        public Transform extra;
     
         class Pool
         {
-            public AsyncOperationHandle<GameObject> PrefabHandle;
-            public GameObject Prefab;
-            public Transform Root;
+            public AsyncOperationHandle<GameObject> prefabHandle;
+            public GameObject prefab;
+            public Transform root;
         
-            public readonly HashSet<GameObject> All = new();
-            public readonly Queue<GameObject> Inactive = new();
+            public readonly HashSet<GameObject> all = new();
+            public readonly Queue<GameObject> inactive = new();
         }
     
         private readonly Dictionary<string, Pool> _pools = new();
@@ -46,73 +45,90 @@ namespace Managers
             DontDestroyOnLoad(gameObject);
         }
 
-        public IEnumerator Prewarm(AssetReferenceGameObject aref, int count = 5)
+        public async Awaitable PrewarmAsync(AssetReferenceGameObject aref, int count = 5)
         {
             string key = aref.AssetGUID;
         
-            yield return EnsurePoolLoaded(key, aref);
+            await EnsurePoolLoadedAsync(key, aref);
+            destroyCancellationToken.ThrowIfCancellationRequested();
         
             var pool = _pools[key];
-            pool.Root = Inactive;
+            pool.root = inactive;
 
             for (int i = 0; i < count; i++)
             {
-                var go = Instantiate(pool.Prefab, pool.Root, false);
+                var go = Instantiate(pool.prefab, pool.root, false);
                 go.SetActive(false);
             
                 EnsureTag(go, key);
                 _instanceToKey[go] = key;
             
-                pool.All.Add(go);
-                pool.Inactive.Enqueue(go);
+                pool.all.Add(go);
+                pool.inactive.Enqueue(go);
             }
         }
     
-        public bool TryGetObject(AssetReferenceGameObject aref, out GameObject instance, Transform parentOverride = null)
+        public bool TryGetObject(
+            AssetReferenceGameObject aref,
+            out GameObject instance,
+            Transform parentOverride = null)
         {
             instance = null;
         
             if (!_pools.TryGetValue(aref.AssetGUID, out var pool))
                 return false;
 
-            while (pool.Inactive.Count > 0 && !instance)
+            while (pool.inactive.Count > 0 && !instance)
             { 
-                var go = pool.Inactive.Dequeue();
+                var go = pool.inactive.Dequeue();
             
                 if (!go) continue;
             
                 instance = go;
-                instance.transform.SetParent(parentOverride);
+                instance.transform.SetParent(parentOverride, false);
 
                 return true;
             }
             return false;
         }
     
-        public IEnumerator GetObject(
+        public async Awaitable<GameObject> GetObjectAsync(
             AssetReferenceGameObject aref,
-            Action<GameObject> onReady,
             Transform parentOverride = null,
             int extraPrewarmCount = 4
         )
         {
             string key = aref.AssetGUID;
-            yield return EnsurePoolLoaded(key, aref);
-            var pool = _pools[key];                   
-        
-            while (pool.Inactive.Count > 0)
+            try
             {
-                var go = pool.Inactive.Dequeue();
+                await EnsurePoolLoadedAsync(key, aref);
+                destroyCancellationToken.ThrowIfCancellationRequested();
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning($"GetObject cancelled during pool loading: {key}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to load pool for key: {key}, Exception: {ex}");
+                return null;
+            }
+            
+            var pool = _pools[key];
+        
+            while (pool.inactive.Count > 0)
+            {
+                var go = pool.inactive.Dequeue();
                 if (!go) continue;
             
                 go.transform.SetParent(parentOverride, false);
                 go.SetActive(false);
             
-                onReady?.Invoke(go);
-                yield break;
+                return go;
             }
         
-            var instance = Instantiate(pool.Prefab, pool.Root, false);
+            var instance = Instantiate(pool.prefab, pool.root, false);
             if (parentOverride != null)
             {
                 instance.transform.SetParent(parentOverride, false);
@@ -123,12 +139,12 @@ namespace Managers
             EnsureTag(instance, key);
             _instanceToKey[instance] = key;
         
-            pool.All.Add(instance);
-
-            onReady?.Invoke(instance);
+            pool.all.Add(instance);
         
             if (extraPrewarmCount > 0)
-                StartCoroutine(CreateAndEnqueue(pool, key, extraPrewarmCount));
+                CreateAndEnqueue(pool, key, extraPrewarmCount);
+
+            return instance;
         }
     
         public void ReturnObject(GameObject instance)
@@ -142,8 +158,8 @@ namespace Managers
             }
 
             instance.SetActive(false);
-            instance.transform.SetParent(pool.Root, false);
-            pool.Inactive.Enqueue(instance);
+            instance.transform.SetParent(pool.root, false);
+            pool.inactive.Enqueue(instance);
         }
     
         public void ClearAllPools()
@@ -152,20 +168,20 @@ namespace Managers
             {
                 var pool = kv.Value;
             
-                foreach (var go in pool.All)
+                foreach (var go in pool.all)
                     if (go != null) Destroy(go);
 
-                pool.All.Clear();
-                pool.Inactive.Clear();  
+                pool.all.Clear();
+                pool.inactive.Clear();
             
-                if (pool.PrefabHandle.IsValid())
-                    Addressables.Release(pool.PrefabHandle);
+                if (pool.prefabHandle.IsValid())
+                    Addressables.Release(pool.prefabHandle);
             }
             _pools.Clear();
             _instanceToKey.Clear();
         }
     
-        private IEnumerator EnsurePoolLoaded(string key, AssetReferenceGameObject aref)
+        private async Awaitable EnsurePoolLoadedAsync(string key, AssetReferenceGameObject aref)
         {
             if (!_pools.TryGetValue(key, out var pool))
             {
@@ -173,36 +189,47 @@ namespace Managers
                 _pools.Add(key, pool);
             }
         
-            if (!pool.PrefabHandle.IsValid())
+            if (!pool.prefabHandle.IsValid())
             {
-                pool.PrefabHandle = aref.LoadAssetAsync<GameObject>();
-                yield return pool.PrefabHandle;
-
-                if (pool.PrefabHandle.Status != AsyncOperationStatus.Succeeded)
+                try
                 {
-                    throw new Exception($"Addressables LoadAssetAsync failed: {key}");
+                    pool.prefabHandle = aref.LoadAssetAsync<GameObject>();
+                    await pool.prefabHandle.Task;
+
+                    if (pool.prefabHandle.Status != AsyncOperationStatus.Succeeded)
+                    {
+                        throw new Exception($"Addressables LoadAssetAsync failed: {key}");
+                    }
+
+                    pool.prefab = pool.prefabHandle.Result;
+                    pool.root = inactive;
+
+                    destroyCancellationToken.ThrowIfCancellationRequested();
                 }
+                catch (Exception)
+                {
+                    if (pool.prefabHandle.IsValid())
+                    {
+                        Addressables.Release(pool.prefabHandle);
+                    }
 
-                pool.Prefab = pool.PrefabHandle.Result;
-                pool.Root   = Inactive;
+                    throw;
+                }
             }
-
-            yield return pool;
         }
     
-        private IEnumerator CreateAndEnqueue(Pool pool, string key, int count)
+        private void CreateAndEnqueue(Pool pool, string key, int count)
         {
             for (int i = 0; i < count; i++)
             {
-                var go = Instantiate(pool.Prefab, pool.Root, false);
+                var go = Instantiate(pool.prefab, pool.root, false);
                 go.SetActive(false);
             
                 EnsureTag(go, key);
                 _instanceToKey[go] = key;
-                pool.All.Add(go);
-                pool.Inactive.Enqueue(go);
+                pool.all.Add(go);
+                pool.inactive.Enqueue(go);
             }
-            yield break;
         }
 
         private static void EnsureTag(GameObject go, string key)

@@ -1,45 +1,40 @@
 using Game.Player;
 using Players;
+using Stat;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Required Managers")]
-    [SerializeField] PlayerController playerManager;
     [Header("Player Movement Info")]
-    [SerializeField] float defaultMoveSpeed = 5f;
     [SerializeField] float sphereCastRadius = 0.5f;
     [SerializeField] LayerMask obstacleLayer;
-    public float Movespeed { get; set; }
 
-    private void Start()
+    private PlayerStat _stat = null;
+    private PlayerController _playerManager = null;
+
+    public void ExecuteMovement(Vector2 moveInput)
     {
-        Init();
-    }
+        _stat ??= PlayerController.Instance.Stat;
+        _playerManager ??= PlayerController.Instance;
 
-    private void Init() 
-    {
-        Movespeed = defaultMoveSpeed;        
-    }
+        _playerManager.ChangePlayerState(PlayerState.Move);
 
-
-    public void Move(Vector2 _moveInput)
-    {
-        playerManager.ChangePlayerState(PlayerState.Move);
-
-        Vector3 moveDir = new Vector3(_moveInput.x, 0, _moveInput.y);
+        Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y);
         transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);
 
         Vector3 collisionPos = transform.position + transform.up + transform.forward * .5f;
         if (Physics.OverlapSphere(collisionPos, sphereCastRadius, obstacleLayer).Length > 0)
             return;
 
-        transform.position += moveDir * Movespeed * Time.deltaTime;
+        transform.position += moveDir * _stat.MoveSpeed * Time.deltaTime;
     }
 
     #region Skill Methods
 
-    public void UpdateMoveSpeed(float _modifier) => Movespeed = defaultMoveSpeed * (1 + _modifier);
+    public void UpdateMoveSpeed(float modifier)
+    {
+        _stat.ApplyMoveSpeedModifier(modifier);
+    }
 
     #endregion
 
@@ -49,11 +44,4 @@ public class PlayerMovement : MonoBehaviour
 
         Gizmos.DrawWireSphere(transform.position + transform.up + transform.forward * .5f, sphereCastRadius);
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (playerManager == null) playerManager = GetComponent<PlayerController>();
-    }
-#endif
 }

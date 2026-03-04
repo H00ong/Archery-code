@@ -5,15 +5,15 @@ using Managers;
 using Players;
 using UnityEngine;
 
-public readonly struct MeteorInitConfig
+public readonly struct MeteorConfig
 {
-    public readonly Vector3 Position;
-    public readonly DamageInfo DamageInfo;
+    public readonly Vector3 position;
+    public readonly DamageInfo damageInfo;
 
-    public MeteorInitConfig(Vector3 position, DamageInfo damageInfo)
+    public MeteorConfig(Vector3 position, DamageInfo damageInfo)
     {
-        Position = position;
-        DamageInfo = damageInfo;
+        this.position = position;
+        this.damageInfo = damageInfo;
     }
 }
 
@@ -36,12 +36,12 @@ public class Meteor : MonoBehaviour
         _hitEnemies.Clear();
     }
 
-    public void Initialize(MeteorInitConfig config)
+    public void InitMeteor(MeteorConfig config)
     {
-        transform.position = config.Position;
+        transform.position = config.position;
         transform.rotation = Quaternion.identity;
 
-        _damageInfo = config.DamageInfo;
+        _damageInfo = config.damageInfo;
         _damageInfo.attackSource = gameObject;
         _timer = 0f;
     }

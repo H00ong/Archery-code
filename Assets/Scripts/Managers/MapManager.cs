@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Map;
 using Players;
@@ -11,17 +10,14 @@ namespace Managers
 {
     public class MapManager : MonoBehaviour
     {
-        public static MapManager Instance;
+        public static MapManager Instance { get; private set; }
 
         [Header("Settings")]
         [SerializeField] private Vector3 defaultMapPosition;
         [SerializeField] private string label = "map_config";
 
-        
         [HideInInspector] public MapType currentMapType;
-        [HideInInspector] public GameMap currentMap = null;
-
-        private MapData _currentMapData = null;
+        private GameMap currentMap = null;
 
         private PoolManager _poolManager;
         private DataManager _dataManager;
@@ -31,8 +27,6 @@ namespace Managers
         private Dictionary<MapType, MapScriptable> _mapDict = new Dictionary<MapType, MapScriptable>();
         
         private List<AssetReferenceGameObject> _currentMapList;
-        private List<AssetReferenceGameObject> _currentEnemyList;
-        private List<AssetReferenceGameObject> _currentBossList;
         private AssetReferenceGameObject _currentBossMapRef;
         
         // EnemyIdentity 기반 리스트
@@ -42,11 +36,9 @@ namespace Managers
         private readonly List<GameObject> _preloadedMaps = new List<GameObject>();
         private GameObject _preloadedBossMap;
 
-        // 이벤트 핸들러
-        private Action _onStartedLoading;
-
+        // TODO : json 저장
         public int CurrentMapIndex { get; private set; } = 0;
-        public MapData CurrentMapData => _currentMapData;
+        public MapData CurrentMapData { get; private set; }
 
         private void Awake()
         {
@@ -61,97 +53,98 @@ namespace Managers
             }
         }
 
-        private void Start()
+        #region Main Loading Sequence
+        public async Awaitable InitAsync()
         {
             _poolManager = PoolManager.Instance;
             _dataManager = DataManager.Instance;
 
             currentMap = null;
-            _currentMapData = null;
+            CurrentMapData = null;
 
-            StartCoroutine(PrepareMapRoutine()); 
+            await LoadMapConfigAsync();
+            RefreshMapData();
         }
+
+        #endregion
 
         private void OnDestroy()
         {
-            if (_handle.IsValid()) Addressables.Release(_handle);
-            
-            _currentBossList.Clear();
-            _currentEnemyList.Clear();
-            _currentMapList.Clear();
+            if (_handle.IsValid())
+                Addressables.Release(_handle);
+
+            _currentBossIdentityList?.Clear();
+            _currentEnemyIdentityList?.Clear();
+            _currentMapList?.Clear();
             _currentBossMapRef = null;
-            
+
             _mapDict.Clear();
             _preloadedMaps.Clear();
 
             currentMap = null;
-            _currentMapData = null;
+            CurrentMapData = null;
         }
-
-        #region Main Loading Sequence
-
-        // 모든 로딩 과정을 순서대로 처리하는 메인 코루틴
-        // 초기화 및 맵 생성 (준비만 함)
-        private IEnumerator PrepareMapRoutine()
-        {
-            yield return LoadMapConfigRoutine();
-            
-            RefreshMapData();
-
-            yield return PreloadMapsRoutine();
-            
-            StageManager.Instance.Init(_currentMapData);
-        }
-        #endregion
-
+        
         #region 1. Data & Addressables
 
-        private IEnumerator LoadMapConfigRoutine()
+        private async Awaitable LoadMapConfigAsync()
         {
-            if (_mapDict is { Count: > 0 }) yield break;
+            if (_mapDict is { Count: > 0 }) return;
 
             _mapDict = new Dictionary<MapType, MapScriptable>();
-            
-            _handle = Addressables.LoadAssetsAsync<MapScriptable>(
-                label,
-                so => { if (so) _mapDict[so.mapType] = so; }
-            );
-
-            yield return _handle;
-
-            if (_handle.Status != AsyncOperationStatus.Succeeded)
+            try
             {
-                Debug.LogError($"[MapManager] Addressable Load Failed: {label}");
+                _handle = Addressables.LoadAssetsAsync<MapScriptable>(
+                    label,
+                    so => { if (so) _mapDict[so.mapType] = so; }
+                );
+
+                await _handle.Task;
+
+                destroyCancellationToken.ThrowIfCancellationRequested();
+
+                if (_handle.Status != AsyncOperationStatus.Succeeded)
+                {
+                    Debug.LogError($"[MapManager] 맵 설정 로드 실패: {label}");
+                    throw new InvalidOperationException($"[MapManager] Addressable load failed for label: {label}");
+                }
+            }
+            catch (System.OperationCanceledException)
+            {
+                Debug.LogError($"[MapManager] OperationCanceledException during LoadMapConfigAsync: {label}");
+                if (_handle.IsValid())
+                    Addressables.Release(_handle);
+                    
+                throw;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[MapManager] Exception during LoadMapConfigAsync: {label}, Exception: {ex}");
+                if (_handle.IsValid())
+                    Addressables.Release(_handle);
+                throw;
             }
         }
 
         private void RefreshMapData()
         {
-            if(_currentMapData != null) return;
+            CurrentMapData = _dataManager.GetMapData(CurrentMapIndex);
             
-            _currentMapData = _dataManager.GetMapData(CurrentMapIndex);
-            
-            if (_currentMapData == null)
+            if (CurrentMapData == null)
             {
-                Debug.LogError("MapData is null!");
-                return;
+                throw new System.Exception($"[MapManager] MapData is null for index: {CurrentMapIndex}");
             }
 
-            currentMapType = (MapType)_currentMapData.mapType;
+            currentMapType = CurrentMapData.mapType;
 
-            if (!_mapDict.TryGetValue(currentMapType, out var mapSo))
+            if (!_mapDict.TryGetValue(currentMapType, out var mapSo) || mapSo == null)
             {
-                Debug.LogError($"MapScriptable not found for type: {currentMapType}");
+                throw new InvalidOperationException($"[MapManager] MapScriptable not found for MapType: {currentMapType}");
             }
-
-            if (mapSo == null) return;
             
             _currentMapList = mapSo.mapList;
-            _currentEnemyList = mapSo.enemyList;
-            _currentBossList = mapSo.bossList;
             _currentBossMapRef = mapSo.bossMap;
             
-            // EnemyIdentity 기반 리스트 초기화
             _currentEnemyIdentityList = mapSo.enemyIdentityList;
             _currentBossIdentityList = mapSo.bossIdentityList;
         }
@@ -160,44 +153,73 @@ namespace Managers
 
         #region 2. Map Pooling (Creation)
 
-        public IEnumerator PreloadMapsRoutine()
+        public async Awaitable PreloadMapsAsync()
         {
-            if (_preloadedMaps is { Count: > 0 })  yield break;
+            if (_preloadedMaps is { Count: > 0 })
+                return;
 
-            yield return new WaitUntil(() => _currentMapList.Count > 0);
-
-            foreach (var mapRef in _currentMapList)
+            try
             {
-                if (!_poolManager.TryGetObject(mapRef, out var go, _poolManager.MapPool))
+                foreach (var mapRef in _currentMapList)
                 {
-                    yield return _poolManager.GetObject(mapRef, inst => go = inst, _poolManager.MapPool);
+                    if (!_poolManager.TryGetObject(mapRef, out var go, _poolManager.mapPool))
+                    {
+                        go = await _poolManager.GetObjectAsync(mapRef, _poolManager.mapPool);
+                    }
+
+                    destroyCancellationToken.ThrowIfCancellationRequested();
+
+                    if (!go)
+                    {
+                        throw new System.Exception($"[MapManager] 맵 프리팹 풀링 실패: {mapRef}");
+                    }
+
+                    _preloadedMaps.Add(go);
                 }
 
-                if (!go) continue;
-                
-                _preloadedMaps.Add(go);
-            }
+                if (!_poolManager.TryGetObject(_currentBossMapRef, out _preloadedBossMap, _poolManager.mapPool))
+                {
+                    _preloadedBossMap = await _poolManager.GetObjectAsync(_currentBossMapRef, _poolManager.mapPool);
+                }
 
-            // 보스 맵 생성 요청
-            if (_currentBossMapRef == null)
-            {
-                Debug.LogError("_currentBossMapRef is null.");
-                yield break;
-            }
+                destroyCancellationToken.ThrowIfCancellationRequested();
 
-            if (!_poolManager.TryGetObject(_currentBossMapRef, out _preloadedBossMap, _poolManager.MapPool))
+                if (!_preloadedBossMap)
+                {
+                    throw new System.Exception("[MapManager] 보스 맵 프리팹 풀링 실패.");
+                }
+            }
+            catch (System.OperationCanceledException)
             {
-                yield return _poolManager.GetObject(_currentBossMapRef, 
-                    inst => _preloadedBossMap = inst,
-                    _poolManager.MapPool);
+                CleanUpPreloadedMaps();
+                throw;
+            }
+            catch (System.Exception ex)
+            {
+                CleanUpPreloadedMaps();
+                throw new System.Exception($"[MapManager] 맵 프리로드 중 치명적 에러: {ex.Message}", ex);
+            }
+        }
+
+        private void CleanUpPreloadedMaps()
+        {
+            foreach (var map in _preloadedMaps)
+            {
+                if (map != null)
+                    _poolManager.ReturnObject(map);
+            }
+            _preloadedMaps.Clear();
+
+            if (_preloadedBossMap != null)
+            {
+                _poolManager.ReturnObject(_preloadedBossMap);
+                _preloadedBossMap = null;
             }
         }
 
         #endregion
 
         #region 3. Map Activation
-
-        // 맵 활성화 (StageManager가 시킬 때 수행)
         public void ActivateRandomMap(bool isBoss)
         {
             if (currentMap != null)
@@ -207,68 +229,44 @@ namespace Managers
             
             SelectMap(isBoss);
             
-            currentMap.transform.position = defaultMapPosition;
-            currentMap.Init();
             currentMap.gameObject.SetActive(true);
+            currentMap.Init();
+            currentMap.transform.position = defaultMapPosition;
         }
 
         private void SelectMap(bool isBoss)
         {
             if (isBoss)
             {
-                if (_preloadedBossMap == null)
-                {
-                    Debug.LogError("_preloadedBossMap is null.");
-                    return;
-                }
-
                 currentMap = _preloadedBossMap.GetComponent<GameMap>();
-                return;
-            }
-
-            if (_preloadedMaps == null || _preloadedMaps.Count == 0)
-            {
-                Debug.LogError("_preloadedMaps is null or empty.");
                 return;
             }
 
             int idx = UnityEngine.Random.Range(0, _preloadedMaps.Count);
             currentMap = _preloadedMaps[idx].GetComponent<GameMap>();
-            currentMap.Init();
         }
 
         #endregion
 
-        #region 4. Player & Enemy
+        #region 4. Get Methods
 
         public Transform GetPlayerSpawnPoint()
         {
-            if (!currentMap)
-            {
-                Debug.LogError("Cannot position player: currentMap is null.");
-                return null;
-            }
-
             return currentMap.PlayerSpawnPoint;
         }
 
-        public List<Transform> GetEnemySpawnPoint(int count)
+        public List<Transform> GetEnemySpawnPoints(int count)
         {
             var list = currentMap.enemySpawnPoints;
-            
-            if (list.Count < count)
-            {
-                Debug.LogError($"[MapManager] Not enough spawn points! Requested: {count}, Available: {list.Count}");
-                return null;
-            }
-            
-            for (int i = 0; i < count; i++)
+            int availableCount = list.Count > count ? count : list.Count;
+
+            for (int i = 0; i < availableCount; i++)
             {
                 int randomIndex = UnityEngine.Random.Range(i, list.Count);
                 (list[i], list[randomIndex]) = (list[randomIndex], list[i]);
             }
             
-            return list.GetRange(0, count);
+            return list.GetRange(0, availableCount);
         }
 
         public Transform GetBossSpawnPoint()
@@ -276,51 +274,28 @@ namespace Managers
             return currentMap.bossSpawnPoint;
         }
 
-        public AssetReferenceGameObject GetBossAssetRef(int index)
-        {
-            return _currentBossList[index];
-        }
-
-        public AssetReferenceGameObject GetEnemeyAssetRef()
-        {
-            var count = _currentEnemyList.Count;
-            var idx = UnityEngine.Random.Range(0, count);
-            
-            return _currentEnemyList[idx];
-        }
-        
-        /// <summary>
-        /// EnemyIdentity 기반으로 랜덤 적 정보 반환
-        /// </summary>
         public EnemyIdentity GetEnemyIdentity()
         {
-            if (_currentEnemyIdentityList == null || _currentEnemyIdentityList.Count == 0)
-                return null;
-                
             var count = _currentEnemyIdentityList.Count;
             var idx = UnityEngine.Random.Range(0, count);
             
             return _currentEnemyIdentityList[idx];
         }
         
-        /// <summary>
-        /// EnemyIdentity 기반으로 보스 정보 반환
-        /// </summary>
         public EnemyIdentity GetBossIdentity(int index)
         {
-            if (_currentBossIdentityList == null || _currentBossIdentityList.Count == 0)
-                return null;
-                
-            if (index < 0 || index >= _currentBossIdentityList.Count)
-                return null;
-                
             return _currentBossIdentityList[index];
         }
-        
-        /// <summary>
-        /// EnemyIdentity 리스트가 설정되어 있는지 확인
-        /// </summary>
-        public bool HasEnemyIdentityList => _currentEnemyIdentityList != null && _currentEnemyIdentityList.Count > 0;
+
+        public Vector3 GetRandomPointInMap()
+        {
+            return currentMap.GetRandomNavMeshPoint();
+        }
+
+        public Vector3 GetMapPosition()
+        {
+            return currentMap.transform.position;
+        }
 
         #endregion
 

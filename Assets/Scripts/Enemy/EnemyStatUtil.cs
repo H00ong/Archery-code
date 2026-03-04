@@ -1,22 +1,20 @@
 using System;
 using System.Collections.Generic;
-using Enemy;
 using Map;
+using Stat;
 using UnityEngine;
 
 namespace Enemy
 {
     public static class EnemyStatUtil
     {
-        public static EnemyStats CalculateStat(
-            EnemyData e, EnemyTag tag, MapData map, int stageIndex,
-            IReadOnlyDictionary<EffectType, EffectConfig> cachedMapEffects = null)
+        public static void CalculateStat(
+            EnemyStat outStat, EnemyData e, EnemyTag tag, MapData map, int stageIndex)
         {
-            var stats = new EnemyStats();
             if (e == null || map == null || e.@base == null)
             {
                 Debug.LogError("Enemy data or map data (or base) is null");
-                return stats;
+                return;
             }
 
             bool isBoss = EnemyTagUtil.Has(tag, EnemyTag.Boss);
@@ -28,14 +26,9 @@ namespace Enemy
             var st = BuildStageMultipliers(stageIndex, isBoss, map.stageGrowth);
             var mp = BuildMapMultipliers(isBoss, isMelee, isRanged, map.mapModifiers);
 
-             ComputeBaseStats(e.@base, st, mp, stats, isBoss);
-
-            ApplyProjectileStats(e, hasShooter, hasFlyingShoooter: hasFlyingShooter, st, mp, stats, isBoss);
-
-            // 맵 이펙트 설정 참조 연결 (Flyweight)
-            stats.offensiveEffects = cachedMapEffects;
-
-            return stats;
+            outStat.SetAttackEffectType(EnemyTagUtil.ToEffectType(tag));
+            ComputeBaseStats(e.@base, st, mp, outStat, isBoss);
+            ApplyProjectileStats(e, hasShooter, hasFlyingShoooter: hasFlyingShooter, st, mp, outStat, isBoss);
         }
 
         private struct StageMulPack
@@ -62,7 +55,8 @@ namespace Enemy
         private static StageMulPack BuildStageMultipliers(int stageIndex, bool isBoss, StageGrowth sg)
         {
             var p = new StageMulPack { hpStage = 1f, atkStage = 1f, bossHpPerBoss = 1f, bossAtkPerBoss = 1f };
-            if (sg == null) return p;
+            if (sg == null)
+                return p;
 
             int stage = Mathf.Max(0, stageIndex);
             int defaultMod = stage;
@@ -93,11 +87,15 @@ namespace Enemy
                 flyingProjSpeed = 1f,
                 bossFlyingProjSpeed = 1f
             };
-            if (mm == null) return m;
+            if (mm == null)
+                return m;
 
-            if (isBoss) m.mapHp = mm.bossEnemyHpMulPerMap > 0f ? mm.bossEnemyHpMulPerMap : 1f;
-            else if (isMelee) m.mapHp = mm.meleeEnemyHpMulPerMap > 0f ? mm.meleeEnemyHpMulPerMap : 1f;
-            else if (isRanged) m.mapHp = mm.rangedEnemyHpMulPerMap > 0f ? mm.rangedEnemyHpMulPerMap : 1f;
+            if (isBoss)
+                m.mapHp = mm.bossEnemyHpMulPerMap > 0f ? mm.bossEnemyHpMulPerMap : 1f;
+            else if (isMelee)
+                m.mapHp = mm.meleeEnemyHpMulPerMap > 0f ? mm.meleeEnemyHpMulPerMap : 1f;
+            else if (isRanged)
+                m.mapHp = mm.rangedEnemyHpMulPerMap > 0f ? mm.rangedEnemyHpMulPerMap : 1f;
 
             m.mapAtk = mm.atkMulPerMap > 0f ? mm.atkMulPerMap : 1f;
             m.move = mm.moveSpeedMul > 0f ? mm.moveSpeedMul : 1f;
@@ -112,7 +110,7 @@ namespace Enemy
             return m;
         }
 
-        private static void ComputeBaseStats(EnemyBase b, in StageMulPack st, in MapMulPack mp, EnemyStats outStats, bool isBoss = false)
+        private static void ComputeBaseStats(EnemyBase b, in StageMulPack st, in MapMulPack mp, EnemyStat outStats, bool isBoss = false)
         {
             float hpStage = isBoss ? st.hpStage * st.bossHpPerBoss : st.hpStage;
             float atkStage = isBoss ? st.atkStage * st.bossAtkPerBoss : st.atkStage;
@@ -121,14 +119,12 @@ namespace Enemy
             float atk = b.atk * atkStage * (isBoss ? mp.bossMapAtk : mp.mapAtk);
             float ms = b.moveSpeed * (isBoss ? mp.bossMove : mp.move);
 
-            outStats.baseStats.hp = Mathf.RoundToInt(hp);
-            outStats.baseStats.atk = Mathf.RoundToInt(atk);
-            outStats.baseStats.moveSpeed = ms;
+            outStats.SetBaseStats(Mathf.RoundToInt(hp), Mathf.RoundToInt(atk), ms, b.armor, b.magicResistance);
         }
 
         private static void ApplyProjectileStats(
             EnemyData e, bool hasShooter, bool hasFlyingShoooter,
-            in StageMulPack st, in MapMulPack mp, EnemyStats outStats, bool isBoss = false)
+            in StageMulPack st, in MapMulPack mp, EnemyStat outStats, bool isBoss = false)
         {
             float atkStage = isBoss ? st.atkStage * st.bossAtkPerBoss : st.atkStage;
             float atkMap = isBoss ? mp.bossMapAtk : mp.mapAtk;
@@ -146,69 +142,6 @@ namespace Enemy
                 float fpAtk = e.flyingShooter.flyingProjectileAtk * atkStage * atkMap;
                 outStats.flyingShooting.flyingProjectileAtk = Mathf.RoundToInt(fpAtk);
             }
-        }
-    }
-
-
-    [Serializable]
-    public class BaseStats
-    {
-        public int hp;
-        public int atk;
-        public float moveSpeed;
-    }
-
-    [Serializable]
-    public class ShootingStats
-    {
-        public int projectileAtk;
-        public float projectileSpeed;
-    }
-
-    [Serializable]
-    public class FlyingShootingStats
-    {
-        public int flyingProjectileAtk;
-        public float flyingProjectileSpeed;
-    }
-
-    [Serializable]
-    public class EnemyStats
-    {
-        public BaseStats baseStats = new();
-        public ShootingStats shooting = new();
-        public FlyingShootingStats flyingShooting = new();
-
-        /// <summary>
-        /// 맵에 설정된 효과 정보 (모든 적이 공유하는 Flyweight 참조)
-        /// </summary>
-        public IReadOnlyDictionary<EffectType, EffectConfig> offensiveEffects;
-
-        /// <summary>
-        /// BaseStats는 깊은 복사, offensiveEffects는 얕은 복사(참조 공유)
-        /// </summary>
-        public EnemyStats Clone()
-        {
-            return new EnemyStats
-            {
-                baseStats = new BaseStats
-                {
-                    hp = baseStats.hp,
-                    atk = baseStats.atk,
-                    moveSpeed = baseStats.moveSpeed
-                },
-                shooting = new ShootingStats
-                {
-                    projectileAtk = shooting.projectileAtk,
-                    projectileSpeed = shooting.projectileSpeed
-                },
-                flyingShooting = new FlyingShootingStats
-                {
-                    flyingProjectileAtk = flyingShooting.flyingProjectileAtk,
-                    flyingProjectileSpeed = flyingShooting.flyingProjectileSpeed
-                },
-                offensiveEffects = offensiveEffects // 얕은 복사 (Flyweight 참조 공유)
-            };
         }
     }
 }

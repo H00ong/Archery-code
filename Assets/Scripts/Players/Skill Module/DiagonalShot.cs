@@ -27,8 +27,8 @@ public class DiagonalShot : PlayerSkillModuleBase, IShootContributor
         if (bulletList.Capacity < need)
             bulletList.Capacity = need;
 
-        Vector3 origin = inst.ShootingPos;
-        Vector3 dir0 = inst.ShootingDir;
+        Vector3 origin = inst.shootingPos;
+        Vector3 dir0 = inst.shootingDir;
         Vector3 up = Vector3.up;
         Vector3 right = Vector3.Cross(up, dir0);
 
@@ -43,7 +43,7 @@ public class DiagonalShot : PlayerSkillModuleBase, IShootContributor
             Quaternion rot = Quaternion.AngleAxis(angle * t, up);
             Vector3 dir = rot * dir0;
 
-            bulletList.Add(new ShotInstruction { ShootingDir = dir, ShootingPos = pos });
+            bulletList.Add(new ShotInstruction { shootingDir = dir, shootingPos = pos });
         }
     }
 }

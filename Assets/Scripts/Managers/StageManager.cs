@@ -1,8 +1,6 @@
 using Game.Stage.Management;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Enemy;
 using Managers;
 using Map;
 using Players;
@@ -36,8 +34,6 @@ public class StageManager : MonoBehaviour
 {
     public static StageManager Instance;
     
-    private readonly HashSet<LoadingTask> pendingLoadingTasks = new();
-    
     private readonly Dictionary<(StageState, StageCommandType), StageState> transitions = new()
     {
         { (StageState.Clear, StageCommandType.EnterPortal), StageState.Loading },
@@ -57,7 +53,6 @@ public class StageManager : MonoBehaviour
     public List<int> EnemyCountList { get; private set; }
     private StageState CurrentState { get; set; }
     public bool IsBossStage => (CurrentStageIndex % 10 == 0) && (CurrentStageIndex != 0);
-
     public bool IsInCombat => CurrentState == StageState.Combat;
 
     private void Awake()
@@ -86,12 +81,9 @@ public class StageManager : MonoBehaviour
         EventBus.Unsubscribe(EventType.StageCleared, UpdateStageIndex);
     }
 
-    public void Init(MapData mapData)
+    public void Init()
     {
         CurrentStageIndex = 0;
-        
-        TotalStageCountOfMap = mapData.stageCount;
-        EnemyCountList = mapData.enemyCountGrid;
 
         ChangeState(StageState.Loading);
     }
@@ -112,21 +104,28 @@ public class StageManager : MonoBehaviour
             Debug.LogError($"No action defined for state {newState}");
     }
 
-    private void StartStageLoadingSequence() => StartCoroutine(StageLoadingCoroutine());
+    private void StartStageLoadingSequence() => StageLoadingAsync().Forget();
     
-    private IEnumerator StageLoadingCoroutine()
+    private async Awaitable StageLoadingAsync()
     {
-        LoadMap();
-
-        // 맵 데이터 캐싱 초기화 (스테이지별 배율 적용)
         var mapData = MapManager.Instance.CurrentMapData;
-        EnemyManager.Instance.SetUpEnemyEffects(mapData, CurrentStageIndex);
-
-        // Player setting
-        PositionPlayer();
         
-        // EnemySetting
-        yield return SpawnEnemy();
+        TotalStageCountOfMap = mapData.stageCount;
+        EnemyCountList = mapData.enemyCountGrid;
+
+        try
+        {
+            await CharacterManager.Instance.LoadAndSpawnCharacterAsync();
+            await PlayerController.Instance.Skill.LoadAllSkillsAsync();
+
+            LoadMap();
+            PositionPlayer();
+            await SpawnEnemyAsync();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[StageManager] Error during stage loading: {e.Message}");
+        }
 
         HandleCommand(StageCommandType.LoadingComplete);
     }
@@ -134,38 +133,38 @@ public class StageManager : MonoBehaviour
     private void LoadMap()
     {
         var mapManager = MapManager.Instance;
-        
+
         mapManager.ActivateRandomMap(IsBossStage);
     }
- 
+    
     private void PositionPlayer()
     {
         var mapManager = MapManager.Instance;
         
-        var player = PlayerController.Instance.transform;
-        var playerContainter = player.parent;
+        var player = PlayerController.Instance;
+        var playerContainter = CharacterManager.Instance.PlayerContainer;
         
         var spawnPos = mapManager.GetPlayerSpawnPoint();
         spawnPos.gameObject.SetActive(true);
 
         playerContainter.position = spawnPos.position;
-        player.position = spawnPos.position;
+        player.gameObject.SetActive(true);
     }
 
-    private IEnumerator SpawnEnemy()
+    private async Awaitable SpawnEnemyAsync()
     {
         var enemyManager = EnemyManager.Instance;
         
         if (IsBossStage)
         {
             var idx = CurrentStageIndex / 10;
-            yield return enemyManager.SpawnBossEnemey(idx); 
+            await enemyManager.SpawnBossEnemyAsync(idx); 
         }
         else
         {
             // TODO : Enemy 생성 count 설정 필요
             var count = 1;
-            yield return enemyManager.SpawnEnemy(count);
+            await enemyManager.SpawnEnemyAsync(count);
         }
     }
 }

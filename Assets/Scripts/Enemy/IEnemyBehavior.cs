@@ -35,7 +35,7 @@ namespace Enemy
 
             if (!_ctx.isDebugMode)
             {
-                _defaultMoveSpeed = _ctx.stats.baseStats.moveSpeed;
+                _defaultMoveSpeed = _ctx.stat.MoveSpeed;
             }
 
             _moveSpeed = _defaultMoveSpeed;
@@ -83,12 +83,15 @@ namespace Enemy
 
         private void ChangeMoveSpeed(DamageInfo damageInfo, bool isStart)
         {
-            if (damageInfo.type != EffectType.Ice) return;
+            if(!damageInfo.effectDataMap.TryGetValue(EffectType.Ice, out var effectData))
+            {
+                return;
+            }
         
             if (isStart)
             {
-                _moveSpeed = _defaultMoveSpeed * (1f - damageInfo.effectValue);
-                _ctx.anim.speed = _originalAnimSpeed * (1f - damageInfo.effectValue);
+                _moveSpeed = _defaultMoveSpeed * (1f - effectData.value);
+                _ctx.anim.speed = _originalAnimSpeed * (1f - effectData.value);
             }
             else
             {
@@ -103,7 +106,7 @@ namespace Enemy
     public class EnemyAttack : MonoBehaviour, IEnemyBehavior, IAnimationListener
     {
         protected EnemyController _ctx;
-        protected EnemyStats _stats;
+        protected EnemyStat _stats;
 
         protected PlayerController _player;
         protected int _animIndex;
@@ -114,7 +117,7 @@ namespace Enemy
 
             if (!_ctx.isDebugMode)
             {
-                _stats = _ctx.stats;
+                _stats = _ctx.stat;
             }
 
             _ctx.SetAttackEndTrigger(false);

@@ -1,21 +1,9 @@
 namespace Players
 {
-    public enum OrbType
+    public enum CharacterName
     {
-        Common,
-        Venom,
-        Blaze,
-        Ice,
-        Lightning,
-    }
-
-    public enum BarrelType
-    {
-        Common,
-        Venom,
-        Blaze,
-        Ice,
-        Lightning,
+        BlueWizard,
+        // 캐릭터 추가 시 여기에 enum 값 추가
     }
 
     public enum PlayerState
