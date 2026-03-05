@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Players;
-using UI;
 
 namespace Managers
 {
@@ -23,11 +22,7 @@ namespace Managers
             100, 150, 220, 340, 500, 750, 1100, 1600, 2300
         };
 
-        [Header("UI")]
-        [SerializeField] private SkillChoicePopup skillChoicePopup;
-
         private bool _isLevelingUp = false;
-        private SkillChoicePopupPresenter _presenter;
 
         private void Awake()
         {
@@ -114,18 +109,7 @@ namespace Managers
 
         private void ShowSkillChoicePopup()
         {
-            EnsurePresenterCreated();
-            _presenter.Show();
-        }   
-
-        private void EnsurePresenterCreated()
-        {
-            if (_presenter != null) return;
-
-                _presenter = new SkillChoicePopupPresenter(
-                skillChoicePopup: skillChoicePopup,
-                playerSkill: PlayerController.Instance.Skill
-            );
+            UIManager.Instance.ShowSkillChoicePopup(PlayerController.Instance.Skill);
         }
 
         private int GetRequiredExpForLevel(int level)
