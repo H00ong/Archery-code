@@ -46,11 +46,6 @@ public class Health : MonoBehaviour, IDamageable
     // 효과 상태 Dictionary
     private Dictionary<EffectType, EffectState> effectStates;
 
-    private void Awake()
-    {
-        _stat = GetComponent<BaseStat>();
-        InitializeEffectStates();
-    }
 
     private void InitializeEffectStates()
     {
@@ -61,9 +56,12 @@ public class Health : MonoBehaviour, IDamageable
             { EffectType.Ice, new() },
         };
     }
-
+    
     public void InitializeHealth(int maxHealth = 100)
     {
+        _stat = GetComponent<BaseStat>();
+        InitializeEffectStates();
+
         this.maxHealth = maxHealth;
         currentHealth = maxHealth;
 
