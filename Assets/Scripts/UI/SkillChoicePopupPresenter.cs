@@ -1,40 +1,55 @@
 using System.Collections.Generic;
 using Players;
-
+using UnityEngine;
 
 namespace UI
 {
+    /// <summary>
+    /// 스킬 선택 팬업의 Presenter.
+    /// 생성자에서 View만 받고, Show()에서 게임 데이터(PlayerSkill)를 받는다.
+    /// </summary>
     public class SkillChoicePopupPresenter
     {
-        private readonly SkillChoicePopup _skillChoicePopup;
-        private readonly PlayerSkill _playerSkill;
-        private readonly List<SkillPresenter> _skillChoicePresenter = new();
+        private const int ChoiceCount = 3;
+        private readonly SkillChoicePopupView _view;
+        private readonly List<SkillPresenter> _cardPresenters = new();
 
-        public SkillChoicePopupPresenter(SkillChoicePopup skillChoicePopup, PlayerSkill playerSkill)
+        // Show() 호출 시에만 필요하므로 일시 보관
+        private PlayerSkill _currentPlayerSkill;
+
+        public SkillChoicePopupPresenter(SkillChoicePopupView view)
         {
-            _skillChoicePopup = skillChoicePopup; 
-            _playerSkill = playerSkill; 
+            _view = view;
         }
 
-        public void Show()
+        public void Show(PlayerSkill playerSkill)
         {
-            _skillChoicePresenter.Clear();
-            
-            int count = 3;
+            _currentPlayerSkill = playerSkill;
+            _cardPresenters.Clear();
 
-            var choices = _playerSkill.GetRandomChoices(count);
-            var skillUiObjects = _skillChoicePopup.BuildCards(count);
+            var choices = playerSkill.GetRandomChoices(ChoiceCount);
 
-            for (int i = 0; i < count; i++)
-                _skillChoicePresenter.Add(new SkillPresenter(skillUiObjects[i], choices[i], OnChosen));
+            // 획득 가능한 스킬이 없으면 팝업 없이 즉시 재개
+            if (choices.Count == 0)
+            {
+                EventBus.Publish(EventType.SkillChosen);
+                return;
+            }
 
-            _skillChoicePopup.Open();
+            // 남은 스킬이 ChoiceCount보다 적을 수 있으므로 실제 개수 기준으로 한정
+            int actualCount = Mathf.Min(ChoiceCount, choices.Count);
+            var cards = _view.BuildCards(actualCount);
+
+            for (int i = 0; i < actualCount; i++)
+                _cardPresenters.Add(new SkillPresenter(cards[i], choices[i], playerSkill, OnChosen));
+
+            _view.Open();
         }
 
         private void OnChosen(SkillDefinition def)
         {
-            _playerSkill.AcquireSkill(def);
-            _skillChoicePopup.Close();
+            _currentPlayerSkill.AcquireSkill(def);
+            _view.Close();
             EventBus.Publish(EventType.SkillChosen);
         }
     }
