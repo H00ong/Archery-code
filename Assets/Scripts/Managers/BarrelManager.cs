@@ -197,10 +197,12 @@ namespace Managers
         {
             GameObject go = null;
 
+            var assetRef = _barrelSoDict[type].meteorPrefab;
+
             try
             {
-                if (!_poolManager.TryGetObject(_barrelSoDict[type].meteorPrefab, out go, _poolManager.effectPool))
-                    go = await PoolManager.Instance.GetObjectAsync(_barrelSoDict[type].meteorPrefab, _poolManager.effectPool);
+                if (!_poolManager.TryGetObject(assetRef, out go, _poolManager.effectPool))
+                    go = await _poolManager.GetObjectAsync(assetRef, _poolManager.effectPool);
 
                 destroyCancellationToken.ThrowIfCancellationRequested();
 
