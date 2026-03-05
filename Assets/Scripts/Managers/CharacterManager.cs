@@ -14,6 +14,7 @@ namespace Managers
         [SerializeField] private string characterLabel = "character_identity";
 
         private bool _isLoaded;
+        private CharacterIdentity _currentCharacterIdentity;
         private AsyncOperationHandle<IList<CharacterIdentity>> _loadHandle;
         private GameObject _currentCharacterInstance;
 
@@ -89,42 +90,30 @@ namespace Managers
             }
         }
 
-        
-
         public async Awaitable LoadAndSpawnCharacterAsync()
         {
-            // 1. 이미 생성된 캐릭터가 있다면 스킵
-            if (_currentCharacterInstance != null)
-                return;
-
-            _player ??= PlayerManager.Instance;
-            PlayerData playerData = _player.PlayerData;
-
-            // 2. CharacterSO 조회
-            if (!_characterMap.TryGetValue(playerData.characterName, out var characterSO))
+            if(_currentCharacterIdentity == null)
             {
-                Debug.LogError($"[CharacterManager] CharacterSO not found for: {playerData.characterName}");
-                return;
+                _currentCharacterIdentity = GetCurrentCharacterIdentity();
             }
 
-            // 3. PoolManager를 통해 캐릭터 프리팹 생성 (PlayerContainer 하위)
             GameObject go = null;
             var pool = PoolManager.Instance;
 
-            if (!pool.TryGetObject(characterSO.characterPrefab, out go, PlayerContainer))
+            if (!pool.TryGetObject(_currentCharacterIdentity.characterPrefab, out go, PlayerContainer))
             {
-                go = await pool.GetObjectAsync(characterSO.characterPrefab, PlayerContainer, 0);
+                go = await pool.GetObjectAsync(_currentCharacterIdentity.characterPrefab, PlayerContainer, 0);
             }
 
             destroyCancellationToken.ThrowIfCancellationRequested();
 
             if (go == null)
             {
-                Debug.LogError($"[CharacterManager] Failed to spawn character: {playerData.characterName}");
-                throw new System.InvalidOperationException($"Failed to spawn character: {playerData.characterName}");
+                Debug.LogError($"[CharacterManager] Failed to spawn character: {_currentCharacterIdentity.characterName}");
+                throw new System.InvalidOperationException($"Failed to spawn character: {_currentCharacterIdentity.characterName}");
             }
 
-            CurrentProjectilePrefab = characterSO.projectilePrefab;
+            CurrentProjectilePrefab = _currentCharacterIdentity.projectilePrefab;
             _currentCharacterInstance = go;
             _currentCharacterInstance.transform.localPosition = Vector3.zero;
 
@@ -136,8 +125,8 @@ namespace Managers
             }
 
             playerController.Init();
-            playerController.Stat.ApplyBaseStat(characterSO.baseStat);
-            Debug.Log($"[CharacterManager] Character spawned and stats applied: {playerData.characterName}");
+            playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.baseStat);
+            Debug.Log($"[CharacterManager] Character spawned and stats applied: {_currentCharacterIdentity.characterName}");
         }
 
         public void DeActiveCurrentCharacter()
@@ -147,6 +136,34 @@ namespace Managers
 
             PoolManager.Instance.ReturnObject(_currentCharacterInstance);
             _currentCharacterInstance = null;
+        }
+
+        public CharacterIdentity GetCurrentCharacterIdentity()
+        {
+            if (_currentCharacterIdentity != null)
+                return _currentCharacterIdentity;
+
+            _player ??= PlayerManager.Instance;
+
+            if (!_characterMap.TryGetValue(_player.PlayerData.characterName, out var characterSO))
+            {
+                Debug.LogError($"[CharacterManager] CharacterSO not found for: {_player.PlayerData.characterName}");
+                return null;
+            }
+
+            _currentCharacterIdentity = characterSO;
+            return _currentCharacterIdentity;
+        }
+
+        public void SyncCharacterIdentity(CharacterName characterName)
+        {
+            if (!_characterMap.TryGetValue(characterName, out var characterSO))
+            {
+                Debug.LogError($"[CharacterManager] CharacterSO not found for: {characterName}");
+                return;
+            }
+
+            _currentCharacterIdentity = characterSO;
         }
     }
 }

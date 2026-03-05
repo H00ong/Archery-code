@@ -216,6 +216,21 @@ namespace Managers
                     throw;
                 }
             }
+            else if (pool.prefab == null)
+            {
+                // 다른 동시 호출이 로딩을 시작했지만 아직 완료되지 않은 경우 대기
+                await pool.prefabHandle.Task;
+                
+                destroyCancellationToken.ThrowIfCancellationRequested();
+                
+                if (pool.prefabHandle.Status != AsyncOperationStatus.Succeeded)
+                {
+                    throw new Exception($"Addressables LoadAssetAsync failed: {key}");
+                }
+                
+                pool.prefab = pool.prefabHandle.Result;
+                pool.root = inactive;
+            }
         }
     
         private void CreateAndEnqueue(Pool pool, string key, int count)

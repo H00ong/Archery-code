@@ -21,23 +21,16 @@ namespace Game.Stage.Management
         AllEnemiesDefeated,
         LoadingComplete,
     }
-    
-    public enum LoadingTask
-    {
-        GenerateMap,
-        SpawnEnemies,
-        PositionPlayer
-    }
 }
 
 public class StageManager : MonoBehaviour
 {
     public static StageManager Instance;
-    
+
     private readonly Dictionary<(StageState, StageCommandType), StageState> transitions = new()
     {
-        { (StageState.Clear, StageCommandType.EnterPortal), StageState.Loading },
         { (StageState.Combat, StageCommandType.AllEnemiesDefeated), StageState.Clear },
+        { (StageState.Clear, StageCommandType.EnterPortal), StageState.Loading },
         { (StageState.Loading, StageCommandType.LoadingComplete), StageState.Combat },
     };
 
@@ -67,7 +60,10 @@ public class StageManager : MonoBehaviour
         }
     }
 
-    private void UpdateStageIndex() => CurrentStageIndex++;
+    private void UpdateStageIndex()
+    {
+        CurrentStageIndex = (CurrentStageIndex + 1) % 10;
+    }
 
     private void OnEnable()
     {
@@ -108,6 +104,8 @@ public class StageManager : MonoBehaviour
     
     private async Awaitable StageLoadingAsync()
     {
+        await Awaitable.NextFrameAsync();
+
         var mapData = MapManager.Instance.CurrentMapData;
         
         TotalStageCountOfMap = mapData.stageCount;
@@ -116,7 +114,6 @@ public class StageManager : MonoBehaviour
         try
         {
             await CharacterManager.Instance.LoadAndSpawnCharacterAsync();
-            await PlayerController.Instance.Skill.LoadAllSkillsAsync();
 
             LoadMap();
             PositionPlayer();
@@ -148,6 +145,10 @@ public class StageManager : MonoBehaviour
         spawnPos.gameObject.SetActive(true);
 
         playerContainter.position = spawnPos.position;
+        player.transform.position = spawnPos.position;
+        
+        CameraController.Instance.SetPosition(spawnPos.position);
+
         player.gameObject.SetActive(true);
     }
 
@@ -158,7 +159,7 @@ public class StageManager : MonoBehaviour
         if (IsBossStage)
         {
             var idx = CurrentStageIndex / 10;
-            await enemyManager.SpawnBossEnemyAsync(idx); 
+            await enemyManager.SpawnBossEnemyAsync(idx);
         }
         else
         {

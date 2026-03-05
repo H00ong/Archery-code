@@ -19,7 +19,7 @@ namespace Managers
     {
         public static BarrelManager Instance { get; private set; }
 
-        [SerializeField] private string addressableAssetLabel;
+        [SerializeField] private string addressableAssetLabel = "barrel_config";
         [SerializeField] private float barrelGenerateTime = 5f;
         [SerializeField] private float meteorDamageModifier = 1f;
         [SerializeField] private float meteorYOffset = 1f;
@@ -38,6 +38,7 @@ namespace Managers
             if (Instance == null)
             {
                 Instance = this;
+                DontDestroyOnLoad(gameObject);
             }
             else
             {
@@ -196,10 +197,12 @@ namespace Managers
         {
             GameObject go = null;
 
+            var assetRef = _barrelSoDict[type].meteorPrefab;
+
             try
             {
-                if (!_poolManager.TryGetObject(_barrelSoDict[type].meteorPrefab, out go, _poolManager.effectPool))
-                    go = await PoolManager.Instance.GetObjectAsync(_barrelSoDict[type].meteorPrefab, _poolManager.effectPool);
+                if (!_poolManager.TryGetObject(assetRef, out go, _poolManager.effectPool))
+                    go = await _poolManager.GetObjectAsync(assetRef, _poolManager.effectPool);
 
                 destroyCancellationToken.ThrowIfCancellationRequested();
 

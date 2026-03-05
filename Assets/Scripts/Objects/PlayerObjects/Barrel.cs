@@ -1,14 +1,13 @@
-using Game.Player;
 using System.Collections;
 using Managers;
 using UnityEngine;
-using Players;
 
 public class Barrel : MonoBehaviour
 {
     [SerializeField] float _lifeTime = 20f;
     [SerializeField] EffectType _type;
     private BarrelManager _barrelManager;
+    private bool _isTouched = false;
 
     private void OnEnable()
     {
@@ -23,6 +22,7 @@ public class Barrel : MonoBehaviour
     public void InitBarrel(EffectType type)
     {
         _type = type;
+        _isTouched = false;
     }
 
     IEnumerator TerminateCoroutine()
@@ -34,8 +34,10 @@ public class Barrel : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(Utils.TagMap[TagType.Player]))
+        if (other.CompareTag(Utils.TagMap[TagType.Player]) && !_isTouched)
         {
+            _isTouched = true;
+
             BarrelManager.Instance.MeteorAttackActive(_type);
 
             StopAllCoroutines();

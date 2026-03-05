@@ -15,6 +15,7 @@ public class InitManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private async void Start()
@@ -62,6 +63,7 @@ public class InitManager : MonoBehaviour
         var characterManager = CharacterManager.Instance;
         var orbManager = OrbManager.instance;
         var barrelManager = BarrelManager.Instance;
+        var skillManager = SkillManager.Instance;
 
         try
         {
@@ -70,12 +72,14 @@ public class InitManager : MonoBehaviour
             var characterTask = characterManager.InitAsync();
             var orbTask = orbManager.EnsureOrbSoDictReadyAsync();
             var barrelTask = barrelManager.EnsureBarrelDictReadyAsync();
+            var skillTask = skillManager.LoadAllSkillsAsync();
 
             await mapTask;
             await enemyTask;
             await characterTask;
             await orbTask;
             await barrelTask;
+            await skillTask;
 
             destroyCancellationToken.ThrowIfCancellationRequested();
         }

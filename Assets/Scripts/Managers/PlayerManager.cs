@@ -29,6 +29,9 @@ namespace Managers
         public void SyncPlayerData(PlayerData playerData)
         {
             PlayerData = playerData;
+
+            var characterManager = CharacterManager.Instance;
+            characterManager.SyncCharacterIdentity(playerData.characterName);
         }
     }
 }

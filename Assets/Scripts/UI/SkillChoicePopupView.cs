@@ -4,34 +4,33 @@ using UnityEngine;
 
 namespace UI
 {
-    public class SkillChoicePopup : MonoBehaviour
+    public class SkillChoicePopupView : MonoBehaviour
     {
-        [SerializeField] private SkillView uiSkillPrefab;
+        private List<SkillView> _cards = new();
 
         public List<SkillView> BuildCards(int count)
         {
-            List<SkillView> list = new List<SkillView>();
+            if (_cards.Count == 0)
+                foreach (Transform c in transform)
+                    _cards.Add(c.GetComponent<SkillView>());
 
-            for (int i = 0; i < count; i++)
-            {
-                var go = Instantiate(uiSkillPrefab, transform);
-                list.Add(go);
-            }
-
-            return list;
+            return _cards.GetRange(0, count);
         }
 
-        private void RemoveAllSkillCards()
+        public void Open()
         {
-            foreach (Transform c in transform) 
-                Destroy(c.gameObject);
+            SetCardsActive(true);
         }
 
-        public void Open() => gameObject.SetActive(true);
-        public void Close() 
+        public void Close()
         {
-            RemoveAllSkillCards();
-            gameObject.SetActive(false);
+            SetCardsActive(false);
+        }
+        
+        private void SetCardsActive(bool active)
+        {
+            foreach (var c in _cards)
+                c.gameObject.SetActive(active);
         }
     }
 }

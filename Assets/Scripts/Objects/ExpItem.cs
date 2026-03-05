@@ -21,6 +21,11 @@ namespace Objects
             }
         }
 
+        void OnEnable()
+        {
+            _isMovingToPlayer = false;
+        }
+
         private void Update()
         {
             if (_playerTransform == null) return;

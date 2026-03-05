@@ -22,6 +22,7 @@ namespace Enemy
         [SerializeField] private Color darkEmissionColor = new Color(0.2f, 0f, 0.3f, 1f) * 1.5f;  // 어두운 보라색 발광
 
         private EnemyController _enemyController;
+        private Health _health;
         private Color _originalEmissionColor = Color.black;
         private bool _useEmission = false;
         
@@ -30,8 +31,6 @@ namespace Enemy
 
         private void Awake()
         {
-            _enemyController = GetComponent<EnemyController>();
-            
             // 효과 색상 매핑 초기화
             _effectColorMap = new Dictionary<EffectType, Color>
             {
@@ -75,15 +74,19 @@ namespace Enemy
 
         public void Initialize()
         {
-            Health health = _enemyController.GetComponent<Health>();
+            _enemyController = GetComponent<EnemyController>();
+            _health = _enemyController.GetComponent<Health>();
 
-            if (health == null)
+            _health.OnStatusChanged -= VisualizeEffect;
+            _health.OnStatusChanged += VisualizeEffect;
+
+            RestoreOriginalEmissionColors();
+
+            if (_health == null)
             {
                 Debug.LogWarning("Health component not found on EnemyController.");
                 return;
             }
-
-            health.OnStatusChanged += VisualizeEffect;
         }
 
         private void CacheOriginalEmissionColors(Material material)
@@ -147,8 +150,6 @@ namespace Enemy
             ApplyObjectMaterial(objectMat);
             ApplyAccessoryMaterial(accessoryMat);
         }
-
-
 
 #if UNITY_EDITOR
         [ContextMenu("Auto Find Renderers")]
