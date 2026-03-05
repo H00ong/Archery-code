@@ -30,17 +30,17 @@ namespace Enemy
         private EnemyStat _stat;
         
         public EnemyStat stat => _stat;
-        public EnemyState CurrentState { get; protected set; }
+        public EnemyState CurrentState { get; private set; }
         public bool IsBoss => EnemyTagUtil.Has(enemyTags, EnemyTag.Boss);
 
         [Header("Modules")]
         public EnemyBrain brain;
-        [SerializeField] protected EnemyIdle idle;
-        [SerializeField] protected EnemyMove move;
-        [SerializeField] protected EnemyHurt hurt;
-        [SerializeField] protected EnemyDie die;
+        [SerializeField] private EnemyIdle idle;
+        [SerializeField] private EnemyMove move;
+        [SerializeField] private EnemyHurt hurt;
+        [SerializeField] private EnemyDie die;
 
-        private readonly List<EnemyAttack> attacks = new List<EnemyAttack>();
+        private readonly List<EnemyAttack> _attacks = new List<EnemyAttack>();
         private readonly Dictionary<EnemyTag, IEnemyBehavior> _modules = new Dictionary<EnemyTag, IEnemyBehavior>();
         
         [Header("Components")]
@@ -52,20 +52,20 @@ namespace Enemy
         public EnemyVisual enemyVisual;
 
         [Header("Idle Tuning")]
-        [SerializeField] protected float defaultIdleTime = 2f;
+        [SerializeField] private float defaultIdleTime = 2f;
         
         [Header("Drop Item")]
         [SerializeField] public AssetReferenceGameObject expItemPrefab;
         
         [Header("Default Tuning")]
-        [SerializeField] protected float defaultAttackSpeed;
-        [SerializeField] protected int defaultAtk;
+        [SerializeField] private float defaultAttackSpeed;
+        [SerializeField] private int defaultAtk;
 
         [Header("Collision")]
-        [SerializeField] protected Transform blockCheck;
-        [SerializeField] protected float sphereCastRadius = 0f;
-        [SerializeField] protected float castDistance = .5f;
-        [SerializeField] protected LayerMask obstacleLayer;
+        [SerializeField] private Transform blockCheck;
+        [SerializeField] private float sphereCastRadius = 0f;
+        [SerializeField] private float castDistance = .5f;
+        [SerializeField] private LayerMask obstacleLayer;
         
         [HideInInspector] public Vector3 lastPlayerPosition;
         [HideInInspector] public PlayerController player;
@@ -74,11 +74,11 @@ namespace Enemy
         public bool AttackMoveTrigger { get; set; }
         public bool HurtEndTrigger { get; set; }
         public bool AttackEndTrigger { get; set; }
-        public bool HasMultiAttackModules => attacks.Count > 1;
+        public bool HasMultiAttackModules => _attacks.Count > 1;
         
     
-        protected Action OnEnter, OnExit, OnTick;
-        protected Dictionary<EnemyState, (Action enter, Action exit, Action tick)> ActionTable;
+        private Action OnEnter, OnExit, OnTick;
+        private Dictionary<EnemyState, (Action enter, Action exit, Action tick)> ActionTable;
     
         #region Unity Cycle
 
@@ -109,7 +109,7 @@ namespace Enemy
             }
         }
 
-        protected virtual void Update()
+        private void Update()
         {
             BlockCheck();
 
@@ -121,7 +121,7 @@ namespace Enemy
             OnTick?.Invoke();
         }
 
-        protected virtual void OnDisable()
+        private void OnDisable()
         {
             ClearAction();
         }
@@ -157,8 +157,8 @@ namespace Enemy
             // Visual 주입
             if (enemyVisual != null)
             {
-                enemyVisual.Initialize();
                 enemyVisual.ApplyMaterials(identity.ObjectMat, identity.AccessoryMat);
+                enemyVisual.Initialize();
             }
         }
 
@@ -179,7 +179,7 @@ namespace Enemy
             enemyReference.Init();
         }
 
-        protected virtual void SetStat()
+        private void SetStat()
         {
             if (!isDebugMode)
             {
@@ -200,17 +200,17 @@ namespace Enemy
             }
         }
 
-        protected virtual void InitMoveModule()
+        private void InitMoveModule()
         {
             move = EnemyBehaviorFactory.CreateMoveModules(this, enemyName, enemyTags, _modules);
         }
 
-        protected void InitAttackModule()
+        private void InitAttackModule()
         {
-            EnemyBehaviorFactory.CreateAttackModules(this, enemyName, enemyTags, _modules, attacks);
+            EnemyBehaviorFactory.CreateAttackModules(this, enemyName, enemyTags, _modules, _attacks);
         }
 
-        protected void ClearAction()
+        private void ClearAction()
         {
             OnEnter = null;
             OnTick = null;
@@ -220,9 +220,13 @@ namespace Enemy
             health.OnHit -= this.OnHit;
         }
 
-        protected virtual void InitModule()
+        private void InitModule()
         {
             ClearAction();
+
+            _attacks.Clear();
+            _modules.Clear();
+
             InitMoveModule();
             InitAttackModule();
 
@@ -240,7 +244,7 @@ namespace Enemy
             ActionTable = new Dictionary<EnemyState, (Action enter, Action exit, Action tick)> {
                 { EnemyState.Idle,   (enter: idle.OnEnter,        exit: idle.OnExit,                tick: idle.Tick) },
                 { EnemyState.Move,   (enter: move.OnEnter,        exit: move.OnExit,                tick: move.Tick) },
-                { EnemyState.Attack, (enter: attacks[0].OnEnter,  exit: attacks[0].OnExit,          tick: attacks[0].Tick)},
+                { EnemyState.Attack, (enter: _attacks[0].OnEnter,  exit: _attacks[0].OnExit,          tick: _attacks[0].Tick)},
                 { EnemyState.Hurt,   (enter: hurt.OnEnter,        exit: hurt.OnExit,                tick: hurt.Tick)},
                 { EnemyState.Dead,   (enter: die.OnEnter,         exit: die.OnExit,                 tick: die.Tick)},
             };
@@ -312,7 +316,7 @@ namespace Enemy
             OnEnter?.Invoke();
         }
 
-        public virtual void ChangeState(EnemyState next)
+        public void ChangeState(EnemyState next)
         {
             if (CurrentState == next) return;
             if (CurrentState == EnemyState.Dead) return;
@@ -334,16 +338,16 @@ namespace Enemy
         
         private void ChooseAttackModule()
         {
-            if (attacks.Count <= 1) return;
+            if (_attacks.Count <= 1) return;
 
             var currentAttackIndex = 1; //UnityEngine.Random.Range(0, attacks.Count);
-            var selectedAttack = attacks[currentAttackIndex];
+            var selectedAttack = _attacks[currentAttackIndex];
             
             ActionTable[EnemyState.Attack] = (selectedAttack.OnEnter, selectedAttack.OnExit, selectedAttack.Tick);
         }
         #endregion
 
-        protected virtual void OnHit()
+        private void OnHit()
         {
             if (!IsBoss)
             {
@@ -351,10 +355,10 @@ namespace Enemy
             }
         }
 
-        protected virtual void OnDie() => ChangeState(EnemyState.Dead);
+        private void OnDie() => ChangeState(EnemyState.Dead);
 
 
-        protected virtual void OnDrawGizmos()
+        private void OnDrawGizmos()
         {
             if (blockCheck == null) return;
             
@@ -363,7 +367,7 @@ namespace Enemy
         }
 
 #if UNITY_EDITOR
-        protected virtual void OnValidate()
+        private void OnValidate()
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
             if (!health) health = GetComponent<Health>();
