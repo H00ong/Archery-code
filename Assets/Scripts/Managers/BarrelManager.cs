@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Map;
 using Players;
 using Stat;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -68,7 +69,7 @@ namespace Managers
             GenerateBarrelCheck();
         }
 
-        public async Awaitable EnsureBarrelDictReadyAsync()
+        public async Awaitable LoadBarrelAssetsAsync()
         {
             if (_barrelSoDict is { Count: > 0 })
                 return;
@@ -92,6 +93,9 @@ namespace Managers
 
         private void GenerateBarrelCheck()
         {
+            if(GameManager.Instance.IsInLobby)
+                return;
+
             if (!StageManager.Instance.IsInCombat)
                 return;
 

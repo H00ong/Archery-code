@@ -57,12 +57,21 @@ namespace Managers
             }
         }
 
-        private void OnDestroy()
+        void OnEnable()
+        {
+            EventBus.Subscribe(EventType.AllStagesCleared, DeActiveCurrentCharacter);
+        }
+
+        private void OnDisable()
         {
             if (_loadHandle.IsValid())
                 Addressables.Release(_loadHandle);
+
+            EventBus.Unsubscribe(EventType.AllStagesCleared, DeActiveCurrentCharacter);
         }
-        public async Awaitable InitAsync()
+
+
+        public async Awaitable LoadCharacterIdentitiesAsync()
         {
             _loadHandle = Addressables.LoadAssetsAsync<CharacterIdentity>(characterLabel, null);
             await _loadHandle.Task;

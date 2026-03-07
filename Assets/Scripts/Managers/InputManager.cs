@@ -44,12 +44,12 @@ public class InputManager : MonoBehaviour
         {
             if (EnemyManager.Instance.Enemies.Count > 0)
             {
-                Player.ChangePlayerState(PlayerState.Attack);
+                Player.ChangePlayerAnimation(PlayerState.Attack);
                 Player.Attack.Attack();
             }
             else
             {
-                Player.ChangePlayerState(PlayerState.Idle);
+                Player.ChangePlayerAnimation(PlayerState.Idle);
             }
         }
     }
@@ -68,11 +68,11 @@ public class InputManager : MonoBehaviour
         if (EnemyManager.Instance.Enemies.Count > 0)
         {
             Player.Attack.Attack();
-            Player.ChangePlayerState(PlayerState.Attack);
+            Player.ChangePlayerAnimation(PlayerState.Attack);
         }
         else
         {
-            Player.ChangePlayerState(PlayerState.Idle);
+            Player.ChangePlayerAnimation(PlayerState.Idle);
         }
     }
 
@@ -87,6 +87,7 @@ public class InputManager : MonoBehaviour
         EventBus.Subscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Subscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Subscribe(EventType.SkillChosen, ActivePlayerInput);
+        EventBus.Subscribe(EventType.AllStagesCleared, DeactivePlayerInput);
     }
 
     private void OnDisable()
@@ -100,6 +101,7 @@ public class InputManager : MonoBehaviour
         EventBus.Unsubscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.SkillChosen, ActivePlayerInput);
+        EventBus.Unsubscribe(EventType.AllStagesCleared, DeactivePlayerInput);
     }
 
     private void ActivePlayerInput() => _playerInput.Player.Enable();
