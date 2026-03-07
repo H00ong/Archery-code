@@ -4,7 +4,7 @@ using UnityEngine;
 public class InitManager : MonoBehaviour
 {
     public static InitManager Instance { get; private set; }
-    private bool _isInitialized = false;
+    public bool IsLoaded { get; private set; }
 
     private void Awake()
     {
@@ -21,20 +21,12 @@ public class InitManager : MonoBehaviour
     private async void Start()
     {
         await InitAsync();
-        _isInitialized = true;
-    }
-
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.Space) && _isInitialized)
-        {
-            Debug.Log("InitManager: Space key pressed after initialization.");
-            StageManager.Instance.Init();
-        }
     }
 
     private async Awaitable InitAsync()
     {
+        IsLoaded = false;
+
         // Phase 1 — DataManager & PoolManager (싱글톤 Awake로 이미 준비됨, 참조만 확보)
         var dataManager = DataManager.Instance;
         var poolManager = PoolManager.Instance;
@@ -67,18 +59,18 @@ public class InitManager : MonoBehaviour
 
         try
         {
-            var mapTask = mapManager.InitAsync();
+            var mapTask = mapManager.LoadMapConfigAsync();
             var enemyTask = enemyManager.LoadEnemyModulesAsync();
-            var characterTask = characterManager.InitAsync();
-            var orbTask = orbManager.EnsureOrbSoDictReadyAsync();
-            var barrelTask = barrelManager.EnsureBarrelDictReadyAsync();
+            var characterTask = characterManager.LoadCharacterIdentitiesAsync();
+            var orbTask = orbManager.LoadOrbConfigurationsAsync();
+            var barrelTask = barrelManager.LoadBarrelAssetsAsync();
             var skillTask = skillManager.LoadAllSkillsAsync();
 
             await mapTask;
             await enemyTask;
             await characterTask;
             await orbTask;
-            await barrelTask;
+            //await barrelTask;
             await skillTask;
 
             destroyCancellationToken.ThrowIfCancellationRequested();
@@ -91,30 +83,14 @@ public class InitManager : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError($"[InitManager] Phase 2 failed: {ex.Message}");
+            Debug.LogException(ex); // 상세 스택 트레이스 로그 추가
             return;
         }
 
         Debug.Log("[InitManager] Phase 2 complete — All Addressables loaded.");
 
-        // Phase 3 — 맵 프리로드
-        try
-        {
-            await mapManager.PreloadMapsAsync();
-            destroyCancellationToken.ThrowIfCancellationRequested();
-        }
-        catch (OperationCanceledException)
-        {
-            Debug.LogWarning("[InitManager] Phase 3 canceled.");
-            return;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[InitManager] Phase 3 failed: {ex.Message}");
-            return;
-        }
-
-        Debug.Log("[InitManager] Phase 3 complete — Maps preloaded.");
-
         PlayerManager.Instance.InitializePlayerData();
+
+        IsLoaded = true;
     }
 }
