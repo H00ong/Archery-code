@@ -26,7 +26,12 @@ namespace UI
         {
             SetCardsActive(false);
         }
-        
+
+        void OnDisable()
+        {
+            _cards.Clear();
+        }
+
         private void SetCardsActive(bool active)
         {
             foreach (var c in _cards)

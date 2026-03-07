@@ -4,7 +4,7 @@ using Players;
 
 namespace Objects
 {
-    public class ExpItem : MonoBehaviour
+    public class ExpItem : SceneObject
     {
         [SerializeField] private int expAmount = 10;
         [SerializeField] private float magnetRange = 3f;
@@ -21,9 +21,15 @@ namespace Objects
             }
         }
 
-        void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             _isMovingToPlayer = false;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
         }
 
         private void Update()

@@ -1,17 +1,24 @@
 using System.Collections;
 using Managers;
 using UnityEngine;
+using Objects;
 
-public class Barrel : MonoBehaviour
+public class Barrel : SceneObject
 {
     [SerializeField] float _lifeTime = 20f;
     [SerializeField] EffectType _type;
     private BarrelManager _barrelManager;
     private bool _isTouched = false;
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         StartCoroutine(TerminateCoroutine());
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
     }
 
     private void Start()

@@ -25,7 +25,11 @@ namespace Game.Stage.Management
 
 public class StageManager : MonoBehaviour
 {
+    
     public static StageManager Instance;
+    private const int BossStageInterval = 10;
+    private bool _initialized = false;
+    private bool _allStageCleared = false;
 
     private readonly Dictionary<(StageState, StageCommandType), StageState> transitions = new()
     {
@@ -34,11 +38,11 @@ public class StageManager : MonoBehaviour
         { (StageState.Loading, StageCommandType.LoadingComplete), StageState.Combat },
     };
 
-    private readonly Dictionary<StageState, Action> actionTable = new()
+    private readonly Dictionary<StageState, EventType> eventTable = new()
     {
-        {StageState.Combat, () => EventBus.Publish(EventType.StageCombatStarted) },
-        {StageState.Clear, () => EventBus.Publish(EventType.StageCleared) },
-        {StageState.Loading, () => EventBus.Publish(EventType.StageLoadingStarted) },
+        {StageState.Combat, EventType.StageCombatStarted },
+        {StageState.Clear, EventType.StageCleared },
+        {StageState.Loading, EventType.StageLoadingStarted },
     };
 
     public int CurrentStageIndex { get; private set; }
@@ -62,24 +66,36 @@ public class StageManager : MonoBehaviour
 
     private void UpdateStageIndex()
     {
-        CurrentStageIndex = (CurrentStageIndex + 1) % 10;
+        CurrentStageIndex++;
+        if (CurrentStageIndex >= TotalStageCountOfMap)
+        {
+            _allStageCleared = true;
+            Debug.Log("All stages cleared!");
+            EventBus.Publish(EventType.AllStagesCleared);
+        }
     }
 
     private void OnEnable()
     {
-        EventBus.Subscribe(EventType.StageLoadingStarted, StartStageLoadingSequence);
-        EventBus.Subscribe(EventType.StageCleared, UpdateStageIndex);
+        EventBus.Subscribe(EventType.StageLoadingStarted, StartStageLoadingSequence, 100);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe(EventType.StageLoadingStarted, StartStageLoadingSequence);
-        EventBus.Unsubscribe(EventType.StageCleared, UpdateStageIndex);
+    }
+
+    void Start()
+    {
+        Init();
     }
 
     public void Init()
     {
-        CurrentStageIndex = 0;
+        CurrentStageIndex = -1;
+
+        _allStageCleared = false;
+        _initialized = false;
 
         ChangeState(StageState.Loading);
     }
@@ -94,8 +110,8 @@ public class StageManager : MonoBehaviour
     {
         CurrentState = newState;
 
-        if (actionTable.TryGetValue(newState, out var action))
-            action?.Invoke();
+        if (eventTable.TryGetValue(newState, out var action))
+            EventBus.Publish(action);
         else
             Debug.LogError($"No action defined for state {newState}");
     }
@@ -104,16 +120,29 @@ public class StageManager : MonoBehaviour
     
     private async Awaitable StageLoadingAsync()
     {
-        await Awaitable.NextFrameAsync();
+        if (!_initialized)
+        {
+            _initialized = true;
 
-        var mapData = MapManager.Instance.CurrentMapData;
-        
-        TotalStageCountOfMap = mapData.stageCount;
-        EnemyCountList = mapData.enemyCountGrid;
+            MapManager.Instance.RefreshMapData();
+
+            var mapData = MapManager.Instance.CurrentMapData;
+
+            TotalStageCountOfMap = mapData.stageCount;
+            EnemyCountList = mapData.enemyCountGrid;
+        }
+
+        UpdateStageIndex();
+
+        if (_allStageCleared)
+            return;
 
         try
         {
+            await MapManager.Instance.PreloadMapsAsync();
             await CharacterManager.Instance.LoadAndSpawnCharacterAsync();
+
+            destroyCancellationToken.ThrowIfCancellationRequested();
 
             LoadMap();
             PositionPlayer();
@@ -124,6 +153,8 @@ public class StageManager : MonoBehaviour
             Debug.LogError($"[StageManager] Error during stage loading: {e.Message}");
         }
 
+        destroyCancellationToken.ThrowIfCancellationRequested();
+        
         HandleCommand(StageCommandType.LoadingComplete);
     }
 
@@ -158,7 +189,7 @@ public class StageManager : MonoBehaviour
         
         if (IsBossStage)
         {
-            var idx = CurrentStageIndex / 10;
+            var idx = CurrentStageIndex / BossStageInterval;
             await enemyManager.SpawnBossEnemyAsync(idx);
         }
         else

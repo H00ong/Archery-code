@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Players;
+using System.Threading.Tasks;
 
 namespace Managers
 {
@@ -38,7 +39,7 @@ namespace Managers
 
         private void OnEnable()
         {
-            EventBus.Subscribe(EventType.SkillChosen, OnSkillChosen);
+            EventBus.Subscribe(EventType.SkillChosen, OnSkillChosen, 100);
         }
 
         private void OnDisable()
@@ -74,14 +75,6 @@ namespace Managers
         private void OnSkillChosen()
         {
             _isLevelingUp = false;
-            // 다음 프레임에 CheckLevelUp을 실행하여
-            // 다른 SkillChosen 핸들러들이 먼저 완료되도록 보장
-            StartCoroutine(CheckLevelUpNextFrame());
-        }
-
-        private System.Collections.IEnumerator CheckLevelUpNextFrame()
-        {
-            yield return null; // 다음 프레임까지 대기
             CheckLevelUp();
         }
 

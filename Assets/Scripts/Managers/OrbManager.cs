@@ -43,11 +43,21 @@ public class OrbManager : MonoBehaviour
         }
     }
 
-    public async Awaitable EnsureOrbSoDictReadyAsync()
+    void OnEnable()
+    {
+        EventBus.Subscribe(EventType.StageCombatStarted, FindOrbPivot);
+    }
+
+    void OnDisable()
+    {
+        EventBus.Unsubscribe(EventType.StageCombatStarted, FindOrbPivot);
+        ClearOrbData();
+    }
+
+    public async Awaitable LoadOrbConfigurationsAsync()
     {
         _rotateSpeed = _defaultRotateSpeed;
 
-        FindOrbPivot();
         CreateOrbObjDict();
 
         try
@@ -63,6 +73,7 @@ public class OrbManager : MonoBehaviour
             if (_handle.Status != AsyncOperationStatus.Succeeded)
             {
                 Debug.LogError($"Load {_label} failed");
+                ReleaseOrbHandle();
                 throw new System.Exception($"Failed to load orb configurations with label: {_label}");
             }
         }
@@ -80,12 +91,10 @@ public class OrbManager : MonoBehaviour
     private void ReleaseOrbHandle()
     {
         if (_handle.IsValid())
+        {
             Addressables.Release(_handle);
-    }
-
-    private void OnDisable()
-    {
-        ClearOrbData();
+            _handle = default;
+        }
     }
 
     private void FindOrbPivot()
@@ -110,11 +119,7 @@ public class OrbManager : MonoBehaviour
 
     private void ClearOrbData()
     {
-        if (_handle.IsValid())
-        {
-            Addressables.Release(_handle);
-            _handle = default;
-        }
+        ReleaseOrbHandle();
 
         foreach (var kv in _orbPoolDict)
         {
@@ -167,14 +172,14 @@ public class OrbManager : MonoBehaviour
                 var orb = go.GetComponent<Orb>();
                 _orbPoolDict[type].orbs.Add(orb);
             }
-            catch (System.OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 if (go != null)
                     PoolManager.Instance.ReturnObject(go);
 
                 return;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[OrbManager] 구슬 생성 중 치명적 에러 발생: {ex.Message}");
 
