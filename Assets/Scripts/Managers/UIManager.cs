@@ -32,15 +32,21 @@ namespace Managers
             }
         }
 
-        /// <summary>
-        /// 레벨업 시 스킬 선택 팬업을 표시한다.
-        /// LevelManager가 호용.
-        /// </summary>
+        void OnEnable()
+        {
+            EventBus.Subscribe(EventType.SkillChosen, ClearDataInStage);
+        }
+
+        void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.SkillChosen, ClearDataInStage);
+        }
+
         public void ShowSkillChoicePopup(PlayerSkill playerSkill)
         {
             if (_skillChoicePresenter == null)
             {
-                var canvas  = FindFirstObjectByType<Canvas>();
+                var canvas = FindFirstObjectByType<Canvas>();
                 var popupObj = Instantiate(skillChoicePopupPrefab, canvas.transform);
                 var popupView = popupObj.GetComponent<SkillChoicePopupView>();
                 _skillChoicePresenter = new SkillChoicePopupPresenter(popupView);

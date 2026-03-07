@@ -33,6 +33,12 @@ namespace Managers
             var characterManager = CharacterManager.Instance;
             characterManager.SyncCharacterIdentity(playerData.characterName);
         }
+
+        public void SetCurrentCharacter(CharacterIdentity characterIdentity)
+        {
+            PlayerData.SetCharacterName(characterIdentity.characterName);
+            SyncPlayerData(PlayerData);
+        }
     }
 }
 
