@@ -18,7 +18,7 @@ public readonly struct OrbConfig
     }
 }
 
-public class Orb : MonoBehaviour
+public class Orb : Objects.SceneObject
 {
     private float _rotateSpeed;
     private Transform _rotatePivot;

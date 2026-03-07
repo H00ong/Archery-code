@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Enemy;
 using Managers;
+using Objects;
 using Players;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public readonly struct MeteorConfig
     }
 }
 
-public class Meteor : MonoBehaviour
+public class Meteor : SceneObject
 {
     [SerializeField] float terminateTime = 2f;
     [SerializeField] float timeDelayForMeteor = 1f;
@@ -30,10 +31,16 @@ public class Meteor : MonoBehaviour
     
     private HashSet<IDamageable> _hitEnemies = new HashSet<IDamageable>();
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         StartCoroutine(TerminateCoroutine());
         _hitEnemies.Clear();
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
     }
 
     public void InitMeteor(MeteorConfig config)
