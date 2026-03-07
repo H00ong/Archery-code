@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Map;
 using Players;
+using Unity.Android.Gradle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -53,33 +55,37 @@ namespace Managers
             }
         }
 
-        #region Main Loading Sequence
-        public async Awaitable InitAsync()
+        void Start()
         {
             _poolManager = PoolManager.Instance;
             _dataManager = DataManager.Instance;
-
-            currentMap = null;
-            CurrentMapData = null;
-
-            await LoadMapConfigAsync();
-            RefreshMapData();
         }
 
-        #endregion
-
-        private void OnDestroy()
+        void OnEnable()
         {
+            EventBus.Subscribe(EventType.AllStagesCleared, OnStageMapClear);
+        }
+
+        void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.AllStagesCleared, OnStageMapClear);
+
             if (_handle.IsValid())
                 Addressables.Release(_handle);
 
-            _currentBossIdentityList?.Clear();
-            _currentEnemyIdentityList?.Clear();
-            _currentMapList?.Clear();
-            _currentBossMapRef = null;
+            OnStageMapClear();
+        }
 
-            _mapDict.Clear();
-            _preloadedMaps.Clear();
+        private void OnStageMapClear()
+        {
+            _currentMapList?.Clear();
+            _preloadedMaps?.Clear();
+            _currentBossMapRef = null;
+            _currentEnemyIdentityList?.Clear();
+            _currentBossIdentityList?.Clear();
+
+            if(currentMap != null)
+                PoolManager.Instance.ReturnObject(currentMap.gameObject);
 
             currentMap = null;
             CurrentMapData = null;
@@ -87,8 +93,11 @@ namespace Managers
         
         #region 1. Data & Addressables
 
-        private async Awaitable LoadMapConfigAsync()
+        public async Awaitable LoadMapConfigAsync()
         {
+            currentMap = null;
+            CurrentMapData = null;
+
             if (_mapDict is { Count: > 0 }) return;
 
             _mapDict = new Dictionary<MapType, MapScriptable>();
@@ -108,6 +117,10 @@ namespace Managers
                     Debug.LogError($"[MapManager] 맵 설정 로드 실패: {label}");
                     throw new InvalidOperationException($"[MapManager] Addressable load failed for label: {label}");
                 }
+                else
+                {
+                    Debug.Log($"[MapManager] 맵 설정 로드 성공: {label}, 총 맵 종류: {_mapDict.Count}");
+                }
             }
             catch (System.OperationCanceledException)
             {
@@ -126,10 +139,16 @@ namespace Managers
             }
         }
 
-        private void RefreshMapData()
+        public void SetCurrentMapIndex(int index)
+        {
+            CurrentMapIndex = index;
+            Debug.Log($"[MapManager] CurrentMapIndex set to: {CurrentMapIndex}");
+        }
+
+        public void RefreshMapData()
         {
             CurrentMapData = _dataManager.GetMapData(CurrentMapIndex);
-            
+
             if (CurrentMapData == null)
             {
                 throw new System.Exception($"[MapManager] MapData is null for index: {CurrentMapIndex}");
@@ -141,12 +160,12 @@ namespace Managers
             {
                 throw new InvalidOperationException($"[MapManager] MapScriptable not found for MapType: {currentMapType}");
             }
-            
-            _currentMapList = mapSo.mapList;
+
+            _currentMapList = mapSo.mapList.ToList();
             _currentBossMapRef = mapSo.bossMap;
-            
-            _currentEnemyIdentityList = mapSo.enemyIdentityList;
-            _currentBossIdentityList = mapSo.bossIdentityList;
+
+            _currentEnemyIdentityList = mapSo.enemyIdentityList.ToList();
+            _currentBossIdentityList = mapSo.bossIdentityList.ToList();
         }
 
         #endregion
@@ -208,7 +227,6 @@ namespace Managers
                 if (map != null)
                     _poolManager.ReturnObject(map);
             }
-            _preloadedMaps.Clear();
 
             if (_preloadedBossMap != null)
             {
@@ -298,14 +316,5 @@ namespace Managers
         }
 
         #endregion
-
-        public void ClearMap()
-        {
-            if (currentMap == null) return;
-            
-            currentMap.gameObject.SetActive(false);
-            _poolManager.ReturnObject(currentMap.gameObject);
-            currentMap = null;
-        }
     }
 }
