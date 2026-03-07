@@ -17,7 +17,7 @@ public class PlayerMovement : MonoBehaviour
         _stat ??= PlayerController.Instance.Stat;
         _playerManager ??= PlayerController.Instance;
 
-        _playerManager.ChangePlayerState(PlayerState.Move);
+        _playerManager.ChangePlayerAnimation(PlayerState.Move);
 
         Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y);
         transform.rotation = Quaternion.LookRotation(moveDir, Vector3.up);

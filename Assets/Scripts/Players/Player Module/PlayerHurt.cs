@@ -28,7 +28,7 @@ namespace Players
 
         private void OnPlayerDie()
         {
-            playerManager.ChangePlayerState(PlayerState.Dead);
+            playerManager.ChangePlayerAnimation(PlayerState.Dead);
         }
 
         private void OnPlayerHit()

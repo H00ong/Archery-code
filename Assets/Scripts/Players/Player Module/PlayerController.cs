@@ -64,7 +64,7 @@ namespace Players
             Health ??= GetComponent<Health>();
         }
 
-        public void ChangePlayerState(PlayerState newState)
+        public void ChangePlayerAnimation(PlayerState newState)
         {
             UpdateAnimation(newState);
 
