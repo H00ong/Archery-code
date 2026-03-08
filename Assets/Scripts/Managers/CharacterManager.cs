@@ -101,10 +101,13 @@ namespace Managers
 
         public async Awaitable LoadAndSpawnCharacterAsync()
         {
-            if(_currentCharacterIdentity == null)
+            if (_currentCharacterIdentity == null)
             {
                 _currentCharacterIdentity = GetCurrentCharacterIdentity();
             }
+            
+            if(_currentCharacterInstance != null)
+                return;
 
             GameObject go = null;
             var pool = PoolManager.Instance;
@@ -135,6 +138,9 @@ namespace Managers
 
             playerController.Init();
             playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.baseStat);
+
+            EventBus.Publish(EventType.PlayerSpawned);
+            
             Debug.Log($"[CharacterManager] Character spawned and stats applied: {_currentCharacterIdentity.characterName}");
         }
 
