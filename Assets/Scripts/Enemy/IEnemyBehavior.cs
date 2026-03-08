@@ -1,5 +1,6 @@
 using Enemy;
 using Players;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 
 namespace Enemy
@@ -19,26 +20,34 @@ namespace Enemy
 
     public class EnemyMove : MonoBehaviour, IEnemyBehavior
     {
+        private const float DefaultDuration = 4.0f;
+        private const float DefaultMoveSpeed = 3.0f;
+
         protected EnemyController _ctx;
         protected PlayerController _player;
+        protected Rigidbody _rigidbody;
 
         protected float _moveTimer;
         protected float _duration;
-        private float _defaultMoveSpeed = 3.0f;
+
         private float _moveSpeed;
+        private float _originMoveSpeed;
         private float _originalAnimSpeed;
         
 
         public virtual void Init(EnemyController ctx, BaseModuleData data = null)
         {
             _ctx = ctx;
+            _rigidbody = ctx.rigidBody;
 
             if (!_ctx.isDebugMode)
             {
-                _defaultMoveSpeed = _ctx.stat.MoveSpeed;
+                _originMoveSpeed = _ctx.stat.MoveSpeed;
             }
-
-            _moveSpeed = _defaultMoveSpeed;
+            else
+            {
+                _originMoveSpeed = DefaultMoveSpeed;
+            }
 
             if (data is MoveModuleData mData)
             {
@@ -46,9 +55,10 @@ namespace Enemy
             }
             else
             {
-                _duration = 4.0f; // 기본값
+                _duration = DefaultDuration;
             }
 
+            _moveSpeed = _originMoveSpeed;
             _originalAnimSpeed = _ctx.anim.speed;
 
             _ctx.health.OnStatusChanged -= ChangeMoveSpeed;
@@ -78,7 +88,8 @@ namespace Enemy
 
         protected void MoveForward()
         {
-            transform.position += transform.forward * _moveSpeed * Time.deltaTime;
+            Vector3 targetPos = _rigidbody.position + transform.forward * _moveSpeed * Time.fixedDeltaTime;
+            _rigidbody.MovePosition(targetPos);
         }
 
         private void ChangeMoveSpeed(DamageInfo damageInfo, bool isStart)
@@ -90,12 +101,12 @@ namespace Enemy
         
             if (isStart)
             {
-                _moveSpeed = _defaultMoveSpeed * (1f - effectData.value);
+                _moveSpeed = _originMoveSpeed * (1f - effectData.value);
                 _ctx.anim.speed = _originalAnimSpeed * (1f - effectData.value);
             }
             else
             {
-                _moveSpeed = _defaultMoveSpeed;
+                _moveSpeed = _originMoveSpeed;
                 _ctx.anim.speed = _originalAnimSpeed;
             }
         }
@@ -106,9 +117,9 @@ namespace Enemy
     public class EnemyAttack : MonoBehaviour, IEnemyBehavior, IAnimationListener
     {
         protected EnemyController _ctx;
-        protected EnemyStat _stats;
-
+        protected EnemyStat _stat;
         protected PlayerController _player;
+
         protected int _animIndex;
 
         public virtual void Init(EnemyController ctx, BaseModuleData data = null)
@@ -117,7 +128,7 @@ namespace Enemy
 
             if (!_ctx.isDebugMode)
             {
-                _stats = _ctx.stat;
+                _stat = _ctx.stat;
             }
 
             _ctx.SetAttackEndTrigger(false);
@@ -139,18 +150,13 @@ namespace Enemy
             _ctx.SetAttackEndTrigger(false);
         }
 
-        public virtual void Tick()
-        {
-            
-        }
+        public virtual void Tick() { }
 
         public virtual void OnExit()
         {
             _ctx.SetAttackEndTrigger(false);
         }
 
-        public virtual void OnAnimEvent()
-        {
-        }
+        public virtual void OnAnimEvent() { }
     }
 }

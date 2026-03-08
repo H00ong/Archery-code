@@ -4,6 +4,7 @@ using UnityEngine;
 [System.Serializable]
 public class RandomMove : EnemyMove
 {
+    private const float PickDirectionTime = 7f;
     private float _pickDirectionTimer;
     private float _pickDirectionTime;
 
@@ -17,7 +18,7 @@ public class RandomMove : EnemyMove
         }
         else
         {
-            _pickDirectionTime = 7f;
+            _pickDirectionTime = PickDirectionTime;
         }
 
         _pickDirectionTimer = _pickDirectionTime;
@@ -40,8 +41,8 @@ public class RandomMove : EnemyMove
 
     public override void Tick()
     {
-        _moveTimer -= Time.deltaTime;
-        _pickDirectionTimer -= Time.deltaTime;
+        _moveTimer -= Time.fixedDeltaTime;
+        _pickDirectionTimer -= Time.fixedDeltaTime;
 
         if (_moveTimer < 0)
         {
