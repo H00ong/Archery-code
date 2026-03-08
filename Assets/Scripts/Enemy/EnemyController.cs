@@ -21,6 +21,8 @@ namespace Enemy
             { EnemyState.Move, Animator.StringToHash("Move") },
         };
 
+        private const float EnemyReturnDelay = .25f;
+
         [Header("Debug")] 
         public bool isDebugMode = true;
 
@@ -53,71 +55,38 @@ namespace Enemy
 
         [Header("Idle Tuning")]
         [SerializeField] private float defaultIdleTime = 2f;
+
         
         [Header("Drop Item")]
         [SerializeField] public AssetReferenceGameObject expItemPrefab;
-        
+
         [Header("Default Tuning")]
         [SerializeField] private float defaultAttackSpeed;
-        [SerializeField] private int defaultAtk;
 
-        [Header("Collision")]
-        [SerializeField] private Transform blockCheck;
-        [SerializeField] private float sphereCastRadius = 0f;
-        [SerializeField] private float castDistance = .5f;
-        [SerializeField] private LayerMask obstacleLayer;
-        
+
         [HideInInspector] public Vector3 lastPlayerPosition;
         [HideInInspector] public PlayerController player;
 
-        public bool IsBlocked { get; private set; }
         public bool AttackMoveTrigger { get; set; }
         public bool HurtEndTrigger { get; set; }
         public bool AttackEndTrigger { get; set; }
         public bool HasMultiAttackModules => _attacks.Count > 1;
-        
     
         private Action OnEnter, OnExit, OnTick;
         private Dictionary<EnemyState, (Action enter, Action exit, Action tick)> ActionTable;
-    
+
         #region Unity Cycle
 
-        private void BlockCheck()
+        void Update()
         {
-            var origin = blockCheck.position;
-            var radius = sphereCastRadius;
-            var dir = transform.forward;
-            var checkDistance = castDistance;
-            var mask = obstacleLayer;
-
-            if (Physics.SphereCast(
-                    origin,
-                    radius,
-                    dir,
-                    out var hit,
-                    checkDistance,
-                    mask)) 
-            {
-                if (move is RandomMove randomMove)
-                {
-                    randomMove.PickReflectDirection(transform.forward, hit.normal);
-                }
-            }
-            else
-            {
-                IsBlocked = false;
-            }
-        }
-
-        private void Update()
-        {
-            BlockCheck();
-
             if (AttackEndTrigger)
             {
                 OnModuleComplete();
             }
+        }
 
+        private void FixedUpdate()
+        {
             OnTick?.Invoke();
         }
 
@@ -137,8 +106,9 @@ namespace Enemy
             {
                 SetIdentity(identity);
             }
-            
-            SetupManager();
+
+            player = PlayerController.Instance;
+
             RigidbodyActive(true);
             ColliderActive(true);
             SetStat();
@@ -160,11 +130,6 @@ namespace Enemy
                 enemyVisual.ApplyMaterials(identity.ObjectMat, identity.AccessoryMat);
                 enemyVisual.Initialize();
             }
-        }
-
-        private void SetupManager()
-        {
-            player = PlayerController.Instance;
         }
 
         private void CacheComponent()
@@ -196,7 +161,8 @@ namespace Enemy
             if (rigidBody)
             {
                 rigidBody.isKinematic = !active;
-                rigidBody.constraints = RigidbodyConstraints.FreezeAll;
+                rigidBody.constraints = RigidbodyConstraints.FreezeRotation |
+                                        RigidbodyConstraints.FreezePositionY;
             }
         }
 
@@ -254,9 +220,7 @@ namespace Enemy
         #region Overridable Methods
         public int GetAtk()
         {
-            if (!isDebugMode && _stat != null)
-                return _stat.AttackPower;
-            return defaultAtk;
+            return _stat.AttackPower;
         }
         #endregion
 
@@ -270,29 +234,13 @@ namespace Enemy
             enemyAttack.OnAnimEvent();
         }
     
-        public void SetHurtEndTrigger(bool active) 
-        {
-            HurtEndTrigger = active;
-        }
+        public void SetHurtEndTrigger(bool active) => HurtEndTrigger = active;
+        public void SetAttackEndTrigger(bool active) => AttackEndTrigger = active;
+        public void SetAttackMoveTrigger(bool active) => AttackMoveTrigger = active;
 
-        public void SetAttackEndTrigger(bool active) 
+        public async void Die()
         {
-            AttackEndTrigger = active;
-        }
-
-        public void SetAttackMoveTrigger(bool active) 
-        {
-            AttackMoveTrigger = active;
-        }
-
-        public void Die() 
-        {
-            StartCoroutine(ReturnCoroutine());
-        }
-
-        private IEnumerator ReturnCoroutine() 
-        {
-            yield return new WaitForSeconds(.5f);
+            await Awaitable.WaitForSecondsAsync(EnemyReturnDelay, destroyCancellationToken);
 
             PoolManager.Instance.ReturnObject(gameObject);
         }
@@ -340,7 +288,7 @@ namespace Enemy
         {
             if (_attacks.Count <= 1) return;
 
-            var currentAttackIndex = 1; //UnityEngine.Random.Range(0, attacks.Count);
+            var currentAttackIndex = UnityEngine.Random.Range(0, _attacks.Count);
             var selectedAttack = _attacks[currentAttackIndex];
             
             ActionTable[EnemyState.Attack] = (selectedAttack.OnEnter, selectedAttack.OnExit, selectedAttack.Tick);
@@ -357,13 +305,18 @@ namespace Enemy
 
         private void OnDie() => ChangeState(EnemyState.Dead);
 
-
-        private void OnDrawGizmos()
+        void OnCollisionEnter(Collision collision)
         {
-            if (blockCheck == null) return;
-            
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(blockCheck.position, sphereCastRadius);
+            if (collision.gameObject.CompareTag("Obstacle"))
+            {
+                if (CurrentState != EnemyState.Move)
+                    return;
+                
+                if(move is RandomMove randomMove)
+                {
+                    randomMove.PickReflectDirection(collision.GetContact(0).point - transform.position, collision.GetContact(0).normal);
+                }
+            }
         }
 
 #if UNITY_EDITOR
@@ -377,7 +330,6 @@ namespace Enemy
             if(!die) GetComponent<EnemyDie>();
             if(!hurt) GetComponent<EnemyHurt>();
             if (!move) GetComponent<EnemyMove>();
-            obstacleLayer = LayerMask.GetMask("Obstacle");
         }
 #endif
     }

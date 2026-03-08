@@ -6,10 +6,15 @@ namespace Enemy
 {
     public class FollowMeleeAttack : MeleeAttack, IAnimationListener
     {
-        private float _attackRange = 1.5f;
-        private float _chaseDuration = 3f;
+        private const float DefaultMoveSpeed = 3f;
+        private const float DefaultAttackRange = 2f;
+        private const float DefaultChaseDuration = 3f;
+        private const float ChaseMoveSpeedMultiplier = 1.5f;
+
+        private float _attackRange;
+        private float _chaseDuration;
         private float _chaseTimer;
-        private float _moveSpeed = 3f;
+        private float _moveSpeed;
 
         private bool _isChasing;
         
@@ -21,16 +26,23 @@ namespace Enemy
             {
                 _moveSpeed = ctx.stat.MoveSpeed;
             }
-
-            if (data is not FollowMeleeAttackData fmData)
+            else
             {
-                Debug.LogError("[FollowMeleeAttack] Invalid module data provided!");
-                return;
+                _moveSpeed = DefaultMoveSpeed;
             }
 
-            _attackRange = fmData.attackRange;
-            _chaseDuration = fmData.chaseDuration;
-            _moveSpeed *= fmData.moveSpeedIncreaseMultiplier;
+            if (data is FollowMeleeAttackData fmData)
+            {
+                _attackRange = fmData.attackRange;
+                _chaseDuration = fmData.chaseDuration;
+                _moveSpeed *= fmData.moveSpeedIncreaseMultiplier;
+            }
+            else
+            {
+                _attackRange = DefaultAttackRange;
+                _chaseDuration = DefaultChaseDuration;
+                _moveSpeed *= ChaseMoveSpeedMultiplier;
+            }
         }
 
         public override void OnEnter()
@@ -44,8 +56,6 @@ namespace Enemy
             {
                 _ctx.anim.SetInteger(AnimHashes.AttackIndex, _animIndex);
             }
-            
-            _ctx.anim.SetInteger(AnimHashes.StateIndex, 0);
         }
 
         public override void OnExit()
@@ -71,7 +81,8 @@ namespace Enemy
 
         private void ChasePlayer()
         {
-            _chaseTimer -= Time.deltaTime;
+            _chaseTimer -= Time.fixedDeltaTime;
+
             bool isInRange = Vector3.Distance(_player.transform.position, transform.position) <= _attackRange;
             
             if (_chaseTimer <= 0f || isInRange)
@@ -84,12 +95,13 @@ namespace Enemy
             Vector3 dir = Utils.GetDirectionVector(_player.transform, transform);
             transform.rotation = Quaternion.LookRotation(dir);
             
-            if (!_ctx.IsBlocked) ChaseMoveForward();
+            ChaseMoveForward();
         }
 
         private void ChaseMoveForward()
         {
-            transform.position += transform.forward * _moveSpeed * Time.deltaTime;
+            Vector3 targetPos = transform.position + transform.forward * _moveSpeed * Time.fixedDeltaTime;
+            _ctx.rigidBody.MovePosition(targetPos);
         }
 
         private void OnDrawGizmos()

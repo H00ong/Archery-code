@@ -40,4 +40,5 @@ public enum EventType
     StageCleared,
     StageLoadingStarted,
     AllStagesCleared,
+    PlayerSpawned,
 }

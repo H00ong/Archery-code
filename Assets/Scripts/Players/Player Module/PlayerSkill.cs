@@ -9,18 +9,9 @@ namespace Players
     public class PlayerSkill : MonoBehaviour
     {
         private List<SkillDefinition> _availableSkills = new();
-
-        /// <summary> 현재 획득 가능한 스킬 목록 </summary>
         public List<SkillDefinition> availableSkills => _availableSkills;
-
-        /// <summary> 이미 배운 스킬 ID → 모듈 매핑 </summary>
         public readonly Dictionary<PlayerSkillId, PlayerSkillModuleBase> acquiredSkillModule = new();
 
-        /// <summary>
-        /// SkillManager의 전체 스킬 목록을 기반으로 availableSkills를 초기화한다.
-        /// CharacterManager에서 캐릭터 스폰 후 PlayerController.Init()을 통해 호출된다.
-        /// SkillManager.LoadAllSkillsAsync()가 완료된 뒤에 호출되어야 한다.
-        /// </summary>
         public void Init()
         {
             var skillManager = SkillManager.Instance;

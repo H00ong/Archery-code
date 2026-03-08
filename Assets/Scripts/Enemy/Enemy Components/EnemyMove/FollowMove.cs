@@ -5,6 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class FollowMove : EnemyMove
 {
+    private const float DefaultAttackRange = 2.0f;
     private float _defaultAttackRange;
 
     public override void Init(EnemyController ctx, BaseModuleData data = null)
@@ -17,7 +18,7 @@ public class FollowMove : EnemyMove
         }
         else
         {
-            _defaultAttackRange = 2.0f;
+            _defaultAttackRange = DefaultAttackRange;
         }
     }
 
@@ -48,7 +49,7 @@ public class FollowMove : EnemyMove
             return;
         }
 
-        if (!_ctx.IsBlocked) MoveForward();
+        MoveForward();
     }
 
     private void OnDrawGizmos()

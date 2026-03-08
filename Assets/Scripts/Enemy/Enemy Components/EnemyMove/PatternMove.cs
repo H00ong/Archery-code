@@ -7,7 +7,7 @@ using UnityEngine;
 public class PatternMove : EnemyMove
 {
     private List<Vector3> _patrolPointsPos = new List<Vector3>();
-    private int _currentPatrolIndex = 0;
+    private int _currentPatrolIndex;
 
     public override void Init(EnemyController ctx, BaseModuleData data = null)
     {
@@ -54,7 +54,7 @@ public class PatternMove : EnemyMove
             SetDirection();
         }
 
-        if (!_ctx.IsBlocked) MoveForward();
+        MoveForward();
     }
 
     private void SetDirection()

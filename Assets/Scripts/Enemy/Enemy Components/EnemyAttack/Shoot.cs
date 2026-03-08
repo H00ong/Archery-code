@@ -25,7 +25,7 @@ namespace Enemy
 
             if (!_ctx.isDebugMode)
             {
-                var shootingStats = _stats.shooting;
+                var shootingStats = _stat.shooting;
                 _projectileSpeed = shootingStats.projectileSpeed;
                 _projectileAtk = shootingStats.projectileAtk;
             }
