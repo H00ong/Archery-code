@@ -8,10 +8,8 @@ public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
     
-    private Vector2 _moveInput;
     private PlayerInput _playerInput;
-    private PlayerController _player;
-    private PlayerController Player => _player ??= PlayerController.Instance;
+    public Vector2 MoveInput { get; private set; }
 
     private void Awake()
     {
@@ -26,54 +24,16 @@ public class InputManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Update()
-    {
-        HandlePlayerMovement();
-    }
-
-    private void HandlePlayerMovement()
-    {
-        if(Player == null)
-            return;
-
-        if (_moveInput != Vector2.zero)
-        {
-            Player.Movement.ExecuteMovement(_moveInput);
-        }
-        else
-        {
-            if (EnemyManager.Instance.Enemies.Count > 0)
-            {
-                Player.ChangePlayerAnimation(PlayerState.Attack);
-                Player.Attack.Attack();
-            }
-            else
-            {
-                Player.ChangePlayerAnimation(PlayerState.Idle);
-            }
-        }
-    }
-
     // 이동 입력값이 들어올 때만 호출됨
     private void OnMovePerformed(InputAction.CallbackContext ctx)
     {
-        _moveInput = ctx.ReadValue<Vector2>();
+        MoveInput = ctx.ReadValue<Vector2>();
     }
 
     // 이동 입력이 0으로 돌아올 때 한 번만 호출됨
     private void OnMoveCanceled(InputAction.CallbackContext ctx)
     {
-            _moveInput = Vector2.zero;
-
-        if (EnemyManager.Instance.Enemies.Count > 0)
-        {
-            Player.Attack.Attack();
-            Player.ChangePlayerAnimation(PlayerState.Attack);
-        }
-        else
-        {
-            Player.ChangePlayerAnimation(PlayerState.Idle);
-        }
+        MoveInput = Vector2.zero;
     }
 
     private void OnEnable()
