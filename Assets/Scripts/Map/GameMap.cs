@@ -7,13 +7,21 @@ namespace Map
 {
     public class GameMap : MonoBehaviour
     {
+        [Header("Surface")]
+        [SerializeField] private NavMeshSurface surface;
+
+        [Header("Player Spawn Point")]
         [SerializeField] private Transform playerSpawnPoint;
         public Transform PlayerSpawnPoint => playerSpawnPoint;
 
-        public Transform bossSpawnPoint;
-        [SerializeField] private NavMeshSurface surface;
+        [Header("Enemy Spawn Points")]
+        [SerializeField] private Transform bossSpawnPoint;
+        [SerializeField] private List<Transform> enemySpawnPoints;
+        public Transform BossSpawnPoint => bossSpawnPoint;
+        public List<Transform> EnemySpawnPoints => enemySpawnPoints;
 
-        public List<Transform> enemySpawnPoints;
+        [Header("Patrol")]
+        [SerializeField] private List<PatrolPoint> patrolPoints;
 
         private NavMeshTriangulation _cachedTriangulation;
 
@@ -29,6 +37,17 @@ namespace Map
 
             PlayerSpawnPoint.gameObject.SetActive(false);
         }
+
+        public List<Vector3> GetPatrolPositions()
+        {
+            if (patrolPoints == null || patrolPoints.Count == 0)
+                return new List<Vector3>();
+
+            int idx = Random.Range(0, patrolPoints.Count);
+            return patrolPoints[idx].GetPatrolPositions();
+        }
+
+        public List<PatrolPoint> GetAllPatrolPoints() => patrolPoints;
 
         public Vector3 GetRandomNavMeshPoint()
         {

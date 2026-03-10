@@ -13,7 +13,6 @@ namespace Enemy
     {
         FlyingShootingMuzzle,
         NormalShootingMuzzle,
-        PatrolPoint
     }
 
     public enum EnemyName

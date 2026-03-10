@@ -21,10 +21,11 @@ public class PatternMove : EnemyMove
             var patrolPoints = patternData.GetPoints(ctx);
             if (patrolPoints != null)
             {
-                foreach (var p in patrolPoints)
-                {
-                    _patrolPointsPos.Add(p.position);
-                }
+                _patrolPointsPos.AddRange(patrolPoints);
+            }
+            else
+            {
+                Debug.LogError($"[PatternMove] No patrol points found for {ctx.name}");
             }
         }
     }

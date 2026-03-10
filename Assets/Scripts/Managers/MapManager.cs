@@ -18,7 +18,7 @@ namespace Managers
         [SerializeField] private Vector3 defaultMapPosition;
         [SerializeField] private string label = "map_config";
 
-        [HideInInspector] public MapType currentMapType;
+        private MapType _currentMapType;
         private GameMap currentMap = null;
 
         private PoolManager _poolManager;
@@ -154,11 +154,11 @@ namespace Managers
                 throw new System.Exception($"[MapManager] MapData is null for index: {CurrentMapIndex}");
             }
 
-            currentMapType = CurrentMapData.mapType;
+            _currentMapType = CurrentMapData.mapType;
 
-            if (!_mapDict.TryGetValue(currentMapType, out var mapSo) || mapSo == null)
+            if (!_mapDict.TryGetValue(_currentMapType, out var mapSo) || mapSo == null)
             {
-                throw new InvalidOperationException($"[MapManager] MapScriptable not found for MapType: {currentMapType}");
+                throw new InvalidOperationException($"[MapManager] MapScriptable not found for MapType: {_currentMapType}");
             }
 
             _currentMapList = mapSo.mapList.ToList();
@@ -275,7 +275,7 @@ namespace Managers
 
         public List<Transform> GetEnemySpawnPoints(int count)
         {
-            var list = currentMap.enemySpawnPoints;
+            var list = currentMap.EnemySpawnPoints;
             int availableCount = list.Count > count ? count : list.Count;
 
             for (int i = 0; i < availableCount; i++)
@@ -289,7 +289,7 @@ namespace Managers
 
         public Transform GetBossSpawnPoint()
         {
-            return currentMap.bossSpawnPoint;
+            return currentMap.BossSpawnPoint;
         }
 
         public EnemyIdentity GetEnemyIdentity()
@@ -313,6 +313,16 @@ namespace Managers
         public Vector3 GetMapPosition()
         {
             return currentMap.transform.position;
+        }
+
+        public List<Vector3> GetPatrolPositions()
+        {
+            return currentMap != null ? currentMap.GetPatrolPositions() : null;
+        }
+
+        public List<PatrolPoint> GetAllPatrolPoints()
+        {
+            return currentMap != null ? currentMap.GetAllPatrolPoints() : null;
         }
 
         #endregion
