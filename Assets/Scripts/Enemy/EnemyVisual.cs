@@ -9,23 +9,24 @@ namespace Enemy
 
         [Header("Object Renderers")]
         [SerializeField] private List<Renderer> objectRenderers = new List<Renderer>();
-        
+
         [Header("Accessory Renderers")]
         [SerializeField] private List<Renderer> accessoryRenderers = new List<Renderer>();
 
         [Header("Effect Colors")]
-        [SerializeField] private Color fireEmissionColor = new Color(1f, 0.3f, 0f, 1f) * 2f;  // 붉은 발광
-        [SerializeField] private Color poisonEmissionColor = new Color(0.5f, 0f, 0.8f, 1f) * 1.5f;  // 보라색 발광
-        [SerializeField] private Color iceEmissionColor = new Color(0.3f, 0.8f, 1f, 1f) * 1.5f;  // 차가운 하늘색 발광
-        [SerializeField] private Color lightningEmissionColor = new Color(1f, 1f, 0.2f, 1f) * 2.5f;  // 밝은 노란색 발광
-        [SerializeField] private Color magmaEmissionColor = new Color(1f, 0.5f, 0f, 1f) * 3f;  // 뜨거운 주황색 발광
-        [SerializeField] private Color darkEmissionColor = new Color(0.2f, 0f, 0.3f, 1f) * 1.5f;  // 어두운 보라색 발광
+        [SerializeField] private Color fireEmissionColor = new Color(53f / 255f, 9f / 255f, 0f / 255f, 1f);
+        [SerializeField] private Color poisonEmissionColor = new Color(15f / 255f, 0f / 255f, 39f / 255f, 1f);
+        [SerializeField] private Color iceEmissionColor = new Color(0f / 255f, 16f / 255f, 39f / 255f, 1f);
+        [SerializeField] private Color lightningEmissionColor = new Color(24f / 255f, 15f / 255f, 0f / 255f, 1f);
+        [SerializeField] private Color magmaEmissionColor = new Color(39f / 255f, 12f / 255f, 1f / 255f, 1f);
+        [SerializeField] private Color darkEmissionColor = new Color(24f / 255f, 24f / 255f, 24f / 255f, 1f);
+        [SerializeField] private float intensity = 1f;
 
         private EnemyController _enemyController;
         private Health _health;
         private Color _originalEmissionColor = Color.black;
         private bool _useEmission = false;
-        
+
         // 효과 타입별 색상 매핑
         private Dictionary<EffectType, Color> _effectColorMap;
 
@@ -45,7 +46,8 @@ namespace Enemy
 
         public void ApplyObjectMaterial(Material material)
         {
-            if (material == null) return;
+            if (material == null)
+                return;
 
             foreach (var renderer in objectRenderers)
             {
@@ -61,8 +63,9 @@ namespace Enemy
 
         public void ApplyAccessoryMaterial(Material material)
         {
-            if (material == null) return;
-            
+            if (material == null)
+                return;
+
             foreach (var renderer in accessoryRenderers)
             {
                 if (renderer != null)
@@ -124,7 +127,7 @@ namespace Enemy
                         renderer.material.EnableKeyword("_EMISSION");
                     }
 
-                    renderer.material.SetColor(EmissionColor, color);
+                    renderer.material.SetColor(EmissionColor, color * intensity);
                 }
             }
         }
@@ -157,13 +160,13 @@ namespace Enemy
         {
             objectRenderers.Clear();
             accessoryRenderers.Clear();
-            
+
             var allRenderers = GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in allRenderers)
             {
                 objectRenderers.Add(renderer);
             }
-            
+
             UnityEditor.EditorUtility.SetDirty(this);
         }
 #endif
