@@ -115,7 +115,6 @@ namespace Enemy
             InitModule();
 
             anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
-        
             InitState(EnemyState.Idle);
         }
         
@@ -140,8 +139,6 @@ namespace Enemy
             if (!health) health = GetComponent<Health>();
             if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>();
             if (!enemyVisual) enemyVisual = GetComponent<EnemyVisual>();
-            
-            enemyReference.Init();
         }
 
         private void SetStat()
@@ -189,6 +186,8 @@ namespace Enemy
         private void InitModule()
         {
             ClearAction();
+
+            enemyReference.Init();
 
             _attacks.Clear();
             _modules.Clear();
