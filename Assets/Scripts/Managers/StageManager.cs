@@ -71,7 +71,7 @@ public class StageManager : MonoBehaviour
         {
             _allStageCleared = true;
             Debug.Log("All stages cleared!");
-            EventBus.Publish(EventType.AllStagesCleared);
+            EventBus.Publish(EventType.MapCleared);
         }
     }
 

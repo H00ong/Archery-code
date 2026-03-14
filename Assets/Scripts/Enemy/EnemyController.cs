@@ -304,6 +304,11 @@ namespace Enemy
 
         private void OnDie() => ChangeState(EnemyState.Dead);
 
+        public void ReturnImmediately()
+        {
+            PoolManager.Instance.ReturnObject(gameObject);
+        }
+
         void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.CompareTag("Obstacle"))

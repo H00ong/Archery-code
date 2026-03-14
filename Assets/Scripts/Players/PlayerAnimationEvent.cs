@@ -12,10 +12,15 @@ namespace Players
                 playerAttack = GetComponent<PlayerAttack>();
         }
 
-        public void Shoot() 
+        public void Shoot()
         {
             if (PlayerController.Instance.currentState == PlayerState.Attack)
                 playerAttack.Shoot();
+        }
+
+        public void Die()
+        {
+            PlayerController.Instance.Hurt.Die();
         }
     
 #if UNITY_EDITOR

@@ -88,7 +88,6 @@ namespace Managers
             Debug.Log($"Level Up! Current Level: {currentLevel}");
 
             EventBus.Publish(EventType.LevelUp);
-            ShowSkillChoicePopup();
         }
 
         // Debug용
@@ -98,11 +97,6 @@ namespace Managers
             {
                 AddExp(RequiredExp);
             }
-        }
-
-        private void ShowSkillChoicePopup()
-        {
-            UIManager.Instance.ShowSkillChoicePopup(PlayerController.Instance.Skill);
         }
 
         private int GetRequiredExpForLevel(int level)
