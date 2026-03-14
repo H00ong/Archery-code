@@ -17,10 +17,8 @@ namespace Players
         };
 
         [HideInInspector] public PlayerState currentState = PlayerState.Idle;
-        
-        /// <summary> 플레이어 3단 레이어 스탯 (Base + Equipment + InGameBuff) </summary>
+
         public PlayerStat Stat { get; private set; }
-        
         public PlayerMovement Movement { get; private set; }
         public PlayerAttack Attack { get; private set; }
         public PlayerHurt Hurt { get; private set; }
@@ -30,15 +28,20 @@ namespace Players
 
         public bool IsPlayerDead => currentState == PlayerState.Dead;
 
-
-        public void Init()
+        private void Awake()
         {
             SetupSingleton();
             InitComponent();
+        }
 
-            Attack.Init();
-            Skill.Init();
+        public void InitModule()
+        {
+            currentState = PlayerState.Idle;
             Health.InitializeHealth(Stat.MaxHP);
+            Attack.Init();
+            Movement.ResetState();
+            Skill.Init();
+            Hurt.Init();
         }
 
         private void SetupSingleton()
@@ -70,6 +73,7 @@ namespace Players
 
             currentState = newState;
         }
+
 
         public void UpdateAnimation(PlayerState newState)
         {

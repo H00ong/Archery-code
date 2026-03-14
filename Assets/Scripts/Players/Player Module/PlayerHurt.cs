@@ -5,19 +5,39 @@ namespace Players
 {
     public class PlayerHurt : MonoBehaviour
     {
-        [SerializeField] PlayerController playerManager;
-        [SerializeField] Health playerHealth;
+        [SerializeField] private Collider playerCollider;
+        [SerializeField] private Rigidbody playerRigidbody;
+
+        private PlayerController playerManager;
+        private Health playerHealth;
+
+        void Awake()
+        {
+            CachingComponent();
+        }
+
+        private void CachingComponent()
+        {
+            if (playerCollider == null)
+                playerCollider = GetComponent<Collider>();
+
+            if (playerRigidbody == null)
+                playerRigidbody = GetComponent<Rigidbody>();
+        }
 
         public void Init()
         {
-            if (playerHealth == null) playerHealth = GetComponent<Health>();
+            playerManager = PlayerController.Instance;
+            playerHealth = playerManager.Health;
 
-            // Health 이벤트 구독
+            playerCollider.enabled = true;
+            playerRigidbody.isKinematic = false;
+
             playerHealth.OnDie += OnPlayerDie;
             playerHealth.OnHit += OnPlayerHit;
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             if (playerHealth != null)
             {
@@ -29,14 +49,22 @@ namespace Players
         private void OnPlayerDie()
         {
             playerManager.ChangePlayerAnimation(PlayerState.Dead);
+
+            playerCollider.enabled = false;
+            playerRigidbody.isKinematic = true;
         }
 
         private void OnPlayerHit()
         {
-            // 피격 시 효과 (애니메이션, 사운드 등)
+            Debug.Log("Player Hit!");
         }
 
-        public void TakeHeal(int healAmount, out bool valid) 
+        public void Die()
+        {
+            EventBus.Publish(EventType.PlayerDied);
+        }
+
+        public void TakeHeal(int healAmount, out bool valid)
         {
             playerHealth.TakeHeal(healAmount, out valid);
         }
@@ -49,18 +77,18 @@ namespace Players
             var hitRoot = collision.collider.attachedRigidbody ? collision.collider.attachedRigidbody.gameObject
                 : collision.collider.gameObject;
 
-            if (!hitRoot.TryGetComponent<EnemyController>(out var enemy)) return;
+            if (!hitRoot.TryGetComponent<EnemyController>(out var enemy))
+                return;
             float atk = enemy.GetAtk();
             var damageInfo = new DamageInfo(atk, EffectType.Normal, hitRoot);
             playerHealth.TakeDamage(damageInfo);
         }
-
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (!playerManager) playerManager = GetComponent<PlayerController>();
-            if (!playerHealth) playerHealth = GetComponent<Health>();
+            CachingComponent();
         }
 #endif
     }
 }
+    

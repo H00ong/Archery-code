@@ -13,11 +13,20 @@ public class PlayerMovement : MonoBehaviour
     private PlayerAttack _playerAttack;
     private PlayerStat _stat;
     private InputManager _inputManager;
+
+    private bool _isDead = false;
     private Vector3 _currentMoveDir; // InputManager로부터 전달받은 이동 방향
+
+    public void ResetState()
+    {
+        _isDead = false;
+        _currentMoveDir = Vector3.zero;
+    }
 
     private void Awake()
     {
-        playerRigidbody = GetComponent<Rigidbody>();
+        if(playerRigidbody == null)
+            playerRigidbody = GetComponent<Rigidbody>();
 
         ApplyRigidbodySettings();
     }
@@ -45,6 +54,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetMoveInput(Vector2 moveInput)
     {
+        if(_isDead || _playerController.currentState == PlayerState.Dead)
+        {
+            _isDead = true;
+            return;
+        }
+
         _currentMoveDir = new Vector3(moveInput.x, 0, moveInput.y);
 
         if (_currentMoveDir != Vector3.zero)
@@ -68,6 +83,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if(_isDead)
+            return;
+
         if (_currentMoveDir == Vector3.zero)
             return;
 
