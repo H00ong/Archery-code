@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using Enemy;
 using Game.Stage.Management;
 using Map;
+using UnityEngine.AddressableAssets;
 
 namespace Managers
 {
@@ -14,14 +13,7 @@ namespace Managers
         public static EnemyManager Instance;
         
 
-        [Header("Addressable Settings")]
-        [SerializeField] private string moduleConfigLabel = "enemy_module";
-
-        private bool _isModuleLoaded = false;
-        private AsyncOperationHandle<IList<BaseModuleData>> _loadHandle;
-
         public List<EnemyController> Enemies = new List<EnemyController>();
-        private Dictionary<EnemyKey, BaseModuleData> _enemyModuleData = new();
 
         private void Awake()
         {
@@ -44,57 +36,8 @@ namespace Managers
 
         void OnDisable()
         {
-            if (_loadHandle.IsValid())
-                Addressables.Release(_loadHandle);
-
             EventBus.Unsubscribe(EventType.TransitionToLobby, ClearEnemiesForMapClear);
             EventBus.Unsubscribe(EventType.Retry, ClearEnemiesForMapClear);
-        }
-        
-        public async Awaitable LoadEnemyModulesAsync()
-        {
-            try
-            {
-                _loadHandle = Addressables.LoadAssetsAsync<BaseModuleData>(moduleConfigLabel, null);
-                await _loadHandle.Task;
-                destroyCancellationToken.ThrowIfCancellationRequested();
-
-                if (_loadHandle.Status != AsyncOperationStatus.Succeeded)
-                    throw new InvalidOperationException($"[EnemyManager] Addressable load failed for label: {moduleConfigLabel}");
-
-                _enemyModuleData.Clear();
-
-                foreach (var data in _loadHandle.Result)
-                {
-                    if (data)
-                    {
-                        var key = new EnemyKey(data.targetName, data.targetTag);
-
-                        if (!_enemyModuleData.TryAdd(key, data))
-                        {
-                            Debug.LogWarning($"[EnemyManager] Duplicate module key detected: {key}. Existing module: {_enemyModuleData[key]}, New module: {data}");
-                        }
-                    }
-                }
-
-                _isModuleLoaded = true;
-                Debug.Log($"[EnemyManager] Loaded {_enemyModuleData.Count} modules.");
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.LogWarning("[EnemyManager] LoadEnemyModulesAsync canceled.");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[EnemyManager] LoadEnemyModulesAsync failed: {ex.Message}");
-                throw;
-            }
-        }
-        
-        public BaseModuleData GetModuleData(EnemyKey key)
-        {
-            return _enemyModuleData.GetValueOrDefault(key);
         }
 
         #region Stat Caching

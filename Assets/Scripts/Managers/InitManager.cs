@@ -51,7 +51,6 @@ public class InitManager : MonoBehaviour
 
         // Phase 2 — Addressables 데이터 병렬 로드
         var mapManager = MapManager.Instance;
-        var enemyManager = EnemyManager.Instance;
         var characterManager = CharacterManager.Instance;
         var orbManager = OrbManager.instance;
         var barrelManager = BarrelManager.Instance;
@@ -60,14 +59,12 @@ public class InitManager : MonoBehaviour
         try
         {
             var mapTask = mapManager.LoadMapConfigAsync();
-            var enemyTask = enemyManager.LoadEnemyModulesAsync();
             var characterTask = characterManager.LoadCharacterIdentitiesAsync();
             var orbTask = orbManager.LoadOrbConfigurationsAsync();
             var barrelTask = barrelManager.LoadBarrelAssetsAsync();
             var skillTask = skillManager.LoadAllSkillsAsync();
 
             await mapTask;
-            await enemyTask;
             await characterTask;
             await orbTask;
             //await barrelTask;

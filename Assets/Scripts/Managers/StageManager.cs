@@ -49,7 +49,7 @@ public class StageManager : MonoBehaviour
     public int TotalStageCountOfMap { get; private set; }
     public List<int> EnemyCountList { get; private set; }
     private StageState CurrentState { get; set; }
-    public bool IsBossStage => (CurrentStageIndex % 10 == 0) && (CurrentStageIndex != 0);
+    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0) && (CurrentStageIndex != 0);
     public bool IsInCombat => CurrentState == StageState.Combat;
 
     private void Awake()
