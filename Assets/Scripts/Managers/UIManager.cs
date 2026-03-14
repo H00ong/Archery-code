@@ -13,9 +13,16 @@ namespace Managers
     {
         public static UIManager Instance { get; private set; }
 
+        [Header("Game System")]
+        [SerializeField] private GameObject gameClearPopupPrefab;
+        [SerializeField] private GameObject gameOverPopupPrefab;
+
+        [Space]
         [Header("Skill")]
         [SerializeField] private GameObject skillChoicePopupPrefab;
 
+        private MapClearPopupPresenter _gameClearPresenter;
+         private GameOverPopupPresenter _gameOverPresenter; 
         private SkillChoicePopupPresenter _skillChoicePresenter;
 
         private void Awake()
@@ -34,30 +41,67 @@ namespace Managers
 
         void OnEnable()
         {
-            EventBus.Subscribe(EventType.SkillChosen, ClearDataInStage);
+            EventBus.Subscribe(EventType.TransitionToLobby, ClearDataInMap);
+            EventBus.Subscribe(EventType.Retry, ClearDataInMap);
+            EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
+            EventBus.Subscribe(EventType.PlayerDied, ShowGameOverPopup);
+            EventBus.Subscribe(EventType.MapCleared, ShowGameClearPopup);
         }
 
         void OnDisable()
         {
-            EventBus.Unsubscribe(EventType.SkillChosen, ClearDataInStage);
+            EventBus.Unsubscribe(EventType.TransitionToLobby, ClearDataInMap);
+            EventBus.Unsubscribe(EventType.Retry, ClearDataInMap);
+            EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
+            EventBus.Unsubscribe(EventType.PlayerDied, ShowGameOverPopup);
+            EventBus.Unsubscribe(EventType.MapCleared, ShowGameClearPopup);
         }
 
-        public void ShowSkillChoicePopup(PlayerSkill playerSkill)
+        private void ShowSkillChoicePopup()
         {
             if (_skillChoicePresenter == null)
             {
                 var canvas = FindFirstObjectByType<Canvas>();
-                var popupObj = Instantiate(skillChoicePopupPrefab, canvas.transform);
-                var popupView = popupObj.GetComponent<SkillChoicePopupView>();
-                _skillChoicePresenter = new SkillChoicePopupPresenter(popupView);
+                var go = Instantiate(skillChoicePopupPrefab, canvas.transform);
+                var popup = go.GetComponent<SkillChoicePopup>();
+                _skillChoicePresenter = new SkillChoicePopupPresenter(popup);
             }
 
+            var playerSkill = PlayerController.Instance.Skill;
             _skillChoicePresenter.Show(playerSkill);
         }
 
-        public void ClearDataInStage()
+        private void ShowGameOverPopup()
+        {
+            if (_gameOverPresenter == null)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                var go = Instantiate(gameOverPopupPrefab, canvas.transform);
+                var popup = go.GetComponent<GameOverPopup>();
+                _gameOverPresenter = new GameOverPopupPresenter(popup);
+            }
+
+            _gameOverPresenter.Show();
+        }
+
+        private void ShowGameClearPopup()
+        {
+            if (_gameClearPresenter == null)
+            {
+                var canvas = FindFirstObjectByType<Canvas>();
+                var go = Instantiate(gameClearPopupPrefab, canvas.transform);
+                var popup = go.GetComponent<MapClearPopupView>();
+                _gameClearPresenter = new MapClearPopupPresenter(popup);
+            }
+
+            _gameClearPresenter.Show();
+        }
+
+        public void ClearDataInMap()
         {
             _skillChoicePresenter = null;
+            _gameOverPresenter = null;
+            _gameClearPresenter = null;
         }
     }
 }
