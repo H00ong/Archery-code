@@ -4,15 +4,15 @@ using UnityEngine;
 
 namespace UI
 {
-    public class SkillChoicePopupView : MonoBehaviour
+    public class SkillChoicePopup : MonoBehaviour
     {
-        private List<SkillView> _cards = new();
+        private List<UI_SkillView> _cards = new();
 
-        public List<SkillView> BuildCards(int count)
+        public List<UI_SkillView> BuildCards(int count)
         {
             if (_cards.Count == 0)
                 foreach (Transform c in transform)
-                    _cards.Add(c.GetComponent<SkillView>());
+                    _cards.Add(c.GetComponent<UI_SkillView>());
 
             return _cards.GetRange(0, count);
         }

@@ -4,22 +4,16 @@ using UnityEngine;
 
 namespace UI
 {
-    /// <summary>
-    /// 스킬 선택 팬업의 Presenter.
-    /// 생성자에서 View만 받고, Show()에서 게임 데이터(PlayerSkill)를 받는다.
-    /// </summary>
     public class SkillChoicePopupPresenter
     {
         private const int ChoiceCount = 3;
-        private readonly SkillChoicePopupView _view;
-        private readonly List<SkillPresenter> _cardPresenters = new();
-
-        // Show() 호출 시에만 필요하므로 일시 보관
+        private readonly SkillChoicePopup _popup;
+        private readonly List<SkillViewPresenter> _cardPresenters = new();
         private PlayerSkill _currentPlayerSkill;
 
-        public SkillChoicePopupPresenter(SkillChoicePopupView view)
+        public SkillChoicePopupPresenter(SkillChoicePopup view)
         {
-            _view = view;
+            _popup = view;
         }
 
         public void Show(PlayerSkill playerSkill)
@@ -38,18 +32,20 @@ namespace UI
 
             // 남은 스킬이 ChoiceCount보다 적을 수 있으므로 실제 개수 기준으로 한정
             int actualCount = Mathf.Min(ChoiceCount, choices.Count);
-            var cards = _view.BuildCards(actualCount);
+            var cards = _popup.BuildCards(actualCount);
 
             for (int i = 0; i < actualCount; i++)
-                _cardPresenters.Add(new SkillPresenter(cards[i], choices[i], playerSkill, OnChosen));
+            {
+                _cardPresenters.Add(new SkillViewPresenter(cards[i], choices[i], playerSkill, OnChosen));
+            }
 
-            _view.Open();
+            _popup.Open();
         }
 
         private void OnChosen(SkillDefinition def)
         {
             _currentPlayerSkill.AcquireSkill(def);
-            _view.Close();
+            _popup.Close();
             EventBus.Publish(EventType.SkillChosen);
         }
     }
