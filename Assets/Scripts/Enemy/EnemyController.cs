@@ -29,6 +29,7 @@ namespace Enemy
         [Header("Identity")] 
         [SerializeField] public EnemyName enemyName;
         [SerializeField] public EnemyTag enemyTags;
+        private EnemyIdentity _identity;
         private EnemyStat _stat;
         
         public EnemyStat stat => _stat;
@@ -112,7 +113,7 @@ namespace Enemy
             RigidbodyActive(true);
             ColliderActive(true);
             SetStat();
-            InitModule();
+            InitModule(_identity);
 
             anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
             InitState(EnemyState.Idle);
@@ -120,10 +121,9 @@ namespace Enemy
         
         private void SetIdentity(EnemyIdentity identity)
         {
-            // Tag 주입
+            _identity = identity;
             enemyTags = identity.Tag;
             
-            // Visual 주입
             if (enemyVisual != null)
             {
                 enemyVisual.ApplyMaterials(identity.ObjectMat, identity.AccessoryMat);
@@ -163,14 +163,14 @@ namespace Enemy
             }
         }
 
-        private void InitMoveModule()
+        private void InitMoveModule(EnemyIdentity identity)
         {
-            move = EnemyBehaviorFactory.CreateMoveModules(this, enemyName, enemyTags, _modules);
+            move = EnemyBehaviorFactory.CreateMoveModules(this, enemyTags, identity?.moveModule, _modules);
         }
 
-        private void InitAttackModule()
+        private void InitAttackModule(EnemyIdentity identity)
         {
-            EnemyBehaviorFactory.CreateAttackModules(this, enemyName, enemyTags, _modules, _attacks);
+            EnemyBehaviorFactory.CreateAttackModules(this, enemyTags, identity?.attackModules, _modules, _attacks);
         }
 
         private void ClearAction()
@@ -183,7 +183,7 @@ namespace Enemy
             health.OnHit -= this.OnHit;
         }
 
-        private void InitModule()
+        private void InitModule(EnemyIdentity identity)
         {
             ClearAction();
 
@@ -192,8 +192,8 @@ namespace Enemy
             _attacks.Clear();
             _modules.Clear();
 
-            InitMoveModule();
-            InitAttackModule();
+            InitMoveModule(identity);
+            InitAttackModule(identity);
 
             idle = gameObject.GetOrAddComponent<EnemyIdle>();
             idle.SetIdleTime(defaultIdleTime);

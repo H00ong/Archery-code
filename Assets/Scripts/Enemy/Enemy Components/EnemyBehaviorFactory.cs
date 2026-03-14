@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Enemy;
-using Managers;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Component = UnityEngine.Component;
@@ -45,25 +44,32 @@ public static class EnemyBehaviorFactory
 
     public static void CreateAttackModules(
         EnemyController c,
-        EnemyName name,
         EnemyTag tags, 
+        List<BaseModuleData> attackModuleDataList,
         Dictionary<EnemyTag, IEnemyBehavior> outDict,
         List<EnemyAttack> outList
     )
-    { 
-        EnemyTag attributeTags = tags & EnemyTag.AttributeMask;
+    {
+        // attackModuleDataList를 Tag 기반으로 빠르게 찾기 위한 임시 딕셔너리
+        Dictionary<EnemyTag, BaseModuleData> dataByTag = null;
+        if (attackModuleDataList != null && attackModuleDataList.Count > 0)
+        {
+            dataByTag = new Dictionary<EnemyTag, BaseModuleData>();
+            foreach (var data in attackModuleDataList)
+            {
+                if (data) dataByTag.TryAdd(data.targetTag, data);
+            }
+        }
         
         foreach (var kvp in AttackModuleRegistry)
         {
             EnemyTag attackTag = kvp.Key;
-            Type type = kvp.Value;   // ex : typeof(FlyingShoot)
+            Type type = kvp.Value;
 
             if (EnemyTagUtil.Has(tags, attackTag))
             {
-                EnemyTag specificTag = attackTag | attributeTags;
-                var key1 = new EnemyKey(name, specificTag);
-                
-                var foundData = EnemyManager.Instance.GetModuleData(key1);
+                BaseModuleData foundData = null;
+                dataByTag?.TryGetValue(attackTag, out foundData);
                 
                 ProcessAttackModule(c, attackTag, type, foundData, outDict, outList);
             }
@@ -72,8 +78,8 @@ public static class EnemyBehaviorFactory
     
     public static EnemyMove CreateMoveModules(
         EnemyController c,
-        EnemyName enemyName,
         EnemyTag tags,
+        BaseModuleData moveModuleData,
         Dictionary<EnemyTag, IEnemyBehavior> outModules
     )
     {
@@ -81,14 +87,11 @@ public static class EnemyBehaviorFactory
         {
             if (EnemyTagUtil.Has(tags, targetTag))
             {
-                var key = new EnemyKey(enemyName, targetTag); 
-                BaseModuleData loadedData = EnemyManager.Instance.GetModuleData(key);
-                
                 var comp = c.gameObject.GetOrAddComponent(type);
                 
                 if (comp is EnemyMove module)
                 {
-                    module.Init(c, loadedData);
+                    module.Init(c, moveModuleData);
                     outModules.TryAdd(targetTag, module);
                     
                     return module;
