@@ -59,7 +59,8 @@ namespace Managers
 
         void OnEnable()
         {
-            EventBus.Subscribe(EventType.AllStagesCleared, DeActiveCurrentCharacter);
+            EventBus.Subscribe(EventType.TransitionToLobby, DeActiveCurrentCharacter);
+            EventBus.Subscribe(EventType.Retry, DeActiveCurrentCharacter);
         }
 
         private void OnDisable()
@@ -67,7 +68,8 @@ namespace Managers
             if (_loadHandle.IsValid())
                 Addressables.Release(_loadHandle);
 
-            EventBus.Unsubscribe(EventType.AllStagesCleared, DeActiveCurrentCharacter);
+            EventBus.Unsubscribe(EventType.TransitionToLobby, DeActiveCurrentCharacter);
+            EventBus.Unsubscribe(EventType.Retry, DeActiveCurrentCharacter);
         }
 
 
@@ -136,7 +138,7 @@ namespace Managers
                 throw new System.InvalidOperationException("PlayerController not found on spawned character prefab.");
             }
 
-            playerController.Init();
+            playerController.InitModule();
             playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.baseStat);
 
             EventBus.Publish(EventType.PlayerSpawned);

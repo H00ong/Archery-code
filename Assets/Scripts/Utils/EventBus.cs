@@ -39,6 +39,9 @@ public enum EventType
     StageCombatStarted,
     StageCleared,
     StageLoadingStarted,
-    AllStagesCleared,
+    MapCleared,
     PlayerSpawned,
+    PlayerDied,
+    Retry,
+    TransitionToLobby,
 }

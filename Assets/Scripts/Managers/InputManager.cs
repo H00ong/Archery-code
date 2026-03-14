@@ -47,7 +47,10 @@ public class InputManager : MonoBehaviour
         EventBus.Subscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Subscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Subscribe(EventType.SkillChosen, ActivePlayerInput);
-        EventBus.Subscribe(EventType.AllStagesCleared, DeactivePlayerInput);
+        EventBus.Subscribe(EventType.MapCleared, DeactivePlayerInput);
+        EventBus.Subscribe(EventType.PlayerDied, DeactivePlayerInput);
+        EventBus.Subscribe(EventType.Retry, DeactivePlayerInput);
+        EventBus.Subscribe(EventType.TransitionToLobby, DeactivePlayerInput);
     }
 
     private void OnDisable()
@@ -61,7 +64,10 @@ public class InputManager : MonoBehaviour
         EventBus.Unsubscribe(EventType.StageLoadingStarted, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.LevelUp, DeactivePlayerInput);
         EventBus.Unsubscribe(EventType.SkillChosen, ActivePlayerInput);
-        EventBus.Unsubscribe(EventType.AllStagesCleared, DeactivePlayerInput);
+        EventBus.Unsubscribe(EventType.MapCleared, DeactivePlayerInput);
+        EventBus.Unsubscribe(EventType.PlayerDied, DeactivePlayerInput);
+        EventBus.Unsubscribe(EventType.Retry, DeactivePlayerInput);
+        EventBus.Unsubscribe(EventType.TransitionToLobby, DeactivePlayerInput);
     }
 
     private void ActivePlayerInput() => _playerInput.Player.Enable();

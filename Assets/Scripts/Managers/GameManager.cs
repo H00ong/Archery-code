@@ -47,14 +47,20 @@ namespace Managers
         {
             EventBus.Subscribe(EventType.LevelUp, PauseGame);
             EventBus.Subscribe(EventType.SkillChosen, ResumeGame);
-            EventBus.Subscribe(EventType.AllStagesCleared, OnAllStagesCleared, 100);
+            EventBus.Subscribe(EventType.MapCleared, PauseGame);
+            EventBus.Subscribe(EventType.TransitionToLobby, OnTransitionToLobby, 100);
+            EventBus.Subscribe(EventType.PlayerDied, PauseGame);
+            EventBus.Subscribe(EventType.Retry, OnRetry, 100);
         }
 
         private void OnDisable()
         {
             EventBus.Unsubscribe(EventType.LevelUp, PauseGame);
             EventBus.Unsubscribe(EventType.SkillChosen, ResumeGame);
-            EventBus.Unsubscribe(EventType.AllStagesCleared, OnAllStagesCleared);
+            EventBus.Unsubscribe(EventType.MapCleared, PauseGame);
+            EventBus.Unsubscribe(EventType.TransitionToLobby, OnTransitionToLobby);
+            EventBus.Unsubscribe(EventType.PlayerDied, PauseGame);
+            EventBus.Unsubscribe(EventType.Retry, OnRetry);
         }
 
         void Update()
@@ -87,9 +93,16 @@ namespace Managers
             }
         }
 
-        private void OnAllStagesCleared()
+        private void OnTransitionToLobby()
         {
+            ResumeGame();
             ChangeScene(SceneState.Lobby);
+        }
+
+        private void OnRetry()
+        {
+            ResumeGame();
+            ChangeScene(SceneState.InGame);
         }
 
         private void PauseGame() => Time.timeScale = 0f;

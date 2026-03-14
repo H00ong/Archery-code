@@ -40,7 +40,15 @@ namespace Managers
 
         // TODO : json 저장
         public int CurrentMapIndex { get; private set; } = 0;
+        public int MaxMapIndex { get; private set; } = 0;
         public MapData CurrentMapData { get; private set; }
+
+        // TODO : MaxMapIndex를 갱신한다
+        public void UpdateMapClearData()
+        {
+            if (CurrentMapIndex > MaxMapIndex)
+                MaxMapIndex = CurrentMapIndex;
+        }
 
         private void Awake()
         {
@@ -63,12 +71,12 @@ namespace Managers
 
         void OnEnable()
         {
-            EventBus.Subscribe(EventType.AllStagesCleared, OnStageMapClear);
+            EventBus.Subscribe(EventType.TransitionToLobby, OnStageMapClear);
         }
 
         void OnDisable()
         {
-            EventBus.Unsubscribe(EventType.AllStagesCleared, OnStageMapClear);
+            EventBus.Unsubscribe(EventType.TransitionToLobby, OnStageMapClear);
 
             if (_handle.IsValid())
                 Addressables.Release(_handle);

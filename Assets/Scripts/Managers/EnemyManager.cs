@@ -36,10 +36,19 @@ namespace Managers
             }
         }
 
-        private void OnDestroy()
+        void OnEnable()
+        {
+            EventBus.Subscribe(EventType.TransitionToLobby, ClearEnemiesForMapClear);
+            EventBus.Subscribe(EventType.Retry, ClearEnemiesForMapClear);
+        }
+
+        void OnDisable()
         {
             if (_loadHandle.IsValid())
                 Addressables.Release(_loadHandle);
+
+            EventBus.Unsubscribe(EventType.TransitionToLobby, ClearEnemiesForMapClear);
+            EventBus.Unsubscribe(EventType.Retry, ClearEnemiesForMapClear);
         }
         
         public async Awaitable LoadEnemyModulesAsync()
@@ -222,6 +231,22 @@ namespace Managers
             {
                 StageManager.Instance.HandleCommand(StageCommandType.AllEnemiesDefeated);
             }
+        }
+
+        public void ClearEnemiesForMapClear()
+        {
+            if(Enemies.Count <= 0)
+                return;
+
+            foreach (var enemy in Enemies)
+            {
+                if (enemy != null)
+                {
+                    enemy.ReturnImmediately();
+                }
+            }
+
+            Enemies.Clear();
         }
     }
 }
