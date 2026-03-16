@@ -50,29 +50,18 @@ public static class EnemyBehaviorFactory
         List<EnemyAttack> outList
     )
     {
-        // attackModuleDataList를 Tag 기반으로 빠르게 찾기 위한 임시 딕셔너리
-        Dictionary<EnemyTag, BaseModuleData> dataByTag = null;
-        if (attackModuleDataList != null && attackModuleDataList.Count > 0)
-        {
-            dataByTag = new Dictionary<EnemyTag, BaseModuleData>();
-            foreach (var data in attackModuleDataList)
-            {
-                if (data) dataByTag.TryAdd(data.targetTag, data);
-            }
-        }
-        
         foreach (var kvp in AttackModuleRegistry)
         {
             EnemyTag attackTag = kvp.Key;
             Type type = kvp.Value;
 
-            if (EnemyTagUtil.Has(tags, attackTag))
-            {
-                BaseModuleData foundData = null;
-                dataByTag?.TryGetValue(attackTag, out foundData);
-                
-                ProcessAttackModule(c, attackTag, type, foundData, outDict, outList);
-            }
+            if (!EnemyTagUtil.Has(tags, attackTag))
+                continue;
+
+            var foundData = attackModuleDataList
+                ?.Find(data => data && EnemyTagUtil.Has(data.targetTag, attackTag));
+
+            ProcessAttackModule(c, attackTag, type, foundData, outDict, outList);
         }
     }
     
