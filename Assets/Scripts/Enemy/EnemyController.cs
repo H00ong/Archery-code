@@ -313,6 +313,8 @@ namespace Enemy
         {
             if (collision.gameObject.CompareTag("Obstacle"))
             {
+                rigidBody.linearVelocity = Vector3.zero;
+
                 if (CurrentState != EnemyState.Move)
                     return;
                 
