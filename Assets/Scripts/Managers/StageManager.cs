@@ -179,6 +179,7 @@ public class StageManager : MonoBehaviour
         player.transform.position = spawnPos.position;
         
         CameraController.Instance.SetPosition(spawnPos.position);
+        CameraController.Instance.SetTarget(player.transform);
 
         player.gameObject.SetActive(true);
     }

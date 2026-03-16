@@ -75,7 +75,7 @@ public class RandomMove : EnemyMove
 
         Vector3 reflectDir = Vector3.Reflect(inDir, inNormal);
         reflectDir.y = 0;
-        reflectDir = Quaternion.Euler(0, UnityEngine.Random.Range(-30f, 30f), 0) * reflectDir;
+        reflectDir = Quaternion.Euler(0, UnityEngine.Random.Range(-15f, 15f), 0) * reflectDir;
 
         transform.rotation = Quaternion.LookRotation(reflectDir);
     }
