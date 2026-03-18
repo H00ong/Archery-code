@@ -62,6 +62,9 @@ namespace Enemy
         {
             foreach (var point in  _shootingPoints)
             {
+                Vector3 spawnPos = point.position;
+                Vector3 targetPos = _player.transform.position;
+
                 if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool)) 
                     go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
 
@@ -78,8 +81,8 @@ namespace Enemy
                 var damageInfo = new DamageInfo(_flyingProjectileAtk, EffectType.Normal, _ctx.gameObject);
                 
                 var inst = new ShootingInstruction(
-                    point.position,
-                    _player.transform.position,
+                    spawnPos,
+                    targetPos,
                     _flyingProjectileSpeed,
                     _projectileLifeTime,
                     damageInfo

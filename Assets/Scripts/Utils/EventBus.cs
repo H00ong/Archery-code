@@ -44,4 +44,5 @@ public enum EventType
     PlayerDied,
     Retry,
     TransitionToLobby,
+    AllCollectiblesCollected,
 }

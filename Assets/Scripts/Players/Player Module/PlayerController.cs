@@ -34,6 +34,18 @@ namespace Players
             InitComponent();
         }
 
+        void OnEnable()
+        {
+            EventBus.Subscribe(EventType.TransitionToLobby, ResetGameBuffStat);
+            EventBus.Subscribe(EventType.Retry, ResetGameBuffStat);
+        }
+
+        void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.TransitionToLobby, ResetGameBuffStat);
+            EventBus.Unsubscribe(EventType.Retry, ResetGameBuffStat);
+        }
+
         public void InitModule()
         {
             currentState = PlayerState.Idle;
@@ -74,11 +86,15 @@ namespace Players
             currentState = newState;
         }
 
-
         public void UpdateAnimation(PlayerState newState)
         {
             Anim.SetBool(animBoolHashes[currentState], false);
             Anim.SetBool(animBoolHashes[newState], true);
+        }
+
+        public void ResetGameBuffStat()
+        {
+            Stat.ResetInGameStats();
         }
     }
 }

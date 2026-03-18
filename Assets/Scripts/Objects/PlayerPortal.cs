@@ -23,14 +23,14 @@ namespace Objects
 
         private void OnEnable()
         {
-            EventBus.Subscribe(EventType.StageCleared, ActivePortal);
+            EventBus.Subscribe(EventType.AllCollectiblesCollected, ActivePortal);
         
             DeactivePortal();
         }
 
         private void OnDisable()
         {
-            EventBus.Unsubscribe(EventType.StageCleared, ActivePortal);
+            EventBus.Unsubscribe(EventType.AllCollectiblesCollected, ActivePortal);
         }
 
 

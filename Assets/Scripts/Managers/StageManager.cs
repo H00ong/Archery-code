@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Managers;
 using Map;
+using Objects;
 using Players;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ public class StageManager : MonoBehaviour
     private const int BossStageInterval = 10;
     private bool _initialized = false;
     private bool _allStageCleared = false;
+    public bool WaitingForCollectibles { get; private set; }
 
     private readonly Dictionary<(StageState, StageCommandType), StageState> transitions = new()
     {
@@ -78,11 +80,34 @@ public class StageManager : MonoBehaviour
     private void OnEnable()
     {
         EventBus.Subscribe(EventType.StageLoadingStarted, StartStageLoadingSequence, 100);
+        EventBus.Subscribe(EventType.StageCleared, ItemCollectActive);
+        EventBus.Subscribe(EventType.AllCollectiblesCollected, ItemCollectDeactive);
     }
 
     private void OnDisable()
     {
         EventBus.Unsubscribe(EventType.StageLoadingStarted, StartStageLoadingSequence);
+        EventBus.Unsubscribe(EventType.StageCleared, ItemCollectActive);
+        EventBus.Unsubscribe(EventType.AllCollectiblesCollected, ItemCollectDeactive);
+    }
+
+    private void ItemCollectActive()
+    {
+        WaitingForCollectibles = true;
+    }
+
+    private void ItemCollectDeactive()
+    {
+        WaitingForCollectibles = false;
+    }
+
+    private void Update()
+    {
+        if (!WaitingForCollectibles) return;
+        if (CollectItem.ActiveCount > 0) return;
+
+        WaitingForCollectibles = false;
+        EventBus.Publish(EventType.AllCollectiblesCollected);
     }
 
     void Start()
@@ -196,7 +221,7 @@ public class StageManager : MonoBehaviour
         else
         {
             // TODO : Enemy 생성 count 설정 필요
-            var count = 1;
+            var count = 3;
             await enemyManager.SpawnEnemyAsync(count);
         }
     }

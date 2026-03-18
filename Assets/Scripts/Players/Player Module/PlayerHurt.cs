@@ -8,7 +8,7 @@ namespace Players
         [SerializeField] private Collider playerCollider;
         [SerializeField] private Rigidbody playerRigidbody;
 
-        private PlayerController playerManager;
+        private PlayerController playerController;
         private Health playerHealth;
 
         void Awake()
@@ -27,8 +27,8 @@ namespace Players
 
         public void Init()
         {
-            playerManager = PlayerController.Instance;
-            playerHealth = playerManager.Health;
+            playerController = PlayerController.Instance;
+            playerHealth = playerController.Health;
 
             playerCollider.enabled = true;
             playerRigidbody.isKinematic = false;
@@ -48,7 +48,7 @@ namespace Players
 
         private void OnPlayerDie()
         {
-            playerManager.ChangePlayerAnimation(PlayerState.Dead);
+            playerController.ChangePlayerAnimation(PlayerState.Dead);
 
             playerCollider.enabled = false;
             playerRigidbody.isKinematic = true;
