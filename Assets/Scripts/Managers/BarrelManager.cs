@@ -57,11 +57,29 @@ namespace Managers
         private void OnEnable()
         {
             EventBus.Subscribe(EventType.StageCombatStarted, MeteorAttack);
+            EventBus.Subscribe(EventType.StageCleared, OnStageCleared);
+            EventBus.Subscribe(EventType.MapCleared, OnMapCleared);
         }
 
         private void OnDisable()
         {
             EventBus.Unsubscribe(EventType.StageCombatStarted, MeteorAttack);
+            EventBus.Unsubscribe(EventType.StageCleared, OnStageCleared);
+            EventBus.Unsubscribe(EventType.MapCleared, OnMapCleared);
+        }
+
+        private void OnStageCleared()
+        {
+            _meteorTargetQueue.Clear();
+
+            foreach (var config in _barrelConfigDict.Values)
+                config.spawnTimer = 0f;
+        }
+
+        private void OnMapCleared()
+        {
+            _meteorTargetQueue.Clear();
+            _barrelConfigDict.Clear();
         }
 
         private void Update()
