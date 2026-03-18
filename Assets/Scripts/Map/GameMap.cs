@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.AI.Navigation;
+using Unity.Entities.UniversalDelegates;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -7,6 +8,11 @@ namespace Map
 {
     public class GameMap : MonoBehaviour
     {
+        private const float offsetY = 0.5f;
+
+        [Header("Map Info")]
+        [SerializeField] private Transform floor;
+
         [Header("Surface")]
         [SerializeField] private NavMeshSurface surface;
 
@@ -22,13 +28,6 @@ namespace Map
 
         [Header("Patrol")]
         [SerializeField] private List<PatrolPoint> patrolPoints;
-
-        private NavMeshTriangulation _cachedTriangulation;
-
-        private void OnEnable()
-        {
-            _cachedTriangulation = NavMesh.CalculateTriangulation();
-        }
 
         public void Init()
         {
@@ -51,17 +50,24 @@ namespace Map
 
         public Vector3 GetRandomNavMeshPoint()
         {
-            int triangleCount = _cachedTriangulation.indices.Length / 3;
-            int triIndex = Random.Range(0, triangleCount) * 3;
+            var bounds = surface.navMeshData.sourceBounds;
+            var floorPos = new Vector3(floor.position.x,
+                                        floor.position.y + offsetY, 
+                                        floor.position.z);
 
-            Vector3 a = _cachedTriangulation.vertices[_cachedTriangulation.indices[triIndex]];
-            Vector3 b = _cachedTriangulation.vertices[_cachedTriangulation.indices[triIndex + 1]];
-            Vector3 c = _cachedTriangulation.vertices[_cachedTriangulation.indices[triIndex + 2]];
+            for (int i = 0; i < 30; i++)
+            {
+                var randomPoint = new Vector3(
+                    Random.Range(-bounds.extents.x, bounds.extents.x),
+                    floorPos.y,
+                    Random.Range(-bounds.extents.z, bounds.extents.z)
+                );
 
-            // barycentric random point inside triangle
-            float r1 = Mathf.Sqrt(Random.value);
-            float r2 = Random.value;
-            return (1 - r1) * a + r1 * (1 - r2) * b + r1 * r2 * c;
+                if (NavMesh.SamplePosition(randomPoint, out var hit, 5f, NavMesh.AllAreas))
+                    return new Vector3(hit.position.x, floorPos.y, hit.position.z);
+            }
+
+            return floorPos;
         }
     }
 }
