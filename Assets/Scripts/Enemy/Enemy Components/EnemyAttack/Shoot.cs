@@ -64,17 +64,18 @@ namespace Enemy
         {
             foreach (var point in _shootingPoints)
             {
+                Vector3 spawnPos = point.position;
+                Vector3 dest = GetDestination(point);
+
                 if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool))
                     go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
 
                 destroyCancellationToken.ThrowIfCancellationRequested();
 
-                Vector3 dest = GetDestination(point);
-
                 var damageInfo = new DamageInfo(_projectileAtk, _effectType, _ctx.gameObject);
 
                 ShootingInstruction inst = new ShootingInstruction(
-                    point.position,
+                    spawnPos,
                     dest,
                     _projectileSpeed,
                     _defaultProjectileLifetime,
