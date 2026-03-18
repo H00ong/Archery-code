@@ -59,8 +59,8 @@ namespace Managers
 
         void OnEnable()
         {
-            EventBus.Subscribe(EventType.TransitionToLobby, DeActiveCurrentCharacter);
-            EventBus.Subscribe(EventType.Retry, DeActiveCurrentCharacter);
+            EventBus.Subscribe(EventType.TransitionToLobby, DeActiveCurrentCharacter, 1);
+            EventBus.Subscribe(EventType.Retry, DeActiveCurrentCharacter, 1);
         }
 
         private void OnDisable()
