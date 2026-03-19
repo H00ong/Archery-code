@@ -27,7 +27,7 @@ namespace Enemy
         public bool isDebugMode = true;
 
         [Header("Identity")] 
-        [SerializeField] public EnemyName enemyName;
+        [SerializeField, RegistryKey("enemyNames")] public string enemyName;
         [SerializeField] public EnemyTag enemyTags;
         private EnemyIdentity _identity;
         private EnemyStat _stat;

@@ -15,28 +15,6 @@ namespace Enemy
         NormalShootingMuzzle,
     }
 
-    public enum EnemyName
-    {
-        None,
-        Slime,
-        Bird,
-        Octopus,
-        Box,
-        Cactus,
-        TurtleShell,
-        SkeletonMinion,
-        SkeletonWarrior,
-        SkeletonRogue,
-        SkeletonMage,
-        Wizard,
-        MeleeGolem,
-        RangedGolem,
-        Mushroom,
-        Orc,
-        Stingray,
-        StoneMonster,
-    }
-
     [System.Flags]
     public enum EnemyTag : int
     {

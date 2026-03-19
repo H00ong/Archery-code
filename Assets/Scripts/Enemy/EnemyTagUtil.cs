@@ -60,10 +60,10 @@ namespace Enemy
 
     public struct EnemyKey : IEquatable<EnemyKey>
     {
-        public EnemyName Name;
+        public string Name;
         public EnemyTag Tag;
 
-        public EnemyKey(EnemyName name, EnemyTag tag)
+        public EnemyKey(string name, EnemyTag tag)
         {
             Name = name;
             Tag = tag;
@@ -71,7 +71,7 @@ namespace Enemy
 
         public bool Equals(EnemyKey other)
         {
-            return Name == other.Name && Tag == other.Tag;
+            return string.Equals(Name, other.Name, System.StringComparison.Ordinal) && Tag == other.Tag;
         }
 
         public override bool Equals(object obj)
@@ -83,7 +83,7 @@ namespace Enemy
         {
             unchecked 
             {
-                return ((int)Name * 397) ^ (int)Tag;
+                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (int)Tag;
             }
         }
         

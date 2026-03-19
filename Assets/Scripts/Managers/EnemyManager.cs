@@ -41,7 +41,7 @@ namespace Managers
         }
 
         #region Stat Caching
-        public void SetEnemyStat(EnemyName name, EnemyTag tag, EnemyStat stat)
+        public void SetEnemyStat(string name, EnemyTag tag, EnemyStat stat)
         {
             var enemyData = DataManager.Instance.GetEnemyData(name, tag);
             var currentMapData = MapManager.Instance.CurrentMapData;
