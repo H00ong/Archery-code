@@ -4,14 +4,14 @@ namespace Players
 {
     public class PlayerData
     {
-        public CharacterName characterName { get; private set; } = CharacterName.BlueWizard;
+        public string characterName { get; private set; } = "BlueWizard";
 
-        public void SetCharacterName(CharacterName characterName)
+        public void SetCharacterName(string characterName)
         {
             this.characterName = characterName;
         }
 
-        public PlayerData(CharacterName characterName)
+        public PlayerData(string characterName)
         {
             this.characterName = characterName;
         }

@@ -10,7 +10,7 @@ namespace Players
     {
         private List<SkillDefinition> _availableSkills = new();
         public List<SkillDefinition> availableSkills => _availableSkills;
-        public readonly Dictionary<PlayerSkillId, PlayerSkillModuleBase> acquiredSkillModule = new();
+        public readonly Dictionary<string, PlayerSkillModuleBase> acquiredSkillModule = new();
 
         public void Init()
         {

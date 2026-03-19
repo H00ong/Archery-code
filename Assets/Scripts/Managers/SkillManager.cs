@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Players;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -17,7 +16,7 @@ namespace Managers
         [Header("Addressable Settings")]
         [SerializeField] private string skillConfigLabel = "skill_config";
 
-        private readonly Dictionary<PlayerSkillId, SkillDefinition> _skillDict = new();
+        private readonly Dictionary<string, SkillDefinition> _skillDict = new();
         private readonly List<SkillDefinition> _allSkills = new();
         private AsyncOperationHandle<IList<SkillDefinition>> _loadHandle;
 
@@ -27,7 +26,7 @@ namespace Managers
         public IReadOnlyList<SkillDefinition> AllSkills => _allSkills;
 
         /// <summary> ID → SkillDefinition 매핑 (읽기 전용) </summary>
-        public IReadOnlyDictionary<PlayerSkillId, SkillDefinition> SkillDict => _skillDict;
+        public IReadOnlyDictionary<string, SkillDefinition> SkillDict => _skillDict;
 
         private void Awake()
         {

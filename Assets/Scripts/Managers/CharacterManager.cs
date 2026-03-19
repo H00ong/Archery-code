@@ -21,7 +21,7 @@ namespace Managers
         PlayerManager _player;
         private Transform _playerContainer;
 
-        private readonly Dictionary<CharacterName, CharacterIdentity> _characterMap = new();
+        private readonly Dictionary<string, CharacterIdentity> _characterMap = new();
         public Transform PlayerContainer
         {
             get
@@ -172,7 +172,7 @@ namespace Managers
             return _currentCharacterIdentity;
         }
 
-        public void SyncCharacterIdentity(CharacterName characterName)
+        public void SyncCharacterIdentity(string characterName)
         {
             if (!_characterMap.TryGetValue(characterName, out var characterSO))
             {
