@@ -15,13 +15,6 @@ public class EffectConfig
 
 namespace Map
 {
-    public enum MapType
-    {
-        Dungeon = 1,
-        Jungle = 2,
-        Desert = 3
-    }
-
     [System.Serializable]
     public class MapDataWrapper
     {
@@ -31,8 +24,7 @@ namespace Map
     [System.Serializable]
     public class MapData
     {
-        [JsonConverter(typeof(StringEnumConverter))]
-        public MapType mapType;
+        public string mapId;
         public int stageCount;
         public MapModifiers mapModifiers;
         public StageGrowth stageGrowth;

@@ -18,7 +18,7 @@ namespace Managers
         [SerializeField] private Vector3 defaultMapPosition;
         [SerializeField] private string label = "map_config";
 
-        private MapType _currentMapType;
+        private string _currentMapID;
         private GameMap currentMap = null;
 
         private PoolManager _poolManager;
@@ -26,7 +26,7 @@ namespace Managers
         
         // Addressable & Caching
         private AsyncOperationHandle<IList<MapScriptable>> _handle;
-        private Dictionary<MapType, MapScriptable> _mapDict = new Dictionary<MapType, MapScriptable>();
+        private Dictionary<string, MapScriptable> _mapDict = new Dictionary<string, MapScriptable>();
         
         private List<AssetReferenceGameObject> _currentMapList;
         private AssetReferenceGameObject _currentBossMapRef;
@@ -108,12 +108,12 @@ namespace Managers
 
             if (_mapDict is { Count: > 0 }) return;
 
-            _mapDict = new Dictionary<MapType, MapScriptable>();
+            _mapDict = new Dictionary<string, MapScriptable>();
             try
             {
                 _handle = Addressables.LoadAssetsAsync<MapScriptable>(
                     label,
-                    so => { if (so) _mapDict[so.mapType] = so; }
+                    so => { if (so) _mapDict[so.mapId] = so; }
                 );
 
                 await _handle.Task;
@@ -162,11 +162,11 @@ namespace Managers
                 throw new System.Exception($"[MapManager] MapData is null for index: {CurrentMapIndex}");
             }
 
-            _currentMapType = CurrentMapData.mapType;
+            _currentMapID = CurrentMapData.mapId;
 
-            if (!_mapDict.TryGetValue(_currentMapType, out var mapSo) || mapSo == null)
+            if (!_mapDict.TryGetValue(_currentMapID, out var mapSo) || mapSo == null)
             {
-                throw new InvalidOperationException($"[MapManager] MapScriptable not found for MapType: {_currentMapType}");
+                throw new InvalidOperationException($"[MapManager] MapScriptable not found for mapId: {_currentMapID}");
             }
 
             _currentMapList = mapSo.mapList.ToList();
