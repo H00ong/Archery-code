@@ -1,10 +1,14 @@
 using System;
 using Managers;
+using UI;
 using UnityEngine;
 public class InitManager : MonoBehaviour
 {
     public static InitManager Instance { get; private set; }
     public bool IsLoaded { get; private set; }
+
+    [Header("Loading UI")]
+    [SerializeField] private UI_ProgressBar progressBar;
 
     private void Awake()
     {
@@ -23,9 +27,19 @@ public class InitManager : MonoBehaviour
         await InitAsync();
     }
 
+    private void Update()
+    {
+        if (IsLoaded && Input.GetKeyDown(KeyCode.Space))
+        {
+            Debug.Log("[InitManager] Space key pressed — Transitioning to Lobby scene.");
+            GameManager.Instance.ChangeScene(SceneState.Lobby);
+        }
+    }
+
     private async Awaitable InitAsync()
     {
         IsLoaded = false;
+        SetProgress(0f, "Initializing...");
 
         // Phase 1 — DataManager & PoolManager (싱글톤 Awake로 이미 준비됨, 참조만 확보)
         var dataManager = DataManager.Instance;
@@ -47,28 +61,32 @@ public class InitManager : MonoBehaviour
             return;
         }
 
+        SetProgress(0.1f, "DataManager initialized");
         Debug.Log("[InitManager] Phase 1 complete — DataManager initialized & PoolManager ready.");
 
-        // Phase 2 — Addressables 데이터 병렬 로드
+        // Phase 2 — Addressables 데이터 순차 로드 (진행률 추적)
         var mapManager = MapManager.Instance;
         var characterManager = CharacterManager.Instance;
-        var orbManager = OrbManager.instance;
+        var orbManager = OrbManager.Instance;
         var barrelManager = BarrelManager.Instance;
         var skillManager = SkillManager.Instance;
 
         try
         {
-            var mapTask = mapManager.LoadMapConfigAsync();
-            var characterTask = characterManager.LoadCharacterIdentitiesAsync();
-            var orbTask = orbManager.LoadOrbConfigurationsAsync();
-            var barrelTask = barrelManager.LoadBarrelAssetsAsync();
-            var skillTask = skillManager.LoadAllSkillsAsync();
+            SetProgress(0.15f, "Loading map data...");
+            await mapManager.LoadMapConfigAsync();
 
-            await mapTask;
-            await characterTask;
-            await orbTask;
-            //await barrelTask;
-            await skillTask;
+            SetProgress(0.35f, "Loading character data...");
+            await characterManager.LoadCharacterIdentitiesAsync();
+
+            SetProgress(0.55f, "Loading orb data...");
+            await orbManager.LoadOrbConfigurationsAsync();
+
+            SetProgress(0.70f, "Loading barrel data...");
+            await barrelManager.LoadBarrelAssetsAsync();
+
+            SetProgress(0.85f, "Loading skill data...");
+            await skillManager.LoadAllSkillsAsync();
 
             destroyCancellationToken.ThrowIfCancellationRequested();
         }
@@ -84,10 +102,19 @@ public class InitManager : MonoBehaviour
             return;
         }
 
+        SetProgress(0.95f, "Initializing player...");
         Debug.Log("[InitManager] Phase 2 complete — All Addressables loaded.");
 
         PlayerManager.Instance.InitializePlayerData();
 
+        SetProgress(1f, "Loading complete!");
         IsLoaded = true;
+    }
+
+    private void SetProgress(float progress, string status)
+    {
+        if (!progressBar) return;
+        progressBar.SetProgress(progress);
+        progressBar.SetStatus(status);
     }
 }
