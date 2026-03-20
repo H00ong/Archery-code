@@ -14,7 +14,7 @@ public class OrbPool
 
 public class OrbManager : MonoBehaviour
 {
-    public static OrbManager instance;
+    public static OrbManager Instance;
     private const float OrbDistanceIncrement = 0.5f;
 
     Transform _orbPivot;
@@ -33,11 +33,11 @@ public class OrbManager : MonoBehaviour
 
     private void Awake()
     {
-        if (!instance)
+        if (!Instance)
         {
-            instance = this;
+            Instance = this;
         }
-        else if (instance != this)
+        else if (Instance != this)
         {
             Destroy(this);
         }
