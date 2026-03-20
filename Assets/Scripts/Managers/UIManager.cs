@@ -21,6 +21,10 @@ namespace Managers
         [Header("Skill")]
         [SerializeField] private GameObject skillChoicePopupPrefab;
 
+        [Space]
+        [Header("Stage Transition")]
+        [SerializeField] private UI_StageTransition stageTransition;
+
         private MapClearPopupPresenter _gameClearPresenter;
          private GameOverPopupPresenter _gameOverPresenter; 
         private SkillChoicePopupPresenter _skillChoicePresenter;
@@ -58,10 +62,10 @@ namespace Managers
         }
 
         private void ShowSkillChoicePopup()
-        {
+        {   
             if (_skillChoicePresenter == null)
             {
-                var canvas = FindFirstObjectByType<Canvas>();
+                var canvas = FindFirstObjectByType<InGameCanvas>();
                 var go = Instantiate(skillChoicePopupPrefab, canvas.transform);
                 var popup = go.GetComponent<SkillChoicePopup>();
                 _skillChoicePresenter = new SkillChoicePopupPresenter(popup);
@@ -75,7 +79,7 @@ namespace Managers
         {
             if (_gameOverPresenter == null)
             {
-                var canvas = FindFirstObjectByType<Canvas>();
+                var canvas = FindFirstObjectByType<InGameCanvas>();
                 var go = Instantiate(gameOverPopupPrefab, canvas.transform);
                 var popup = go.GetComponent<GameOverPopup>();
                 _gameOverPresenter = new GameOverPopupPresenter(popup);
@@ -88,7 +92,7 @@ namespace Managers
         {
             if (_gameClearPresenter == null)
             {
-                var canvas = FindFirstObjectByType<Canvas>();
+                var canvas = FindFirstObjectByType<InGameCanvas>();
                 var go = Instantiate(gameClearPopupPrefab, canvas.transform);
                 var popup = go.GetComponent<MapClearPopupView>();
                 _gameClearPresenter = new MapClearPopupPresenter(popup);
@@ -102,6 +106,23 @@ namespace Managers
             _skillChoicePresenter = null;
             _gameOverPresenter = null;
             _gameClearPresenter = null;
+        }
+
+        public async Awaitable FadeOutAsync()
+        {
+            if (stageTransition)
+            {
+                stageTransition.gameObject.SetActive(true);
+                await stageTransition.FadeOutAsync();
+            }
+        }
+
+        public async Awaitable FadeInAsync(string stageLabel = null)
+        {
+            if (stageTransition)
+                await stageTransition.FadeInAsync(stageLabel);
+
+            stageTransition.gameObject.SetActive(false);
         }
     }
 }

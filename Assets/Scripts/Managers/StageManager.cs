@@ -2,7 +2,6 @@ using Game.Stage.Management;
 using System;
 using System.Collections.Generic;
 using Managers;
-using Map;
 using Objects;
 using Players;
 using UnityEngine;
@@ -131,7 +130,7 @@ public class StageManager : MonoBehaviour
             ChangeState(next);
     }
     
-    private void ChangeState(StageState newState) 
+    private void ChangeState(StageState newState)
     {
         CurrentState = newState;
 
@@ -162,6 +161,9 @@ public class StageManager : MonoBehaviour
         if (_allStageCleared)
             return;
 
+        if (UIManager.Instance)
+            await UIManager.Instance.FadeOutAsync();
+
         try
         {
             await MapManager.Instance.PreloadMapsAsync();
@@ -179,7 +181,15 @@ public class StageManager : MonoBehaviour
         }
 
         destroyCancellationToken.ThrowIfCancellationRequested();
-        
+
+        // Fade in — 스테이지 텍스트 표시 후 화면 복원, 그 뒤 Combat 시작
+        var label = IsBossStage ? "BOSS" : $"Stage {CurrentStageIndex + 1}";
+
+        if (UIManager.Instance)
+            await UIManager.Instance.FadeInAsync(label);
+
+        await Awaitable.WaitForSecondsAsync(0.5f);
+
         HandleCommand(StageCommandType.LoadingComplete);
     }
 
