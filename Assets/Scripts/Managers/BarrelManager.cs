@@ -111,7 +111,7 @@ namespace Managers
 
         private void GenerateBarrelCheck()
         {
-            if(GameManager.Instance.IsInLobby)
+            if (!GameManager.Instance.IsInGame)
                 return;
 
             if (!StageManager.Instance.IsInCombat)
