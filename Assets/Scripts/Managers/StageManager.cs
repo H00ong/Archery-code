@@ -206,12 +206,18 @@ public class StageManager : MonoBehaviour
         
         var player = PlayerController.Instance;
         var playerContainter = CharacterManager.Instance.PlayerContainer;
+        var rb = player.GetComponent<Rigidbody>();
         
         var spawnPos = mapManager.GetPlayerSpawnPoint();
         spawnPos.gameObject.SetActive(true);
 
+        // Rigidbody velocity 초기화 후 위치 설정
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+
         playerContainter.position = spawnPos.position;
-        player.transform.position = spawnPos.position;
+        rb.position = spawnPos.position;
+        Physics.SyncTransforms();
         
         CameraController.Instance.SetPosition(spawnPos.position);
         CameraController.Instance.SetTarget(player.transform);
