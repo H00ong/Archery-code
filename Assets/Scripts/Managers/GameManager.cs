@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using NUnit.Framework;
-using Players;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -67,7 +65,7 @@ namespace Managers
         {
             if(InitManager.Instance.IsLoaded && IsInLobby)
             {
-                if(Input.GetKeyDown(KeyCode.Space))
+                if(Input.GetKeyDown(KeyCode.F1))
                 {
                     ChangeScene(SceneState.InGame);
                 }
