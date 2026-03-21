@@ -189,7 +189,7 @@ public class StageManager : MonoBehaviour
         if (UIManager.Instance)
             await UIManager.Instance.FadeInAsync(label);
 
-        await Awaitable.WaitForSecondsAsync(0.5f);
+        await Awaitable.WaitForSecondsAsync(.1f);
 
         HandleCommand(StageCommandType.LoadingComplete);
     }
