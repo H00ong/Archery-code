@@ -34,9 +34,19 @@ namespace Objects
         }
 
 
-        private void OnTriggerEnter(Collider other)    
+        private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag(playerTag)) 
+            OnPlayerEnterPortal(other);
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            OnPlayerEnterPortal(other);
+        }
+
+        private void OnPlayerEnterPortal(Collider other)
+        {
+            if (other.CompareTag(playerTag))
             {
                 StageManager.Instance.HandleCommand(StageCommandType.EnterPortal);
             }
