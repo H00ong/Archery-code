@@ -54,9 +54,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void SetMoveInput(Vector2 moveInput)
     {
-        if(_isDead || _playerController.currentState == PlayerState.Dead)
+        if (_isDead || _playerController.currentState == PlayerState.Dead)
         {
             _isDead = true;
+            return;
+        }
+
+        if (StageManager.Instance.IsInLoading)
+        {
+            _currentMoveDir = Vector3.zero;
+            playerRigidbody.linearVelocity = Vector3.zero;
+            _playerController.ChangePlayerAnimation(PlayerState.Idle);
             return;
         }
 

@@ -6,6 +6,7 @@ namespace Managers
 {
     public enum SceneState
     {
+        Loading,
         Lobby,
         InGame,
     }
@@ -38,7 +39,7 @@ namespace Managers
         private void Init()
         {
             CreateDict();
-            CurrentState = SceneState.Lobby;
+            CurrentState = SceneState.Loading;
         }
 
         private void OnEnable()

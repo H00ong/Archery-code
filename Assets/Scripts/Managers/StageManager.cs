@@ -52,6 +52,7 @@ public class StageManager : MonoBehaviour
     private StageState CurrentState { get; set; }
     public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0) && (CurrentStageIndex != 0);
     public bool IsInCombat => CurrentState == StageState.Combat;
+    public bool IsInLoading => CurrentState == StageState.Loading;
 
     private void Awake()
     {
