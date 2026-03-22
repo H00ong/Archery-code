@@ -59,6 +59,7 @@ namespace Managers
             EventBus.Subscribe(EventType.StageCombatStarted, MeteorAttack);
             EventBus.Subscribe(EventType.StageCleared, OnStageCleared);
             EventBus.Subscribe(EventType.MapCleared, OnMapCleared);
+            EventBus.Subscribe(EventType.Retry, OnMapCleared);
         }
 
         private void OnDisable()
@@ -66,6 +67,7 @@ namespace Managers
             EventBus.Unsubscribe(EventType.StageCombatStarted, MeteorAttack);
             EventBus.Unsubscribe(EventType.StageCleared, OnStageCleared);
             EventBus.Unsubscribe(EventType.MapCleared, OnMapCleared);
+            EventBus.Unsubscribe(EventType.Retry, OnMapCleared);
         }
 
         private void OnStageCleared()

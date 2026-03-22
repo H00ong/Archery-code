@@ -37,14 +37,23 @@ namespace Managers
             }
         }
 
+        private void ResetLevelData()
+        {
+            currentLevel = 1;
+            currentExp = 0;
+            _isLevelingUp = false;
+        }
+
         private void OnEnable()
         {
             EventBus.Subscribe(EventType.SkillChosen, OnSkillChosen, 100);
+            EventBus.Subscribe(EventType.Retry, ResetLevelData);
         }
 
         private void OnDisable()
         {
             EventBus.Unsubscribe(EventType.SkillChosen, OnSkillChosen);
+            EventBus.Unsubscribe(EventType.Retry, ResetLevelData);
         }
 
         public void AddExp(int amount)

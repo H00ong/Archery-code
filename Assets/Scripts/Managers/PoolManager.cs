@@ -149,7 +149,7 @@ namespace Managers
     
         public void ReturnObject(GameObject instance)
         {
-            if (!instance) return;
+            if (!instance || !instance.activeSelf) return;
 
             if (!_instanceToKey.TryGetValue(instance, out var key) || !_pools.TryGetValue(key, out var pool))
             {
@@ -218,7 +218,7 @@ namespace Managers
             }
             else if (pool.prefab == null)
             {
-                // 다른 동시 호출이 로딩을 시작했지만 아직 완료되지 않은 경우 대기
+                // pool.prefabHandle is valid but prefab is null, likely still loading
                 await pool.prefabHandle.Task;
                 
                 destroyCancellationToken.ThrowIfCancellationRequested();

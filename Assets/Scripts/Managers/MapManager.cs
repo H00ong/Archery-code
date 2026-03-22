@@ -72,11 +72,13 @@ namespace Managers
         void OnEnable()
         {
             EventBus.Subscribe(EventType.TransitionToLobby, OnStageMapClear);
+            EventBus.Subscribe(EventType.Retry, OnStageMapClear);
         }
 
         void OnDisable()
         {
             EventBus.Unsubscribe(EventType.TransitionToLobby, OnStageMapClear);
+            EventBus.Unsubscribe(EventType.Retry, OnStageMapClear);
 
             if (_handle.IsValid())
                 Addressables.Release(_handle);
@@ -331,6 +333,11 @@ namespace Managers
         public List<PatrolPoint> GetAllPatrolPoints()
         {
             return currentMap != null ? currentMap.GetAllPatrolPoints() : null;
+        }
+
+        public List<EnemySpawnData> GetPredefinedEnemies()
+        {
+            return currentMap != null ? currentMap.PredefinedEnemies : null;
         }
 
         #endregion
