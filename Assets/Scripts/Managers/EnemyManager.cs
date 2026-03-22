@@ -126,6 +126,34 @@ namespace Managers
             }
         }
 
+        public async Awaitable SpawnPredefinedEnemiesAsync(List<EnemySpawnData> predefinedEnemies)
+        {
+            try
+            {
+                foreach (var data in predefinedEnemies)
+                {
+                    var enemyRef = data.identity.Prefab;
+                    var spawnPoint = data.spawnPoint;
+
+                    await SpawnSingleEnemyAsync(
+                        enemyRef,
+                        spawnPoint.position,
+                        data.identity,
+                        () => spawnPoint.gameObject.SetActive(true));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[EnemyManager] SpawnPredefinedEnemiesAsync canceled.");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[EnemyManager] SpawnPredefinedEnemiesAsync failed: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Awaitable SpawnEnemyAsync(int count)
         {
             try

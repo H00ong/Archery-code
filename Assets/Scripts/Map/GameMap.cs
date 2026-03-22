@@ -6,6 +6,13 @@ using UnityEngine.AI;
 
 namespace Map
 {
+    [System.Serializable]
+    public class EnemySpawnData
+    {
+        public EnemyIdentity identity;
+        public Transform spawnPoint;
+    }
+
     public class GameMap : MonoBehaviour
     {
         private const float offsetY = 0.5f;
@@ -25,6 +32,10 @@ namespace Map
         [SerializeField] private List<Transform> enemySpawnPoints;
         public Transform BossSpawnPoint => bossSpawnPoint;
         public List<Transform> EnemySpawnPoints => enemySpawnPoints;
+
+        [Header("Predefined Enemies (고정 배치)")]
+        [SerializeField] private List<EnemySpawnData> predefinedEnemies;
+        public List<EnemySpawnData> PredefinedEnemies => predefinedEnemies;
 
         [Header("Patrol")]
         [SerializeField] private List<PatrolPoint> patrolPoints;

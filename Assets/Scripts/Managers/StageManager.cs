@@ -237,6 +237,12 @@ public class StageManager : MonoBehaviour
         }
         else
         {
+            // 고정 배치 적 스폰
+            var predefined = MapManager.Instance.GetPredefinedEnemies();
+            if (predefined is { Count: > 0 })
+                await enemyManager.SpawnPredefinedEnemiesAsync(predefined);
+
+            // 랜덤 적 스폰
             // TODO : Enemy 생성 count 설정 필요
             var count = 3;
             await enemyManager.SpawnEnemyAsync(count);
