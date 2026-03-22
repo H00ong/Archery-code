@@ -8,7 +8,7 @@ namespace Enemy
 {
     public class Shoot : EnemyAttack, IAnimationListener
     {
-        private const float _defaultProjectileLifetime = 10f;
+        private const float defaultProjectileLifetime = 10f;
 
         private float _projectileSpeed = 10f;
         private int _projectileAtk = 1;
@@ -57,15 +57,17 @@ namespace Enemy
 
         public override void OnAnimEvent()
         {
-            ShootAsync().Forget();
+            var cachedPoints = new List<(Vector3 pos, Vector3 dest)>(_shootingPoints.Count);
+            foreach (var point in _shootingPoints)
+                cachedPoints.Add((point.position, GetDestination(point)));
+
+            ShootAsync(cachedPoints).Forget();
         }
 
-        async Awaitable ShootAsync()
+        async Awaitable ShootAsync(List<(Vector3 pos, Vector3 dest)> cachedPoints)
         {
-            foreach (var point in _shootingPoints)
+            foreach (var (spawnPos, dest) in cachedPoints)
             {
-                Vector3 spawnPos = point.position;
-                Vector3 dest = GetDestination(point);
 
                 if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool))
                     go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
@@ -78,7 +80,7 @@ namespace Enemy
                     spawnPos,
                     dest,
                     _projectileSpeed,
-                    _defaultProjectileLifetime,
+                    defaultProjectileLifetime,
                     damageInfo
                 );
 

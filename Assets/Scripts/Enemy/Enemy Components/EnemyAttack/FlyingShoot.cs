@@ -54,16 +54,19 @@ namespace Enemy
 
         public override void OnAnimEvent()
         {
-            FlyingShootAsync().Forget();
+            Vector3 playerPos = _player.transform.position;
+            var cachedPoints = new List<(Vector3 pos, Vector3 target)>(_shootingPoints.Count);
+            foreach (var point in _shootingPoints)
+                cachedPoints.Add((point.position, playerPos));
+
+            FlyingShootAsync(cachedPoints).Forget();
         }
 
         // ReSharper disable Unity.PerformanceAnalysis
-        async Awaitable FlyingShootAsync()
+        async Awaitable FlyingShootAsync(List<(Vector3 pos, Vector3 target)> cachedPoints)
         {
-            foreach (var point in  _shootingPoints)
+            foreach (var (spawnPos, targetPos) in cachedPoints)
             {
-                Vector3 spawnPos = point.position;
-                Vector3 targetPos = _player.transform.position;
 
                 if (!_poolManager.TryGetObject(_projectilePrefab, out var go, _poolManager.projectilePool)) 
                     go = await _poolManager.GetObjectAsync(_projectilePrefab, _poolManager.projectilePool);
