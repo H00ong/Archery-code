@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Stat;
 using UnityEngine;
 
+// TODO : Adapter 패턴 도입해서 effect 적용 방식 개선하기
 public interface IDamageable
 {
     void TakeDamage(DamageInfo damageInfo);

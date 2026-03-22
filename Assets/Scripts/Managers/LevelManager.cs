@@ -99,15 +99,6 @@ namespace Managers
             EventBus.Publish(EventType.LevelUp);
         }
 
-        // Debug용
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F1))
-            {
-                AddExp(RequiredExp);
-            }
-        }
-
         private int GetRequiredExpForLevel(int level)
         {
             int index = level - 1;
