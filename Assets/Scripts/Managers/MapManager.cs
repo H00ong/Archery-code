@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Map;
-using Players;
-using Unity.Android.Gradle;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -40,15 +38,8 @@ namespace Managers
 
         // TODO : json 저장
         public int CurrentMapIndex { get; private set; } = 0;
-        public int MaxMapIndex { get; private set; } = 0;
+        public int MaxMapIndex { get; private set; } = -1;
         public MapData CurrentMapData { get; private set; }
-
-        // TODO : MaxMapIndex를 갱신한다
-        public void UpdateMapClearData()
-        {
-            if (CurrentMapIndex > MaxMapIndex)
-                MaxMapIndex = CurrentMapIndex;
-        }
 
         private void Awake()
         {
@@ -73,17 +64,27 @@ namespace Managers
         {
             EventBus.Subscribe(EventType.TransitionToLobby, OnStageMapClear);
             EventBus.Subscribe(EventType.Retry, OnStageMapClear);
+            EventBus.Subscribe(EventType.MapCleared, UpdateMapClearData);
         }
 
         void OnDisable()
         {
             EventBus.Unsubscribe(EventType.TransitionToLobby, OnStageMapClear);
             EventBus.Unsubscribe(EventType.Retry, OnStageMapClear);
+            EventBus.Unsubscribe(EventType.MapCleared, UpdateMapClearData);
 
             if (_handle.IsValid())
                 Addressables.Release(_handle);
 
             OnStageMapClear();
+        }
+
+        public void UpdateMapClearData()
+        {
+            if (CurrentMapIndex > MaxMapIndex)
+                MaxMapIndex = CurrentMapIndex;
+            
+            // TODO : 세이브 시스템에 맵 클리어 데이터 저장
         }
 
         private void OnStageMapClear()
@@ -176,6 +177,12 @@ namespace Managers
 
             _currentEnemyIdentityList = mapSo.enemyIdentityList.ToList();
             _currentBossIdentityList = mapSo.bossIdentityList.ToList();
+        }
+
+        public MapScriptable GetMapScriptable(string mapId)
+        {
+            _mapDict.TryGetValue(mapId, out var mapSo);
+            return mapSo;
         }
 
         #endregion

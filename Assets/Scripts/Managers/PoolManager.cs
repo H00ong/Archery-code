@@ -15,6 +15,7 @@ namespace Managers
         public Transform projectilePool;
         public Transform enemyPool;
         public Transform mapPool;
+        public Transform lobbyMapPool;
         public Transform extra;
     
         class Pool

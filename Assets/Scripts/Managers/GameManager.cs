@@ -62,17 +62,6 @@ namespace Managers
             EventBus.Unsubscribe(EventType.Retry, OnRetry);
         }
 
-        void Update()
-        {
-            if(InitManager.Instance.IsLoaded && IsInLobby)
-            {
-                if(Input.GetKeyDown(KeyCode.F1))
-                {
-                    ChangeScene(SceneState.InGame);
-                }
-            }
-        }
-
         private void CreateDict()
         {
             _sceneDictionary.Add(SceneState.Lobby, "Lobby");

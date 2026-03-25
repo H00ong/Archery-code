@@ -13,7 +13,6 @@ namespace Managers
         [Header("Addressable Settings")]
         [SerializeField] private string characterLabel = "character_identity";
 
-        private bool _isLoaded;
         private CharacterIdentity _currentCharacterIdentity;
         private AsyncOperationHandle<IList<CharacterIdentity>> _loadHandle;
         private GameObject _currentCharacterInstance;
@@ -90,8 +89,6 @@ namespace Managers
                         Debug.LogWarning($"[CharacterManager] Duplicate CharacterName: {so.characterName}");
                     }
                 }
-
-                _isLoaded = true;
                 Debug.Log($"[CharacterManager] Loaded {_characterMap.Count} character identities.");
             }
             else

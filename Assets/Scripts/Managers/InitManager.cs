@@ -70,6 +70,7 @@ public class InitManager : MonoBehaviour
         var orbManager = OrbManager.Instance;
         var barrelManager = BarrelManager.Instance;
         var skillManager = SkillManager.Instance;
+        var lobbyMapController = LobbyMapController.Instance;
 
         try
         {
@@ -87,6 +88,9 @@ public class InitManager : MonoBehaviour
 
             SetProgress(0.85f, "Loading skill data...");
             await skillManager.LoadAllSkillsAsync();
+
+            SetProgress(0.90f, "Loading lobby maps...");
+            await lobbyMapController.InitLobbyAsync();
 
             destroyCancellationToken.ThrowIfCancellationRequested();
         }
