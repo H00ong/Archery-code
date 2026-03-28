@@ -25,6 +25,7 @@ namespace Managers
 
         private readonly List<GameObject> _dummyMaps = new();
         private readonly List<AssetReferenceGameObject> _dummyRefs = new();
+        private readonly Dictionary<int, Color> _originalColors = new();
 
         private DataManager _dataManager;
         private MapManager _mapManager;
@@ -80,7 +81,7 @@ namespace Managers
             if (scene.name != "Lobby")
                 return;
 
-            SetDummyPoolActive();
+            SetDummyPoolActive(true);
             SetLobbyCamera();
         }
 
@@ -169,10 +170,21 @@ namespace Managers
             {
                 foreach (var mat in r.materials)
                 {
+                    int id = mat.GetInstanceID();
+
                     if (mat.HasProperty("_Color"))
-                        mat.color = lockedTint;
+                    {
+                        if (!_originalColors.ContainsKey(id))
+                            _originalColors[id] = mat.color;
+                        mat.color = _originalColors[id] * lockedTint;
+                    }
                     if (mat.HasProperty("_BaseColor"))
-                        mat.SetColor("_BaseColor", lockedTint);
+                    {
+                        int baseId = id + 1;
+                        if (!_originalColors.ContainsKey(baseId))
+                            _originalColors[baseId] = mat.GetColor("_BaseColor");
+                        mat.SetColor("_BaseColor", _originalColors[baseId] * lockedTint);
+                    }
                 }
             }
         }
@@ -184,10 +196,22 @@ namespace Managers
             {
                 foreach (var mat in r.materials)
                 {
+                    int id = mat.GetInstanceID();
+
                     if (mat.HasProperty("_Color"))
-                        mat.color = Color.white;
+                    {
+                        mat.color = _originalColors.TryGetValue(id, out var origColor)
+                            ? origColor
+                            : Color.white;
+                    }
                     if (mat.HasProperty("_BaseColor"))
-                        mat.SetColor("_BaseColor", Color.white);
+                    {
+                        int baseId = id + 1;
+                        mat.SetColor("_BaseColor",
+                            _originalColors.TryGetValue(baseId, out var origBase)
+                                ? origBase
+                                : Color.white);
+                    }
                 }
             }
         }
@@ -197,9 +221,9 @@ namespace Managers
             _nextMapIndex = MapManager.Instance.MaxMapIndex + 1;
         }
 
-        private void SetDummyPoolActive()
+        private void SetDummyPoolActive(bool active)
         {
-            _dummyMapPool?.gameObject.SetActive(true);
+            _dummyMapPool?.gameObject.SetActive(active);
         }
 
         private void OnNewMapCleared()
@@ -222,6 +246,8 @@ namespace Managers
             }
 
             _mapManager.SetCurrentMapIndex(index);
+            GameManager.Instance.ChangeScene(SceneState.InGame);
+            SetDummyPoolActive(false);
         }
     }
 }
