@@ -64,9 +64,9 @@ namespace Players
             EventBus.Publish(EventType.PlayerDied);
         }
 
-        public void TakeHeal(int healAmount, out bool valid)
+        public bool TryTakeHeal(int healAmount)
         {
-            playerHealth.TakeHeal(healAmount, out valid);
+            return playerHealth.TryTakeHeal(healAmount);
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -79,6 +79,7 @@ namespace Players
 
             if (!hitRoot.TryGetComponent<EnemyController>(out var enemy))
                 return;
+                
             float atk = enemy.GetAtk();
             var damageInfo = new DamageInfo(atk, EffectType.Normal, hitRoot);
             playerHealth.TakeDamage(damageInfo);

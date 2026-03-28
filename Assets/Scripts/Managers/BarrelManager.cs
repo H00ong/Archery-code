@@ -116,7 +116,7 @@ namespace Managers
             if (!GameManager.Instance.IsInGame)
                 return;
 
-            if (!StageManager.Instance.IsInCombat)
+            if (StageManager.Instance != null && !StageManager.Instance.IsInCombat)
                 return;
 
             foreach (var key in _barrelConfigDict.Keys)
