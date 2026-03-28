@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Stat;
 using UnityEngine;
 
-// TODO : Adapter 패턴 도입해서 effect 적용 방식 개선하기
 public interface IDamageable
 {
     void TakeDamage(DamageInfo damageInfo);
@@ -44,18 +43,22 @@ public class Health : MonoBehaviour, IDamageable
     // 방어 스탯 캐싱
     private BaseStat _stat;
 
+    // Strategy 패턴: 이펙트 핸들러 리스트
+    private readonly List<IEffectHandler> _effectHandlers = new()
+    {
+        new DotEffectHandler(EffectType.Fire),
+        new DotEffectHandler(EffectType.Poison),
+        new IceEffectHandler(),
+    };
+
     // 효과 상태 Dictionary
     private Dictionary<EffectType, EffectState> effectStates;
 
-
     private void InitializeEffectStates()
     {
-        effectStates = new Dictionary<EffectType, EffectState>
-        {
-            { EffectType.Fire, new() },
-            { EffectType.Poison, new() },
-            { EffectType.Ice, new() },
-        };
+        effectStates = new Dictionary<EffectType, EffectState>();
+        foreach (var handler in _effectHandlers)
+            effectStates[handler.Type] = new EffectState();
     }
     
     public void InitializeHealth(int maxHealth = 100)
@@ -79,13 +82,11 @@ public class Health : MonoBehaviour, IDamageable
         if (!isLive)
             return;
 
-        // 도트 효과 업데이트
-        foreach (var effectType in Utils.DotEffectTypes)
+        foreach (var handler in _effectHandlers)
         {
-            UpdateDotEffect(effectType);
+            if (effectStates.TryGetValue(handler.Type, out var state))
+                handler.Tick(state, Time.deltaTime, _stat, OnStatusChanged, ApplyDotDamage);
         }
-
-        UpdateIceEffect();
     }
 
     public void TakeDamage(DamageInfo damageInfo)
@@ -100,7 +101,7 @@ public class Health : MonoBehaviour, IDamageable
         currentHealth -= finalDamage;
 
         // 속성별 효과 적용
-        ApplyDamageEffect(damageInfo);
+        ApplyEffect(damageInfo);
 
         if (currentHealth > 0)
         {
@@ -113,127 +114,34 @@ public class Health : MonoBehaviour, IDamageable
         OnDie?.Invoke();
     }
 
-    public virtual void TakeHeal(int amount, out bool valid)
+    public virtual bool TryTakeHeal(int amount)
     {
         if (!isLive)
-            valid = false;
+            return false;
 
-        if (currentHealth < maxHealth)
-        {
-            currentHealth += amount;
+        if (currentHealth >= maxHealth)
+            return false;
 
-            if (currentHealth > maxHealth)
-                currentHealth = maxHealth;
+        currentHealth += amount;
 
-            valid = true;
-        }
+        if (currentHealth > maxHealth)
+            currentHealth = maxHealth;
 
-        valid = false;
+        return true;
     }
 
-    private void ApplyDamageEffect(DamageInfo damageInfo)
+    private void ApplyEffect(DamageInfo damageInfo)
     {
-        foreach (var effectType in Utils.DotEffectTypes)
+        foreach (var handler in _effectHandlers)
         {
-            if (Utils.HasEffectType(damageInfo.type, effectType))
-            {
-                ApplyDotEffect(damageInfo);
-            }
-        }
+            if (!Utils.HasEffectType(damageInfo.type, handler.Type))
+                continue;
 
-        if (Utils.HasEffectType(damageInfo.type, EffectType.Ice))
-        {
-            ApplyIceEffect(damageInfo);
+            if (effectStates.TryGetValue(handler.Type, out var state))
+                handler.Apply(state, damageInfo, _stat, OnStatusChanged);
         }
     }
 
-    #region Effect
-
-    private void ApplyDotEffect(DamageInfo damageInfo)
-    {
-        if (!effectStates.TryGetValue(damageInfo.type, out var state))
-            return;
-
-        if (!state.isActive)
-        {
-            state.isActive = true;
-            state.damageInfo = damageInfo;
-            OnStatusChanged?.Invoke(state.damageInfo, true);
-        }
-
-        state.timer = 0f;
-        state.tickTimer = 0f;
-        state.damageInfo = damageInfo;
-    }
-
-    private void UpdateDotEffect(EffectType type)
-    {
-        if (!effectStates.TryGetValue(type, out var state))
-            return;
-        if (!state.isActive)
-            return;
-
-        state.timer += Time.deltaTime;
-        state.tickTimer += Time.deltaTime;
-
-        var effectData = state.damageInfo.GetEffectData(type);
-        if (effectData == null) return;
-
-        if (state.tickTimer >= effectData.tickInterval)
-        {
-            state.tickTimer -= effectData.tickInterval;
-
-            // 마법 저항력으로 DOT 데미지 감소 (약한 공식: 50 / (50 + MR))
-            float dotDmg = ApplyMagicResistanceToDot(effectData.dotDamage);
-            ApplyDotDamage(dotDmg);
-        }
-
-        if (state.timer >= effectData.duration)
-        {
-            state.isActive = false;
-            OnStatusChanged?.Invoke(state.damageInfo, false);
-        }
-    }
-
-    // Ice 효과 적용
-    private void ApplyIceEffect(DamageInfo damageInfo)
-    {
-        if (!effectStates.TryGetValue(EffectType.Ice, out var state))
-            return;
-
-        if (!state.isActive)
-        {
-            // MR로 슬로우 효과 감소 적용한 DamageInfo 저장
-            state.isActive = true;
-            state.damageInfo = CreateMRReducedDamageInfo(damageInfo, EffectType.Ice);
-            OnStatusChanged?.Invoke(state.damageInfo, true);
-        }
-
-        state.timer = 0f;
-    }
-
-    // Ice 효과 업데이트
-    private void UpdateIceEffect()
-    {
-        if (!effectStates.TryGetValue(EffectType.Ice, out var state))
-            return;
-        if (!state.isActive)
-            return;
-
-        state.timer += Time.deltaTime;
-
-        var iceData = state.damageInfo.GetEffectData(EffectType.Ice);
-        
-        if (iceData == null) return;
-
-        if (state.timer >= iceData.duration)
-        {
-            state.isActive = false;
-            OnStatusChanged?.Invoke(state.damageInfo, false);
-        }
-    }
-
-    // 도트 데미지 적용 공통 함수
     private void ApplyDotDamage(float damage)
     {
         if (!isLive)
@@ -249,52 +157,4 @@ public class Health : MonoBehaviour, IDamageable
             return;
         }
     }
-    #endregion
-
-    #region Damage Reduction
-
-    /// <summary>
-    /// DamageInfo의 특정 EffectType에 대해 MR 감소를 적용한 복사본을 만든다.
-    /// Ice의 경우 effectValue(슬로우 비율)를 줄인다.
-    /// </summary>
-    private DamageInfo CreateMRReducedDamageInfo(DamageInfo original, EffectType effectType)
-    {
-        var copy = new DamageInfo(original.damageAmount, original.type, original.attackSource);
-        // 원본의 effectDataMap을 복사
-        foreach (var kvp in original.effectDataMap)
-            copy.effectDataMap[kvp.Key] = kvp.Value.Clone();
-
-        var data = copy.GetEffectData(effectType);
-        if (data != null)
-            data.value = ApplyMagicResistanceToEffect(data.value);
-
-        return copy;
-    }
-
-    /// <summary>
-    /// DOT 데미지에 마법 저항력 적용 (약한 공식).
-    /// reducedDot = dot * (50 / (50 + MR))
-    /// 일반 방어 공식(100 기준)보다 감소 폭이 작아 DOT가 지나치게 약해지지 않는다.
-    /// </summary>
-    private float ApplyMagicResistanceToDot(float dotDamage)
-    {
-        int mr = _stat != null ? _stat.MagicResistance : 0;
-        if (mr <= 0) return dotDamage;
-        return dotDamage * (50f / (50f + mr));
-    }
-
-    /// <summary>
-    /// Ice 슬로우 등 효과 수치에 마법 저항력 적용.
-    /// reducedValue = value * (80 / (80 + MR))
-    /// MR이 높아도 슬로우가 완전히 사라지지 않되 체감 가능하게 줄어든다.
-    /// 예) MR=20 → 0.3 슬로우 → 약 0.24 (≈20% 감소)
-    /// </summary>
-    private float ApplyMagicResistanceToEffect(float effectValue)
-    {
-        int mr = _stat != null ? _stat.MagicResistance : 0;
-        if (mr <= 0) return effectValue;
-        return effectValue * (80f / (80f + mr));
-    }
-
-    #endregion
 }
