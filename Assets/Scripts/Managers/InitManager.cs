@@ -29,7 +29,11 @@ public class InitManager : MonoBehaviour
 
     private void Update()
     {
-        if (IsLoaded && Input.GetKeyDown(KeyCode.Space))
+        bool canTransition = IsLoaded
+                             && Input.GetKeyDown(KeyCode.Space)
+                             && GameManager.Instance.CurrentState == SceneState.Loading;
+
+        if (canTransition)
         {
             Debug.Log("[InitManager] Space key pressed — Transitioning to Lobby scene.");
             GameManager.Instance.ChangeScene(SceneState.Lobby);
