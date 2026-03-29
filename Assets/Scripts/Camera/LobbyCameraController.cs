@@ -6,9 +6,14 @@ public class LobbyCameraController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private Vector3 cameraOffset = Vector3.zero;
 
+    [Header("Lock Icon")]
+    [SerializeField] private GameObject lockIcon;
+
     private float _yOffset;
     private int _maxReachableIndex;
     private int _totalMapCount;
+
+    private int _nextMapIndex;
 
     private int _currentStageIndex;
     private float _targetY;
@@ -24,6 +29,7 @@ public class LobbyCameraController : MonoBehaviour
         transform.position = initPos + cameraOffset;
         _totalMapCount = totalMapCount;
         _yOffset = yOffset;
+        _nextMapIndex = nextMapIndex;
 
         _maxReachableIndex = totalMapCount - 1;
         
@@ -62,6 +68,7 @@ public class LobbyCameraController : MonoBehaviour
         _currentStageIndex = Mathf.Clamp(_currentStageIndex, 0, _maxReachableIndex);
         _targetY = _baseY + (_currentStageIndex * _yOffset);
         _hasTarget = true;
+        UpdateLockIcon();
     }
 
     public void SetStage(int index)
@@ -74,6 +81,13 @@ public class LobbyCameraController : MonoBehaviour
         }
         
         _hasTarget = false;
+        UpdateLockIcon();
+    }
+
+    private void UpdateLockIcon()
+    {
+        if (lockIcon != null)
+            lockIcon.SetActive(_currentStageIndex > _nextMapIndex);
     }
 
     public int CurrentStageIndex => _currentStageIndex;
