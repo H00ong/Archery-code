@@ -20,8 +20,8 @@ namespace Managers
         [SerializeField] private float yOffset = 30f;
         [SerializeField] private Transform mapParent;
 
-        [Header("Locked Color Tint")]
-        [SerializeField] private Color lockedTint = new Color(0.35f, 0.35f, 0.35f, 1f);
+        [Header("Locked Visual")]
+        [SerializeField, Range(0f, 1f)] private float lockedAlpha = 0.3f;
 
         private readonly List<GameObject> _dummyMaps = new();
         private readonly List<AssetReferenceGameObject> _dummyRefs = new();
@@ -176,14 +176,16 @@ namespace Managers
                     {
                         if (!_originalColors.ContainsKey(id))
                             _originalColors[id] = mat.color;
-                        mat.color = _originalColors[id] * lockedTint;
+                        var c = _originalColors[id];
+                        mat.color = new Color(c.r, c.g, c.b, lockedAlpha);
                     }
                     if (mat.HasProperty("_BaseColor"))
                     {
                         int baseId = id + 1;
                         if (!_originalColors.ContainsKey(baseId))
                             _originalColors[baseId] = mat.GetColor("_BaseColor");
-                        mat.SetColor("_BaseColor", _originalColors[baseId] * lockedTint);
+                        var c = _originalColors[baseId];
+                        mat.SetColor("_BaseColor", new Color(c.r, c.g, c.b, lockedAlpha));
                     }
                 }
             }
