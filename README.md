@@ -1,4 +1,4 @@
-# Archery
+# 🏹 Archery
 
 > **궁수의 전설 2** 모티브 로그라이크 아처 서바이벌 게임
 
@@ -7,41 +7,41 @@ Unity 6 (6000.0.62f1) 기반의 탑다운 슈터 로그라이크 게임.
 
 ---
 
-## 목차
+## 📑 목차
 
-- [기술 스택](#기술-스택)
-- [프로젝트 구조](#프로젝트-구조)
-- [아키텍처 개요](#아키텍처-개요)
-  - [레이어 구조](#레이어-구조)
-  - [매니저 시스템](#매니저-시스템)
-  - [EventBus](#eventbus)
-  - [MVP UI 패턴](#mvp-ui-패턴)
-  - [오브젝트 풀링 & Addressables](#오브젝트-풀링--addressables)
-  - [3계층 스탯 시스템](#3계층-스탯-시스템)
-  - [플레이어 모듈 시스템](#플레이어-모듈-시스템)
-  - [적 행동 시스템](#적-행동-시스템)
-  - [이펙트 시스템](#이펙트-시스템)
-- [게임 흐름](#게임-흐름)
-- [데이터 파이프라인](#데이터-파이프라인)
-- [사용 디자인 패턴 정리](#사용-디자인-패턴-정리)
+- [기술 스택](#-기술-스택)
+- [프로젝트 구조](#-프로젝트-구조)
+- [아키텍처 개요](#-아키텍처-개요)
+  - [레이어 구조](#-레이어-구조)
+  - [매니저 시스템](#-매니저-시스템)
+  - [EventBus](#-eventbus)
+  - [MVP UI 패턴](#-mvp-ui-패턴)
+  - [오브젝트 풀링 & Addressables](#-오브젝트-풀링--addressables)
+  - [3계층 스탯 시스템](#-3계층-스탯-시스템)
+  - [플레이어 모듈 시스템](#-플레이어-모듈-시스템)
+  - [적 행동 시스템](#-적-행동-시스템)
+  - [이펙트 시스템](#-이펙트-시스템)
+- [게임 흐름](#-게임-흐름)
+- [데이터 파이프라인](#-데이터-파이프라인)
+- [사용 디자인 패턴 정리](#-사용-디자인-패턴-정리)
 
 ---
 
-## 기술 스택
+## 🛠 기술 스택
 
 | 영역 | 기술 |
 |------|------|
-| 엔진 | Unity 6 (6000.0.62f1) |
-| 언어 | C# |
-| 비동기 | Unity `Awaitable` async/await |
-| 에셋 관리 | Unity Addressables (라벨 기반 로딩) |
-| JSON 파싱 | Newtonsoft.Json |
-| 입력 | Unity New Input System |
-| UI 텍스트 | TextMesh Pro |
+| 🎮 엔진 | Unity 6 (6000.0.62f1) |
+| 💻 언어 | C# |
+| ⚡ 비동기 | Unity `Awaitable` async/await |
+| 📦 에셋 관리 | Unity Addressables (라벨 기반 로딩) |
+| 📄 JSON 파싱 | Newtonsoft.Json |
+| 🕹️ 입력 | Unity New Input System |
+| ✏️ UI 텍스트 | TextMesh Pro |
 
 ---
 
-## 프로젝트 구조
+## 📂 프로젝트 구조
 
 ```
 Assets/Scripts/
@@ -74,9 +74,9 @@ Assets/Scriptable Data/       # ScriptableObject 에셋
 
 ---
 
-## 아키텍처 개요
+## 🏗 아키텍처 개요
 
-### 레이어 구조
+### 🧱 레이어 구조
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -99,7 +99,7 @@ Assets/Scriptable Data/       # ScriptableObject 에셋
 └──────────────────────────────────────────────────────────┘
 ```
 
-### 매니저 시스템
+### ⚙️ 매니저 시스템
 
 모든 매니저는 **싱글턴 + DontDestroyOnLoad** 패턴을 사용하며, `InitManager`가 2단계 비동기 파이프라인으로 순차 초기화한다.
 
@@ -137,7 +137,7 @@ InitManager
 | `SoundManager` | 오디오 관리 (미구현) |
 | `SaveManager` | 세이브/로드 (미구현) |
 
-### EventBus
+### 📡 EventBus
 
 **우선순위 기반 Pub/Sub** 이벤트 시스템. 매니저 간 결합도를 낮추는 핵심 인프라.
 
@@ -163,7 +163,7 @@ EventBus.Publish(EventType.LevelUp);
 | `AllEnemiesDefeated` | EnemyManager | StageManager |
 | `PlayerDied` | Health | UIManager(게임오버 팝업) |
 
-### MVP UI 패턴
+### 🖼 MVP UI 패턴
 
 UI는 **View(MonoBehaviour)** + **Presenter(Plain C#)** 로 분리.  
 Presenter는 `UIManager`가 소유하고, View는 Canvas 하위 컴포넌트로 존재.
@@ -190,7 +190,7 @@ SettingPopup
        └─ Name Text      (캐릭터 이름)
 ```
 
-### 오브젝트 풀링 & Addressables
+### ♻️ 오브젝트 풀링 & Addressables
 
 모든 런타임 프리팹(적, 투사체, 이펙트, 맵)은 **PoolManager**를 통해 관리.
 
@@ -212,7 +212,7 @@ PoolManager
 - `barrel_config` / `orb_config` — 스킬 설정
 - `map_config` — 맵 ScriptableObject
 
-### 3계층 스탯 시스템
+### 📊 3계층 스탯 시스템
 
 ```
 Total = Base + Equipment + InGameBuff
@@ -227,7 +227,7 @@ Total = Base + Equipment + InGameBuff
 - **Equipment**: 장착 장비에 의한 영구 보너스
 - **InGameBuff**: 스킬 선택 등에 의한 인게임 한정 버프
 
-### 플레이어 모듈 시스템
+### 🧩 플레이어 모듈 시스템
 
 `PlayerController`가 독립 모듈을 조합하여 동작.
 
@@ -249,7 +249,7 @@ PlayerController (Orchestrator)
 
 각 스킬은 `ISkillModule` 인터페이스를 구현하며, `SkillManager`의 정의 데이터를 기반으로 동적 적용.
 
-### 적 행동 시스템
+### 👾 적 행동 시스템
 
 적은 **상태 머신 + Behavior Module** 구조로 동작.  
 `EnemyBehaviorFactory`가 `EnemyTag`에 따라 적절한 행동 모듈을 생성.
@@ -268,7 +268,7 @@ EnemyController (State Machine)
 
 **EnemyTag (비트 플래그):** Boss, Melee, Ranged, Flying 등 조합 가능.
 
-### 이펙트 시스템
+### 🔥 이펙트 시스템
 
 **Strategy 패턴**으로 상태이상 처리.
 
@@ -285,7 +285,7 @@ IEffectHandler
 
 ---
 
-## 게임 흐름
+## 🎯 게임 흐름
 
 ```
 Loading Scene
@@ -324,7 +324,7 @@ InGame Scene
 
 ---
 
-## 데이터 파이프라인
+## 💾 데이터 파이프라인
 
 ```
 JSON Files (Resources/Data/)
@@ -351,7 +351,7 @@ Addressables.LoadAssetsAsync<T>(label)
 
 ---
 
-## 사용 디자인 패턴 정리
+## 🧬 사용 디자인 패턴 정리
 
 | 패턴 | 적용 위치 | 설명 |
 |------|-----------|------|
@@ -367,6 +367,6 @@ Addressables.LoadAssetsAsync<T>(label)
 
 ---
 
-## 라이선스
+## 📜 라이선스
 
 이 저장소는 개인 프로젝트입니다.
