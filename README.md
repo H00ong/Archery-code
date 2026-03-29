@@ -9,11 +9,11 @@ Unity 6 (6000.0.62f1) 기반의 탑다운 슈터 로그라이크 게임.
 
 ## 🎬 플레이 영상
 
-<video src="Recordings/Movie_005.mp4" controls width="100%"></video>
+<video src="https://github.com/H00ong/Archery/releases/download/v0.1.0/Movie_005.mp4" controls width="100%"></video>
 
 ---
 
-## �🎯 프로젝트 목표
+## 🎯 프로젝트 목표
 
 | 구분 | 목표 |
 |------|------|
