@@ -53,16 +53,15 @@ namespace Managers
                 if (!json)
                     throw new InvalidOperationException("Resources/Data/enemyData.json not found");
 
-                string text = json.text.TrimStart();
-                string wrapped = text.StartsWith("[") ? "{\"enemies\":" + json.text + "}" : json.text;
+                string text = json.text;
 
-                EnemyDataWrapper wrapper = JsonConvert.DeserializeObject<EnemyDataWrapper>(wrapped);
-                if (wrapper == null || wrapper.enemies == null || wrapper.enemies.Count == 0)
+                var enemies = JsonConvert.DeserializeObject<List<EnemyData>>(text);
+                if (enemies == null || enemies.Count == 0)
                     throw new InvalidOperationException("EnemyData parse failed or empty");
 
                 enemyDataDict = new Dictionary<EnemyKey, EnemyData>();
 
-                foreach (var enemyData in wrapper.enemies)
+                foreach (var enemyData in enemies)
                 {
                     enemyData.enemyTags ??= new List<EnemyTag>();
 
@@ -114,11 +113,11 @@ namespace Managers
                 if (!jsonFile)
                     throw new InvalidOperationException("Map data file not found at Resources/Data/mapData.json");
 
-                MapDataWrapper wrapper = JsonConvert.DeserializeObject<MapDataWrapper>(jsonFile.text);
-                if (wrapper == null || wrapper.maps == null || wrapper.maps.Count == 0)
+                var maps = JsonConvert.DeserializeObject<List<MapData>>(jsonFile.text);
+                if (maps == null || maps.Count == 0)
                     throw new InvalidOperationException("MapData parse failed or empty");
 
-                mapDataList = wrapper.maps;
+                mapDataList = maps;
 
                 Debug.Log($"Loaded {mapDataList.Count} maps.");
             }

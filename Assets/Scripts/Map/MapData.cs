@@ -16,12 +16,6 @@ public class EffectConfig
 namespace Map
 {
     [System.Serializable]
-    public class MapDataWrapper
-    {
-        public List<MapData> maps;
-    }
-
-    [System.Serializable]
     public class MapData
     {
         public string mapId;

@@ -42,9 +42,4 @@ namespace Enemy
         public FlyingShootingData flyingShooter;
     }
 
-    [System.Serializable]
-    public class EnemyDataWrapper
-    {
-        public List<EnemyData> enemies;
-    }
 }
