@@ -7,7 +7,13 @@ Unity 6 (6000.0.62f1) 기반의 탑다운 슈터 로그라이크 게임.
 
 ---
 
-## 🎯 프로젝트 목표
+## 🎬 플레이 영상
+
+<video src="Recordings/Movie_005.mp4" controls width="100%"></video>
+
+---
+
+## �🎯 프로젝트 목표
 
 | 구분 | 목표 |
 |------|------|
@@ -378,4 +384,4 @@ Addressables.LoadAssetsAsync<T>(label)
 
 ## 📜 라이선스
 
-이 저장소는 개인 프로젝트입니다.
+이 프로젝트는 [MIT License](LICENSE)로 배포됩니다.
