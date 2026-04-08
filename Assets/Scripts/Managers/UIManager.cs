@@ -26,8 +26,9 @@ namespace Managers
         [SerializeField] private UI_StageTransition stageTransition;
 
         private MapClearPopupPresenter _gameClearPresenter;
-         private GameOverPopupPresenter _gameOverPresenter; 
+        private GameOverPopupPresenter _gameOverPresenter;
         private SkillChoicePopupPresenter _skillChoicePresenter;
+        private SettingPopupPresenter _characterSettingPresenter;
 
         private void Awake()
         {
@@ -45,6 +46,7 @@ namespace Managers
 
         void OnEnable()
         {
+            EventBus.Subscribe(EventType.LobbySceneLoaded, SetupCharacterSetting);
             EventBus.Subscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Subscribe(EventType.Retry, ClearDataInMap);
             EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -54,6 +56,7 @@ namespace Managers
 
         void OnDisable()
         {
+            EventBus.Unsubscribe(EventType.LobbySceneLoaded, SetupCharacterSetting);
             EventBus.Unsubscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Unsubscribe(EventType.Retry, ClearDataInMap);
             EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -123,6 +126,39 @@ namespace Managers
                 await stageTransition.FadeInAsync(stageLabel);
 
             stageTransition.gameObject.SetActive(false);
+        }
+
+        public void SetupCharacterSetting()
+        {
+            var lobbyCanvas = FindFirstObjectByType<LobbyCanvas>();
+            if (lobbyCanvas == null)
+                return;
+
+            var popup = lobbyCanvas.CharacterSettingPopup;
+            var camera = lobbyCanvas.LobbyCharacterCamera;
+            if (popup == null || camera == null)
+                return;
+
+            _characterSettingPresenter = new SettingPopupPresenter(popup, camera);
+
+            var openBtn = lobbyCanvas.OpenSettingsButton;
+            if (openBtn != null)
+                openBtn.onClick.AddListener(() => _characterSettingPresenter.Show());
+
+            var lobbyCameraController = FindAnyObjectByType<LobbyCameraController>();
+            if (lobbyCameraController != null)
+            {
+                _characterSettingPresenter.OnPopupToggled += isOpen =>
+                {
+                    lobbyCameraController.MapSelectInputBlocked = isOpen;
+                    openBtn.gameObject.SetActive(!isOpen);
+                };
+            }
+        }
+
+        public void ClearDataInLobby()
+        {
+            _characterSettingPresenter = null;
         }
     }
 }

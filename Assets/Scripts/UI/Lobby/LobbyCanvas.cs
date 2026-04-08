@@ -1,16 +1,15 @@
+using UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class LobbyCanvas : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Character Setting")]
+    [SerializeField] private SettingPopup settingPopup;
+    [SerializeField] private LobbyCharacterCamera lobbyCharacterCamera;
+    [SerializeField] private Button openSettingsButton;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    public SettingPopup CharacterSettingPopup => settingPopup;
+    public LobbyCharacterCamera LobbyCharacterCamera => lobbyCharacterCamera;
+    public Button OpenSettingsButton => openSettingsButton;
 }

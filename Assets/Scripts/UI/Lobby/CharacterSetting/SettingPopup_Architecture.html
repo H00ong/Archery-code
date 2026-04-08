@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Settings Popup - MVP Architecture</title>
+    <style>
+        @media print {
+            body {
+                margin: 0;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            color: #222;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid #333;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #1a5276;
+            margin-top: 36px;
+            border-left: 4px solid #1a5276;
+            padding-left: 10px;
+        }
+
+        h3 {
+            color: #2e86c1;
+            margin-top: 24px;
+        }
+
+        pre {
+            background: #f4f4f4;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        code {
+            font-family: 'Consolas', monospace;
+        }
+
+        .role {
+            display: inline-block;
+            background: #eaf2f8;
+            color: #1a5276;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .view {
+            background: #d5f5e3;
+            color: #196f3d;
+        }
+
+        .presenter {
+            background: #fdebd0;
+            color: #b9770e;
+        }
+
+        .model {
+            background: #fadbd8;
+            color: #922b21;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #bbb;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #2e86c1;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .diagram {
+            background: #fafafa;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .note {
+            background: #fff9c4;
+            border-left: 4px solid #f9a825;
+            padding: 10px 14px;
+            margin: 16px 0;
+            font-size: 13px;
+        }
+
+        .section-divider {
+            border: 0;
+            border-top: 2px dashed #ccc;
+            margin: 40px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Settings Popup — MVP 아키텍처 레퍼런스</h1>
+    <p style="text-align:center; color:#666;">Archery Project &middot; 2026.03.29</p>
+
+    <!-- ──────────────────────────────────── -->
+    <h2>1. 전체 구조 다이어그램</h2>
+
+    <div class="diagram">
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ <strong>로비 씬 (Lobby Scene)</strong> │
+        │ │
+        │ ┌──────────────────────┐ ┌───────────────────────┐ │
+        │ │ <strong>LobbyCanvas</strong> │ │ <strong>LobbyCameraController</strong> │ │
+        │ │ (MonoBehaviour) │ │ InputBlocked 프로퍼티 │ │
+        │ │ │ └───────────┬───────────┘ │
+        │ │ SerializeField: │ │ │
+        │ │ - SettingPopup │ OnPopupToggled(true/false) │
+        │ │ - LobbyCharacterCamera│ │ │
+        │ │ - Button (열기) │ │ │
+        │ └──────┬───────┬────────┘ │ │
+        │ │ │ │ │
+        │ getter getter │ │
+        │ │ │ │ │
+        │ ┌──────▼───────▼──────────────────────────▼──────────────────┐ │
+        │ │ <strong>UIManager</strong> (DontDestroyOnLoad) │ │
+        │ │ │ │
+        │ │ EventBus.Subscribe(LobbySceneLoaded, SetupCharacterSetting)│ │
+        │ │ │ │
+        │ │ SetupCharacterSetting(): │ │
+        │ │ 1. LobbyCanvas에서 View/Camera 가져오기 │ │
+        │ │ 2. new SettingPopupPresenter(popup, camera) │ │
+        │ │ 3. openBtn.onClick → presenter.Show() │ │
+        │ │ 4. OnPopupToggled → LobbyCameraController.InputBlocked │ │
+        │ └────────────────────────────────────────────────────────────┘ │
+        └─────────────────────────────────────────────────────────────────┘
+
+        ▼ Presenter 내부 구조 ▼
+
+        ┌─────────────────────────────────────────────────────────────────┐
+        │ <strong>SettingPopupPresenter</strong> (Presenter) │
+        │ │
+        │ ┌──────────────────────┐ ┌───────────────────────────────┐ │
+        │ │ <strong>SettingPopup</strong> │ │ <strong>CharacterTabPresenter</strong> │ │
+        │ │ (View · MonoBehaviour)│ │ (Presenter · 순수 C# 클래스) │ │
+        │ │ │ │ │ │
+        │ │ tabButtons[] │ │ ┌─────────────────────────┐ │ │
+        │ │ tabContents[] │ │ │ <strong>UI_CharacterTabView</strong> │ │ │
+        │ │ │ │ │ (View · MonoBehaviour) │ │ │
+        │ │ Open() / Close() │ │ │ │ │ │
+        │ │ SwitchTab(index) │ │ │ RawImage (3D 프리뷰) │ │ │
+        │ │ Init(onTab, onClose) │ │ │ ◀ / ▶ 버튼 │ │ │
+        │ │ ESC → _onClose() │ │ │ 선택 버튼 │ │ │
+        │ │ │ │ │ 잠금 아이콘 │ │ │
+        │ │ GetCharacterTabView() │ │ │ 캐릭터 이름 텍스트 │ │ │
+        │ └──────────────────────┘ │ └────────────┬────────────┘ │ │
+        │ │ │ │ │
+        │ │ ┌──────────▼──────────┐ │ │
+        │ │ │ <strong>LobbyCharacterManager</strong>│ │ │
+        │ │ │ (Model · Singleton) │ │ │
+        │ │ │ │ │ │
+        │ │ │ 3D 더미 캐릭터 관리 │ │ │
+        │ │ │ Show() / Hide() │ │ │
+        │ │ │ ChangeCharacter(±1) │ │ │
+        │ │ │ SelectCurrent() │ │ │
+        │ │ │ IsCurrentCharLocked()│ │ │
+        │ │ └─────────────────────┘ │ │
+        │ │ │ │
+        │ │ ┌─────────────────────┐ │ │
+        │ │ │ <strong>LobbyCharacterCamera</strong>│ │ │
+        │ │ │ (RenderTexture 전용) │ │ │
+        │ │ │ │ │ │
+        │ │ │ GetOrCreateRT() │ │ │
+        │ │ │ SetupPosition() │ │ │
+        │ │ │ Enable/Disable() │ │ │
+        │ │ └─────────────────────┘ │ │
+        │ └───────────────────────────────┘ │
+        └─────────────────────────────────────────────────────────────────┘
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- ──────────────────────────────────── -->
+    <h2>2. 파일별 역할 요약</h2>
+
+    <table>
+        <tr>
+            <th>파일</th>
+            <th>역할</th>
+            <th>타입</th>
+            <th>핵심 멤버</th>
+        </tr>
+        <tr>
+            <td><strong>LobbyCanvas.cs</strong></td>
+            <td>SerializeField를 보관하고 public getter로 노출만 함</td>
+            <td><span class="role view">View (Wiring)</span></td>
+            <td>CharacterSettingPopup, LobbyCharacterCamera, OpenSettingsButton</td>
+        </tr>
+        <tr>
+            <td><strong>UIManager.cs</strong></td>
+            <td>LobbySceneLoaded 이벤트 시 Presenter 생성 + 버튼/입력차단 연결</td>
+            <td><span class="role">Manager</span></td>
+            <td>SetupCharacterSetting(), _settingPresenter</td>
+        </tr>
+        <tr>
+            <td><strong>SettingPopup.cs</strong></td>
+            <td>팝업 전체 View — 탭 버튼/컨텐츠 전환, Open/Close, ESC 닫기</td>
+            <td><span class="role view">View</span></td>
+            <td>tabButtons[], tabContents[], SwitchTab(), GetCharacterTabView()</td>
+        </tr>
+        <tr>
+            <td><strong>SettingPopupPresenter.cs</strong></td>
+            <td>팝업 Presenter — 탭 전환 로직, 각 탭 Presenter 생성/활성화</td>
+            <td><span class="role presenter">Presenter</span></td>
+            <td>Show(), Hide(), OnTabSelected(), OnPopupToggled 이벤트</td>
+        </tr>
+        <tr>
+            <td><strong>UI_CharacterTabView.cs</strong></td>
+            <td>캐릭터 탭 View — RawImage, 좌/우/선택 버튼, 잠금 아이콘, 이름</td>
+            <td><span class="role view">View</span></td>
+            <td>Init(), SetRenderTexture(), SetCharacterName(), SetLockIconActive()</td>
+        </tr>
+        <tr>
+            <td><strong>CharacterTabPresenter.cs</strong></td>
+            <td>캐릭터 탭 Presenter — 전환/선택/잠금 로직, View 갱신</td>
+            <td><span class="role presenter">Presenter</span></td>
+            <td>Activate(), Deactivate(), OnLeft(), OnRight(), OnSelect(), UpdateView()</td>
+        </tr>
+        <tr>
+            <td><strong>LobbyCharacterManager.cs</strong></td>
+            <td>3D 더미 캐릭터 데이터 — 풀링, 활성화, 전환, 잠금 비주얼</td>
+            <td><span class="role model">Model</span></td>
+            <td>Show(), Hide(), ChangeCharacter(), SelectCurrent(), IsCurrentCharacterLocked()</td>
+        </tr>
+        <tr>
+            <td><strong>LobbyCharacterCamera.cs</strong></td>
+            <td>RenderTexture 카메라 전용 — UI/입력 로직 없음</td>
+            <td><span class="role model">Infrastructure</span></td>
+            <td>GetOrCreateRenderTexture(), SetupPosition(), EnableCamera(), DisableCamera()</td>
+        </tr>
+    </table>
+
+    <hr class="section-divider">
+
+    <!-- ──────────────────────────────────── -->
+    <h2>3. 실행 흐름 (시퀀스)</h2>
+
+    <h3>3-1. 팝업 열기</h3>
+    <pre>
+사용자 클릭: [Settings 버튼]
+  │
+  ▼
+UIManager: openBtn.onClick → SettingPopupPresenter.Show()
+  │
+  ├─ _currentTab = 0 (캐릭터 탭)
+  ├─ SettingPopup.SwitchTab(0)          ← tabContents[0]만 활성화
+  ├─ SettingPopup.Open()                ← gameObject.SetActive(true)
+  ├─ CharacterTabPresenter.Activate()
+  │    ├─ LobbyCharacterCamera.GetOrCreateRenderTexture()
+  │    ├─ UI_CharacterTabView.SetRenderTexture(rt)
+  │    ├─ LobbyCharacterCamera.SetupPosition(dummyPosition)
+  │    ├─ LobbyCharacterCamera.EnableCamera()
+  │    ├─ LobbyCharacterManager.Show()  ← 3D 더미 활성화
+  │    └─ UpdateView()                  ← 이름, 잠금 상태 반영
+  │
+  └─ OnPopupToggled(true) → LobbyCameraController.InputBlocked = true
+</pre>
+
+    <h3>3-2. 캐릭터 전환 (◀ / ▶)</h3>
+    <pre>
+사용자 클릭: [◀ 버튼]
+  │
+  ▼
+UI_CharacterTabView → onLeft 콜백
+  │
+  ▼
+CharacterTabPresenter.OnLeft()
+  ├─ LobbyCharacterManager.ChangeCharacter(-1)
+  │    ├─ 이전 더미 SetActive(false)
+  │    ├─ 새 더미 SetActive(true)
+  │    └─ ApplyVisual() ← 잠금이면 alpha 0.3
+  │
+  └─ UpdateView()
+       ├─ SetCharacterName("궁수")
+       ├─ SetLockIconActive(false)
+       └─ SetSelectButtonInteractable(true)
+</pre>
+
+    <h3>3-3. 캐릭터 선택</h3>
+    <pre>
+사용자 클릭: [선택 버튼]
+  │
+  ▼
+CharacterTabPresenter.OnSelect()
+  ├─ IsCurrentCharacterLocked()? → true면 return (잠긴 캐릭터 선택 불가)
+  ├─ LobbyCharacterManager.SelectCurrent()
+  │    └─ CharacterManager.SyncCharacterIdentity(name)
+  └─ UpdateView()
+</pre>
+
+    <h3>3-4. 팝업 닫기</h3>
+    <pre>
+사용자: ESC 키 또는 닫기
+  │
+  ▼
+SettingPopup.Update() → _onClose()
+  │
+  ▼
+SettingPopupPresenter.Hide()
+  ├─ CharacterTabPresenter.Deactivate()
+  │    ├─ LobbyCharacterCamera.DisableCamera()
+  │    └─ LobbyCharacterManager.Hide()  ← 3D 더미 비활성화
+  ├─ SettingPopup.Close()               ← gameObject.SetActive(false)
+  └─ OnPopupToggled(false) → LobbyCameraController.InputBlocked = false
+</pre>
+
+    <hr class="section-divider">
+
+    <!-- ──────────────────────────────────── -->
+    <h2>4. 탭 구조</h2>
+    <pre>
+SettingPopup
+├─ tabButtons[0] "캐릭터"  ──→  tabContents[0] = UI_CharacterTabView  ✅ 구현됨
+├─ tabButtons[1] "장비"    ──→  tabContents[1] = (미구현 패널)
+└─ tabButtons[2] "룬"      ──→  tabContents[2] = (미구현 패널)
+
+SwitchTab(index):
+  tabContents 전체 SetActive(false) → tabContents[index]만 SetActive(true)
+</pre>
+
+    <hr class="section-divider">
+
+    <!-- ──────────────────────────────────── -->
+    <h2>5. 씬 이벤트 흐름 (EventBus)</h2>
+    <pre>
+GameManager (유일한 SceneManager.sceneLoaded 구독자)
+  │
+  ├─ "Lobby" 씬 로드 → EventBus.Publish(<strong>LobbySceneLoaded</strong>)
+  │    ├─ UIManager         → SetupCharacterSetting()
+  │    ├─ LobbyMapManager   → SetDummyPoolActive(true) + SetLobbyCamera()
+  │    └─ LobbyCharacterManager → SetDummyPoolActive(false)
+  │
+  └─ "InGame" 씬 로드 → EventBus.Publish(<strong>InGameSceneLoaded</strong>)
+       └─ (추후 확장)
+</pre>
+
+    <hr class="section-divider">
+
+    <!-- ──────────────────────────────────── -->
+    <h2>6. Unity Editor 세팅 체크리스트</h2>
+    <table>
+        <tr>
+            <th>오브젝트</th>
+            <th>컴포넌트</th>
+            <th>할당할 필드</th>
+        </tr>
+        <tr>
+            <td>LobbyCanvas</td>
+            <td>LobbyCanvas</td>
+            <td>SettingPopup, LobbyCharacterCamera, OpenSettingsButton</td>
+        </tr>
+        <tr>
+            <td>SettingPopup (팝업 루트)</td>
+            <td>SettingPopup</td>
+            <td>tabButtons[3], tabContents[3]</td>
+        </tr>
+        <tr>
+            <td>tabContents[0] (캐릭터탭)</td>
+            <td>UI_CharacterTabView</td>
+            <td>characterDisplay(RawImage), leftButton, rightButton, selectButton, lockIcon, characterNameText</td>
+        </tr>
+        <tr>
+            <td>CharacterCamera</td>
+            <td>LobbyCharacterCamera</td>
+            <td>characterCamera(Camera), cameraOffset</td>
+        </tr>
+        <tr>
+            <td>LobbyCharacterManager</td>
+            <td>LobbyCharacterManager</td>
+            <td>dummyPosition, lockedAlpha</td>
+        </tr>
+    </table>
+
+    <div class="note">
+        <strong>PDF로 저장:</strong> 브라우저에서 이 파일을 열고 <code>Ctrl + P</code> → 대상: "PDF로 저장" 선택
+    </div>
+
+</body>
+
+</html>
