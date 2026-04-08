@@ -3,7 +3,6 @@ using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.SceneManagement;
 
 namespace Managers
 {
@@ -12,9 +11,9 @@ namespace Managers
     /// InGame 전환 시 전부 ReturnPool한다.
     /// 궁수의 전설2 스타일: 모든 맵을 보여주되, 잠긴 맵은 회색으로 표시.
     /// </summary>
-    public class LobbyMapController : MonoBehaviour
+    public class LobbyMapManager : MonoBehaviour
     {
-        public static LobbyMapController Instance { get; private set; }
+        public static LobbyMapManager Instance { get; private set; }
 
         [Header("Map Placement Settings")]
         [SerializeField] private float yOffset = 30f;
@@ -55,13 +54,13 @@ namespace Managers
 
         private void OnEnable()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            EventBus.Subscribe(EventType.LobbySceneLoaded, OnLobbySceneLoaded);
             EventBus.Subscribe(EventType.MapCleared, OnNewMapCleared, 1);
         }
 
         private void OnDisable()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            EventBus.Unsubscribe(EventType.LobbySceneLoaded, OnLobbySceneLoaded);
             EventBus.Unsubscribe(EventType.MapCleared, OnNewMapCleared);
         }
 
@@ -73,12 +72,9 @@ namespace Managers
             }
         }
 
-        private async void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        private void OnLobbySceneLoaded()
         {
             if (!_initialized)
-                return;
-
-            if (scene.name != "Lobby")
                 return;
 
             SetDummyPoolActive(true);

@@ -22,6 +22,8 @@ public class LobbyCameraController : MonoBehaviour
 
     private Vector3 originalPosition;
 
+    public bool MapSelectInputBlocked { get; set; }
+
     public void Setup(int totalMapCount, float yOffset, int nextMapIndex, Vector3 initPos)
     {
         originalPosition = initPos;
@@ -39,7 +41,7 @@ public class LobbyCameraController : MonoBehaviour
 
     void Update()
     {
-        if (_totalMapCount <= 0) return;
+        if (_totalMapCount <= 0 || MapSelectInputBlocked) return;
 
         if (Input.GetKeyDown(KeyCode.UpArrow))
             ChangeStage(1);
