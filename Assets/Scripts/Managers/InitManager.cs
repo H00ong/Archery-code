@@ -74,7 +74,8 @@ public class InitManager : MonoBehaviour
         var orbManager = OrbManager.Instance;
         var barrelManager = BarrelManager.Instance;
         var skillManager = SkillManager.Instance;
-        var lobbyMapController = LobbyMapController.Instance;
+        var lobbyMapManager = LobbyMapManager.Instance;
+        var lobbyCharacterManager = LobbyCharacterManager.Instance;
 
         try
         {
@@ -94,7 +95,10 @@ public class InitManager : MonoBehaviour
             await skillManager.LoadAllSkillsAsync();
 
             SetProgress(0.90f, "Loading lobby maps...");
-            await lobbyMapController.InitLobbyAsync();
+            await lobbyMapManager.InitLobbyAsync();
+
+            SetProgress(0.95f, "Loading lobby characters...");
+            await lobbyCharacterManager.InitLobbyAsync();
 
             destroyCancellationToken.ThrowIfCancellationRequested();
         }
@@ -110,7 +114,7 @@ public class InitManager : MonoBehaviour
             return;
         }
 
-        SetProgress(0.95f, "Initializing player...");
+        SetProgress(0.99f, "Initializing player...");
         Debug.Log("[InitManager] Phase 2 complete — All Addressables loaded.");
 
         PlayerManager.Instance.InitializePlayerData();

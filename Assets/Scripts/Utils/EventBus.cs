@@ -45,4 +45,6 @@ public enum EventType
     Retry,
     TransitionToLobby,
     AllCollectiblesCollected,
+    LobbySceneLoaded,
+    InGameSceneLoaded,
 }

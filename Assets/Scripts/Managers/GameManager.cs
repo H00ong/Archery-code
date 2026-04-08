@@ -44,6 +44,7 @@ namespace Managers
 
         private void OnEnable()
         {
+            SceneManager.sceneLoaded += OnSceneLoaded;
             EventBus.Subscribe(EventType.LevelUp, PauseGame);
             EventBus.Subscribe(EventType.SkillChosen, ResumeGame);
             EventBus.Subscribe(EventType.MapCleared, PauseGame);
@@ -54,12 +55,21 @@ namespace Managers
 
         private void OnDisable()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             EventBus.Unsubscribe(EventType.LevelUp, PauseGame);
             EventBus.Unsubscribe(EventType.SkillChosen, ResumeGame);
             EventBus.Unsubscribe(EventType.MapCleared, PauseGame);
             EventBus.Unsubscribe(EventType.TransitionToLobby, OnTransitionToLobby);
             EventBus.Unsubscribe(EventType.PlayerDied, PauseGame);
             EventBus.Unsubscribe(EventType.Retry, OnRetry);
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == "Lobby")
+                EventBus.Publish(EventType.LobbySceneLoaded);
+            else if (scene.name == "InGame")
+                EventBus.Publish(EventType.InGameSceneLoaded);
         }
 
         private void CreateDict()

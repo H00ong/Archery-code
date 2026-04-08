@@ -21,6 +21,7 @@ namespace Managers
         private Transform _playerContainer;
 
         private readonly Dictionary<string, CharacterIdentity> _characterMap = new();
+        private readonly HashSet<string> _unlockedCharacters = new();
         public Transform PlayerContainer
         {
             get
@@ -90,6 +91,13 @@ namespace Managers
                     }
                 }
                 Debug.Log($"[CharacterManager] Loaded {_characterMap.Count} character identities.");
+
+                // TODO: SaveManager에서 해금 목록 불러오기
+                if (_unlockedCharacters.Count == 0)
+                {
+                    var playerData = DataManager.Instance.GetPlayerData();
+                    _unlockedCharacters.Add(playerData.characterName);
+                }
             }
             else
             {
@@ -149,7 +157,6 @@ namespace Managers
                 return;
 
             PoolManager.Instance.ReturnObject(_currentCharacterInstance);
-            _currentCharacterInstance = null;
         }
 
         public CharacterIdentity GetCurrentCharacterIdentity()
@@ -178,6 +185,17 @@ namespace Managers
             }
 
             _currentCharacterIdentity = characterSO;
+            _currentCharacterInstance = null;
+        }
+
+        public IReadOnlyDictionary<string, CharacterIdentity> GetCharacterMap() => _characterMap;
+
+        public bool IsCharacterUnlocked(string characterName) => _unlockedCharacters.Contains(characterName);
+
+        public void UnlockCharacter(string characterName)
+        {
+            if (_unlockedCharacters.Add(characterName))
+                Debug.Log($"[CharacterManager] 캐릭터 해금: {characterName}");
         }
     }
 }
