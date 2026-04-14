@@ -4,10 +4,6 @@ using UnityEngine.UI;
 
 namespace UI
 {
-    /// <summary>
-    /// 캐릭터 설정 팝업 View.
-    /// 탭(캐릭터, 장비, 룬)을 전환하고 팝업 열기/닫기를 담당한다.
-    /// </summary>
     public class SettingPopup : MonoBehaviour
     {
         [Header("Tabs")]
