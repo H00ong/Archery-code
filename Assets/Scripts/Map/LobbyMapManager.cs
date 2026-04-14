@@ -6,11 +6,6 @@ using UnityEngine.AddressableAssets;
 
 namespace Managers
 {
-    /// <summary>
-    /// DDL 객체. 로비 진입 시 PoolManager로 맵 더미를 생성·배치하고,
-    /// InGame 전환 시 전부 ReturnPool한다.
-    /// 궁수의 전설2 스타일: 모든 맵을 보여주되, 잠긴 맵은 회색으로 표시.
-    /// </summary>
     public class LobbyMapManager : MonoBehaviour
     {
         public static LobbyMapManager Instance { get; private set; }
@@ -24,7 +19,8 @@ namespace Managers
 
         private readonly List<GameObject> _dummyMaps = new();
         private readonly List<AssetReferenceGameObject> _dummyRefs = new();
-        private readonly Dictionary<int, Color> _originalColors = new();
+        private readonly Dictionary<int, Color> _originalBaseColors = new();   // "_Color" 원본
+        private readonly Dictionary<int, Color> _originalUrpColors = new();    // "_BaseColor" 원본
 
         private DataManager _dataManager;
         private MapManager _mapManager;
@@ -33,7 +29,7 @@ namespace Managers
 
         private Transform _dummyMapPool;
         private bool _initialized;
-        private int _nextMapIndex;
+        private int _firstUnlockedMapIndex;
 
         public int FocusedMapIndex => _lobbyCameraController != null
             ? _lobbyCameraController.CurrentStageIndex
@@ -100,26 +96,27 @@ namespace Managers
             _lobbyCameraController = FindAnyObjectByType<LobbyCameraController>();
 
             if (_lobbyCameraController != null)
-                _lobbyCameraController.Setup(_dummyMaps.Count, yOffset, _nextMapIndex, _dummyMaps[0].transform.position);
+                _lobbyCameraController.Setup(_dummyMaps.Count, yOffset, _firstUnlockedMapIndex, _dummyMaps[0].transform.position);
         }
 
         private void CacheDummyRefs()
         {
             int mapCount = _dataManager.GetMapCount();
+
             for (int i = 0; i < mapCount; i++)
             {
                 var mapData = _dataManager.GetMapData(i);
                 if (mapData == null) continue;
 
                 var mapSo = _mapManager.GetMapScriptable(mapData.mapId);
-                if (mapSo == null || mapSo.lobbyMapDummy == null)
+                if (mapSo == null || mapSo.lobbyDummyMap == null)
                 {
                     Debug.LogWarning($"[LobbyMapController] lobbyMapDummy 없음 — mapId: {mapData.mapId}");
                     _dummyRefs.Add(null);
                     continue;
                 }
 
-                _dummyRefs.Add(mapSo.lobbyMapDummy);
+                _dummyRefs.Add(mapSo.lobbyDummyMap);
             }
         }
 
@@ -135,31 +132,30 @@ namespace Managers
                 if (dummyRef == null)
                     continue;
 
-                GameObject dummy;
+                GameObject map;
                 
-                if (!_poolManager.TryGetObject(dummyRef, out dummy, _dummyMapPool))
+                if (!_poolManager.TryGetObject(dummyRef, out map, _dummyMapPool))
                 {
-                    dummy = await _poolManager.GetObjectAsync(dummyRef, _dummyMapPool, extraPrewarmCount: 0);
+                    map = await _poolManager.GetObjectAsync(dummyRef, _dummyMapPool, extraPrewarmCount: 0);
                 }
 
-                if (dummy == null)
+                if (map == null)
                 {
                     Debug.LogError($"[LobbyMapController] 더미 풀링 실패: index {i}");
                     continue;
                 }
 
-                dummy.transform.position = new Vector3(0f, i * yOffset, 0f);
-                dummy.SetActive(true);
+                map.transform.position = new Vector3(0f, i * yOffset, 0f);
+                map.SetActive(true);
 
-                bool isLocked = i > _nextMapIndex;
-                if (isLocked)
-                    ApplyLockedVisual(dummy);
+                bool isLocked = i > _firstUnlockedMapIndex;
+                ApplyVisual(map, isLocked);
 
-                _dummyMaps.Add(dummy);
+                _dummyMaps.Add(map);
             }
         }
 
-        private void ApplyLockedVisual(GameObject mapObj)
+        private void ApplyVisual(GameObject mapObj, bool locked)
         {
             var renderers = mapObj.GetComponentsInChildren<Renderer>(true);
             foreach (var r in renderers)
@@ -170,45 +166,18 @@ namespace Managers
 
                     if (mat.HasProperty("_Color"))
                     {
-                        if (!_originalColors.ContainsKey(id))
-                            _originalColors[id] = mat.color;
-                        var c = _originalColors[id];
-                        mat.color = new Color(c.r, c.g, c.b, lockedAlpha);
+                        if (!_originalBaseColors.ContainsKey(id))
+                            _originalBaseColors[id] = mat.color;
+
+                        var c = _originalBaseColors[id];
+                        mat.color = locked ? new Color(c.r, c.g, c.b, lockedAlpha) : c;
                     }
                     if (mat.HasProperty("_BaseColor"))
                     {
-                        int baseId = id + 1;
-                        if (!_originalColors.ContainsKey(baseId))
-                            _originalColors[baseId] = mat.GetColor("_BaseColor");
-                        var c = _originalColors[baseId];
-                        mat.SetColor("_BaseColor", new Color(c.r, c.g, c.b, lockedAlpha));
-                    }
-                }
-            }
-        }
-
-        private void ApplyOriginalVisual(GameObject mapObj)
-        {
-            var renderers = mapObj.GetComponentsInChildren<Renderer>(true);
-            foreach (var r in renderers)
-            {
-                foreach (var mat in r.materials)
-                {
-                    int id = mat.GetInstanceID();
-
-                    if (mat.HasProperty("_Color"))
-                    {
-                        mat.color = _originalColors.TryGetValue(id, out var origColor)
-                            ? origColor
-                            : Color.white;
-                    }
-                    if (mat.HasProperty("_BaseColor"))
-                    {
-                        int baseId = id + 1;
-                        mat.SetColor("_BaseColor",
-                            _originalColors.TryGetValue(baseId, out var origBase)
-                                ? origBase
-                                : Color.white);
+                        if (!_originalUrpColors.ContainsKey(id))
+                            _originalUrpColors[id] = mat.GetColor("_BaseColor");
+                        var c = _originalUrpColors[id];
+                        mat.SetColor("_BaseColor", locked ? new Color(c.r, c.g, c.b, lockedAlpha) : c);
                     }
                 }
             }
@@ -216,7 +185,7 @@ namespace Managers
 
         private void SetNextMapIndex()
         {
-            _nextMapIndex = MapManager.Instance.MaxMapIndex + 1;
+            _firstUnlockedMapIndex = MapManager.Instance.MaxMapIndex + 1;
         }
 
         private void SetDummyPoolActive(bool active)
@@ -226,18 +195,19 @@ namespace Managers
 
         private void OnNewMapCleared()
         {
-            if (_nextMapIndex >= _dummyMaps.Count)
+            if (_firstUnlockedMapIndex >= _dummyMaps.Count)
                 return;
 
-            var go = _dummyMaps[_nextMapIndex];
-            ApplyOriginalVisual(go);
+            var go = _dummyMaps[_firstUnlockedMapIndex];
+            ApplyVisual(go, locked : false);
             SetNextMapIndex();
         }
 
         public void SelectFocusedMap()
         {
             int index = FocusedMapIndex;
-            if (index > _nextMapIndex)
+
+            if (index > _firstUnlockedMapIndex)
             {
                 Debug.LogWarning($"[LobbyMapController] 잠긴 맵은 선택할 수 없습니다: index {index}");
                 return;
