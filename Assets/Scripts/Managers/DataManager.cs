@@ -11,6 +11,8 @@ namespace Managers
     public class DataManager : MonoBehaviour
     {
         public static DataManager Instance { get; private set; }
+        [SerializeField] private TextAsset enemyDataJson;
+        [SerializeField] private TextAsset mapDataJson;
         private Dictionary<EnemyKey, EnemyData> enemyDataDict;
         private List<MapData> mapDataList;
         private PlayerData playerData;
@@ -49,9 +51,9 @@ namespace Managers
 
             try
             {
-                TextAsset json = Resources.Load<TextAsset>("Data/enemyData");
+                TextAsset json = enemyDataJson;
                 if (!json)
-                    throw new InvalidOperationException("Resources/Data/enemyData.json not found");
+                    throw new InvalidOperationException("enemyDataJson is not assigned in Inspector");
 
                 string text = json.text;
 
@@ -109,9 +111,9 @@ namespace Managers
         {
             try
             {
-                TextAsset jsonFile = Resources.Load<TextAsset>("Data/mapData");
+                TextAsset jsonFile = mapDataJson;
                 if (!jsonFile)
-                    throw new InvalidOperationException("Map data file not found at Resources/Data/mapData.json");
+                    throw new InvalidOperationException("mapDataJson is not assigned in Inspector");
 
                 var maps = JsonConvert.DeserializeObject<List<MapData>>(jsonFile.text);
                 if (maps == null || maps.Count == 0)
@@ -147,7 +149,7 @@ namespace Managers
         public void LoadPlayerData()
         {
             // TODO : Load PlayerData from SaveSystem
-            playerData = new PlayerData("BlueWizard");
+            playerData = new PlayerData("BlueWizard", 500);
         }
 
         public PlayerData GetPlayerData()
