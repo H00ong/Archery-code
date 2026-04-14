@@ -45,8 +45,11 @@ public class LobbyCharacterCamera : MonoBehaviour
         characterCamera.transform.rotation = Quaternion.Euler(cameraRotation);
     }
 
-    public void EnableCamera() => characterCamera.enabled = true;
-    public void DisableCamera() => characterCamera.enabled = false;
+    public void SetActive(bool active)
+    {
+        if (characterCamera != null)
+            characterCamera.enabled = active;
+    }
 
     private void OnDestroy()
     {

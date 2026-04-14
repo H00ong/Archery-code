@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace Managers
 {
-    /// <summary>
-    /// 씨에 존재하는 모든 UI View 참조를 보관하고,
-    /// 게임 로직에서 팔업 표시 요청을 받아 Presenter에 위임한다.
-    /// UI는 옴에 파쇼되므로 DontDestroyOnLoad 미사용.
-    /// </summary>
     public class UIManager : MonoBehaviour
     {
         public static UIManager Instance { get; private set; }
@@ -28,7 +23,7 @@ namespace Managers
         private MapClearPopupPresenter _gameClearPresenter;
         private GameOverPopupPresenter _gameOverPresenter;
         private SkillChoicePopupPresenter _skillChoicePresenter;
-        private SettingPopupPresenter _characterSettingPresenter;
+        private SettingPopupPresenter _settingPresenter;
 
         private void Awake()
         {
@@ -46,7 +41,7 @@ namespace Managers
 
         void OnEnable()
         {
-            EventBus.Subscribe(EventType.LobbySceneLoaded, SetupCharacterSetting);
+            EventBus.Subscribe(EventType.LobbySceneLoaded, SetupSettingPopup);
             EventBus.Subscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Subscribe(EventType.Retry, ClearDataInMap);
             EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -56,7 +51,7 @@ namespace Managers
 
         void OnDisable()
         {
-            EventBus.Unsubscribe(EventType.LobbySceneLoaded, SetupCharacterSetting);
+            EventBus.Unsubscribe(EventType.LobbySceneLoaded, SetupSettingPopup);
             EventBus.Unsubscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Unsubscribe(EventType.Retry, ClearDataInMap);
             EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -128,27 +123,27 @@ namespace Managers
             stageTransition.gameObject.SetActive(false);
         }
 
-        public void SetupCharacterSetting()
+        public void SetupSettingPopup()
         {
             var lobbyCanvas = FindFirstObjectByType<LobbyCanvas>();
             if (lobbyCanvas == null)
                 return;
 
-            var popup = lobbyCanvas.CharacterSettingPopup;
+            var popup = lobbyCanvas.SettingPopup;
             var camera = lobbyCanvas.LobbyCharacterCamera;
             if (popup == null || camera == null)
                 return;
 
-            _characterSettingPresenter = new SettingPopupPresenter(popup, camera);
+            _settingPresenter = new SettingPopupPresenter(popup, camera);
 
-            var openBtn = lobbyCanvas.OpenSettingsButton;
+            var openBtn = lobbyCanvas.SettingsButton;
             if (openBtn != null)
-                openBtn.onClick.AddListener(() => _characterSettingPresenter.Show());
+                openBtn.onClick.AddListener(() => _settingPresenter.Show());
 
             var lobbyCameraController = FindAnyObjectByType<LobbyCameraController>();
             if (lobbyCameraController != null)
             {
-                _characterSettingPresenter.OnPopupToggled += isOpen =>
+                _settingPresenter.OnPopupToggled += isOpen =>
                 {
                     lobbyCameraController.MapSelectInputBlocked = isOpen;
                     openBtn.gameObject.SetActive(!isOpen);
@@ -158,7 +153,7 @@ namespace Managers
 
         public void ClearDataInLobby()
         {
-            _characterSettingPresenter = null;
+            _settingPresenter = null;
         }
     }
 }

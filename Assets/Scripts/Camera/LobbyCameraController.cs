@@ -23,6 +23,7 @@ public class LobbyCameraController : MonoBehaviour
     private Vector3 originalPosition;
 
     public bool MapSelectInputBlocked { get; set; }
+    public int CurrentStageIndex => _currentStageIndex;
 
     public void Setup(int totalMapCount, float yOffset, int nextMapIndex, Vector3 initPos)
     {
@@ -70,6 +71,7 @@ public class LobbyCameraController : MonoBehaviour
         _currentStageIndex = Mathf.Clamp(_currentStageIndex, 0, _maxReachableIndex);
         _targetY = _baseY + (_currentStageIndex * _yOffset);
         _hasTarget = true;
+        
         UpdateLockIcon();
     }
 
@@ -91,8 +93,6 @@ public class LobbyCameraController : MonoBehaviour
         if (lockIcon != null)
             lockIcon.SetActive(_currentStageIndex > _nextMapIndex);
     }
-
-    public int CurrentStageIndex => _currentStageIndex;
 
     [ContextMenu("Apply Offset To Position")]
     private void ApplyOffsetToPosition()
