@@ -7,9 +7,9 @@ public class LobbyCanvas : MonoBehaviour
     [Header("Character Setting")]
     [SerializeField] private SettingPopup settingPopup;
     [SerializeField] private LobbyCharacterCamera lobbyCharacterCamera;
-    [SerializeField] private Button openSettingsButton;
+    [SerializeField] private Button settingsButton;
 
-    public SettingPopup CharacterSettingPopup => settingPopup;
+    public SettingPopup SettingPopup => settingPopup;
     public LobbyCharacterCamera LobbyCharacterCamera => lobbyCharacterCamera;
-    public Button OpenSettingsButton => openSettingsButton;
+    public Button SettingsButton => settingsButton;
 }
