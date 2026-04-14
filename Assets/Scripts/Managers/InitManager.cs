@@ -58,6 +58,7 @@ public class InitManager : MonoBehaviour
         try
         {
             dataManager.Init();
+            PlayerManager.Instance.InitializePlayerData();
         }
         catch (Exception ex)
         {
@@ -81,24 +82,31 @@ public class InitManager : MonoBehaviour
         {
             SetProgress(0.15f, "Loading map data...");
             await mapManager.LoadMapConfigAsync();
+            Debug.Log("[InitManager] ✓ MapManager done");
 
             SetProgress(0.35f, "Loading character data...");
             await characterManager.LoadCharacterIdentitiesAsync();
+            Debug.Log("[InitManager] ✓ CharacterManager done");
 
             SetProgress(0.55f, "Loading orb data...");
             await orbManager.LoadOrbConfigurationsAsync();
+            Debug.Log("[InitManager] ✓ OrbManager done");
 
             SetProgress(0.70f, "Loading barrel data...");
             await barrelManager.LoadBarrelAssetsAsync();
+            Debug.Log("[InitManager] ✓ BarrelManager done");
 
             SetProgress(0.85f, "Loading skill data...");
             await skillManager.LoadAllSkillsAsync();
+            Debug.Log("[InitManager] ✓ SkillManager done");
 
             SetProgress(0.90f, "Loading lobby maps...");
             await lobbyMapManager.InitLobbyAsync();
+            Debug.Log("[InitManager] ✓ LobbyMapManager done");
 
             SetProgress(0.95f, "Loading lobby characters...");
             await lobbyCharacterManager.InitLobbyAsync();
+            Debug.Log("[InitManager] ✓ LobbyCharacterManager done");
 
             destroyCancellationToken.ThrowIfCancellationRequested();
         }
@@ -113,11 +121,6 @@ public class InitManager : MonoBehaviour
             Debug.LogException(ex); // 상세 스택 트레이스 로그 추가
             return;
         }
-
-        SetProgress(0.99f, "Initializing player...");
-        Debug.Log("[InitManager] Phase 2 complete — All Addressables loaded.");
-
-        PlayerManager.Instance.InitializePlayerData();
 
         SetProgress(1f, "Loading complete!");
         IsLoaded = true;
