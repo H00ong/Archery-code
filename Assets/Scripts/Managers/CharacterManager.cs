@@ -21,6 +21,9 @@ namespace Managers
         private Transform _playerContainer;
 
         private readonly Dictionary<string, CharacterIdentity> _characterMap = new();
+        private readonly HashSet<string> _ownedCharacters = new();
+
+        public AssetReferenceGameObject CurrentProjectilePrefab { get; private set; }
         public Transform PlayerContainer
         {
             get
@@ -41,7 +44,7 @@ namespace Managers
             }
         }
         
-        public AssetReferenceGameObject CurrentProjectilePrefab { get; private set; }
+        
 
         private void Awake()
         {
@@ -56,7 +59,7 @@ namespace Managers
             }
         }
 
-        void OnEnable()
+        private void OnEnable()
         {
             EventBus.Subscribe(EventType.TransitionToLobby, DeActiveCurrentCharacter, 1);
             EventBus.Subscribe(EventType.Retry, DeActiveCurrentCharacter, 1);
@@ -90,6 +93,12 @@ namespace Managers
                     }
                 }
                 Debug.Log($"[CharacterManager] Loaded {_characterMap.Count} character identities.");
+
+                // TODO: SaveManager에서 해금 목록 불러오기
+                {
+                    var playerData = PlayerManager.Instance.PlayerData;
+                    _ownedCharacters.Add(playerData.currentCharacterName);
+                }
             }
             else
             {
@@ -149,7 +158,6 @@ namespace Managers
                 return;
 
             PoolManager.Instance.ReturnObject(_currentCharacterInstance);
-            _currentCharacterInstance = null;
         }
 
         public CharacterIdentity GetCurrentCharacterIdentity()
@@ -159,14 +167,20 @@ namespace Managers
 
             _player ??= PlayerManager.Instance;
 
-            if (!_characterMap.TryGetValue(_player.PlayerData.characterName, out var characterSO))
+            if (!_characterMap.TryGetValue(_player.PlayerData.currentCharacterName, out var characterSO))
             {
-                Debug.LogError($"[CharacterManager] CharacterSO not found for: {_player.PlayerData.characterName}");
+                Debug.LogError($"[CharacterManager] CharacterSO not found for: {_player.PlayerData.currentCharacterName}");
                 return null;
             }
 
             _currentCharacterIdentity = characterSO;
             return _currentCharacterIdentity;
+        }
+
+        public CharacterIdentity GetCharacterIdentityByName(string characterName)
+        {
+            _characterMap.TryGetValue(characterName, out var identity);
+            return identity;
         }
 
         public void SyncCharacterIdentity(string characterName)
@@ -178,6 +192,57 @@ namespace Managers
             }
 
             _currentCharacterIdentity = characterSO;
+            _currentCharacterInstance = null;
+        }
+
+        public IReadOnlyDictionary<string, CharacterIdentity> GetCharacterMap() => _characterMap;
+
+        public bool IsCharacterUnlocked(string characterName) => _ownedCharacters.Contains(characterName);
+
+        public void UnlockCharacter(string characterName)
+        {
+            if (_ownedCharacters.Add(characterName))
+            {
+                Debug.Log($"[CharacterManager] Character unlocked: {characterName}");
+            }
+        }
+
+        public bool TryLevelUpCharacter(string characterName)
+        {
+            if (!_characterMap.TryGetValue(characterName, out var identity))
+                return false;
+
+            var playerData = PlayerManager.Instance.PlayerData;
+            int currentLevel = playerData.GetCharacterLevel(characterName);
+
+            if (currentLevel >= identity.maxLevel)
+                return false;
+
+            int cost = identity.GetLevelUpCost(currentLevel);
+            if (cost < 0 || !playerData.SpendGold(cost))
+                return false;
+
+            playerData.SetCharacterLevel(characterName, currentLevel + 1);
+            Debug.Log($"[CharacterManager] '{characterName}' 레벨업: {currentLevel} → {currentLevel + 1}");
+            return true;
+        }
+        
+        public bool TryPurchaseCharacter(string characterName)
+        {
+            if (!_characterMap.TryGetValue(characterName, out var identity))
+                return false;
+
+            if (_ownedCharacters.Contains(characterName))
+                return false;
+
+            var playerData = PlayerManager.Instance.PlayerData;
+
+            if (!playerData.SpendGold(identity.purchasePrice))
+                return false;
+
+            UnlockCharacter(characterName);
+            playerData.SetCharacterLevel(characterName, 1);
+            return true;
         }
     }
 }

@@ -72,6 +72,12 @@ namespace Managers
                 {
                     if (skill == null) continue;
 
+                    if (string.IsNullOrEmpty(skill.id))
+                    {
+                        Debug.LogError($"[SkillManager] id가 null인 에셋 발견: '{skill.name}' (type={skill.GetType()})");
+                        continue;
+                    }
+
                     if (!_skillDict.TryAdd(skill.id, skill))
                         Debug.LogWarning($"[SkillManager] 중복 스킬 ID: {skill.id}");
                     else
