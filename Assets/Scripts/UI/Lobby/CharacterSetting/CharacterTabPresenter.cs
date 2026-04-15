@@ -1,5 +1,8 @@
+using System.Collections.Generic;
+using System.Text;
 using Managers;
 using Players;
+using Stat;
 
 namespace UI
 {
@@ -103,7 +106,7 @@ namespace UI
                 _view.SetActionButtonInteractable(_playerData.gold >= identity.purchasePrice);
 
                 _view.SetLevelText("Lv.1");
-                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(1)));
+                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(1), identity.GetEffectDataAtLevel(1)));
                 _view.SetNextLevelStatsText("");
             }
             else if (equipped)
@@ -117,10 +120,10 @@ namespace UI
                     _view.SetActionButtonInteractable(_playerData.gold >= cost);
 
                 _view.SetLevelText($"Lv.{level}");
-                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(level)));
+                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(level), identity.GetEffectDataAtLevel(level)));
 
                 if (!isMaxLevel)
-                    _view.SetNextLevelStatsText($"<color=#FFD700>Next Lv.{level + 1}</color>\n{FormatStats(identity.GetStatsAtLevel(level + 1))}");
+                    _view.SetNextLevelStatsText($"<color=#FFD700>Next Lv.{level + 1}</color>\n{FormatStats(identity.GetStatsAtLevel(level + 1), identity.GetEffectDataAtLevel(level + 1))}");
                 else
                     _view.SetNextLevelStatsText("<color=#FFD700>MAX LEVEL</color>");
             }
@@ -132,10 +135,10 @@ namespace UI
                 _view.SetActionButtonState(CharacterActionButtonState.Equip);
 
                 _view.SetLevelText($"Lv.{level}");
-                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(level)));
+                _view.SetCurrentStatsText(FormatStats(identity.GetStatsAtLevel(level), identity.GetEffectDataAtLevel(level)));
 
                 if (level < identity.maxLevel)
-                    _view.SetNextLevelStatsText($"<color=#FFD700>Next Lv.{level + 1}</color>\n{FormatStats(identity.GetStatsAtLevel(level + 1))}");
+                    _view.SetNextLevelStatsText($"<color=#FFD700>Next Lv.{level + 1}</color>\n{FormatStats(identity.GetStatsAtLevel(level + 1), identity.GetEffectDataAtLevel(level + 1))}");
                 else
                     _view.SetNextLevelStatsText("<color=#FFD700>MAX LEVEL</color>");
             }
@@ -152,17 +155,61 @@ namespace UI
             _view.SetEquippedCharacterIcon(equippedIdentity.characterIcon);
             _view.SetEquippedCharacterName(equippedName);
             _view.SetEquippedLevelText($"Lv.{level}");
-            _view.SetEquippedStatsText(FormatStats(equippedIdentity.GetStatsAtLevel(level)));
+            _view.SetEquippedStatsText(FormatStats(equippedIdentity.GetStatsAtLevel(level), equippedIdentity.GetEffectDataAtLevel(level)));
         }
 
-        private static string FormatStats(CharacterBaseStatData stat)
+        private static string FormatStats(CharacterBaseStatData stat, Dictionary<EffectType, EffectData> effectMap = null)
         {
-            return $"❤️ HP: {stat.maxHP}\n" +
-                   $"⚔️ ATK: {stat.attackPower}\n" +
-                   $"💨 SPD: {stat.moveSpeed:F1}\n" +
-                   $"🛡️ ARM: {stat.armor}\n" +
-                   $"✨ MR: {stat.magicResistance}\n" +
-                   $"⚡ AS: {stat.attackSpeed:F2}";
+            var sb = new StringBuilder();
+            sb.AppendLine($"HP: {stat.maxHP}");
+            sb.AppendLine($"ATK: {stat.attackPower}");
+            sb.AppendLine($"SPD: {stat.moveSpeed:F1}");
+            sb.AppendLine($"ARM: {stat.armor}");
+            sb.AppendLine($"MR: {stat.magicResistance}");
+            sb.Append($"AS: {stat.attackSpeed:F2}");
+
+            if (stat.attackEffectType != EffectType.Normal && effectMap is { Count: > 0 })
+            {
+                foreach (var kvp in effectMap)
+                {
+                    if (kvp.Key == EffectType.Normal) continue;
+                    if (!Utils.HasEffectType(stat.attackEffectType, kvp.Key)) continue;
+
+                    var d = kvp.Value;
+                    string label = GetEffectLabel(kvp.Key);
+                    string color = GetEffectColor(kvp.Key);
+
+                    sb.AppendLine();
+                    sb.Append($"<color={color}>{label}</color> ");
+                    sb.Append($"dur:{d.duration:F1}s val:{d.value:F2}");
+                    if (d.dotDamage > 0)
+                        sb.Append($" dot:{d.dotDamage:F1}/{d.tickInterval:F1}s");
+                }
+            }
+
+            return sb.ToString();
         }
+
+        private static string GetEffectLabel(EffectType type) => type switch
+        {
+            EffectType.Fire => "Fire",
+            EffectType.Poison => "Poison",
+            EffectType.Ice => "Ice",
+            EffectType.Lightning => "Lightning",
+            EffectType.Magma => "Magma",
+            EffectType.Dark => "Dark",
+            _ => type.ToString(),
+        };
+
+        private static string GetEffectColor(EffectType type) => type switch
+        {
+            EffectType.Fire => "#FF6B35",
+            EffectType.Poison => "#A855F7",
+            EffectType.Ice => "#38BDF8",
+            EffectType.Lightning => "#FACC15",
+            EffectType.Magma => "#F97316",
+            EffectType.Dark => "#6B7280",
+            _ => "#FFFFFF",
+        };
     }
 }
