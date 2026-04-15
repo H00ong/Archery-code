@@ -74,10 +74,10 @@ namespace UI
                     actionButton.interactable = goldCost >= 0;
                     break;
                 case CharacterActionButtonState.Equip:
-                    actionButtonText.text = "착용";
+                    actionButtonText.text = "Equip";
                     break;
                 case CharacterActionButtonState.Purchase:
-                    actionButtonText.text = $"구매\n<size=70%>{goldCost} G</size>";
+                    actionButtonText.text = $"Purchase\n<size=70%>{goldCost} G</size>";
                     break;
             }
         }
