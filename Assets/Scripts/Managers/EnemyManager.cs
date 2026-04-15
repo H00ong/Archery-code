@@ -47,6 +47,9 @@ namespace Managers
             var currentMapData = MapManager.Instance.CurrentMapData;
             var currentStageIndex = StageManager.Instance.CurrentStageIndex;
 
+            if (!EnemyEffectCache.IsLoaded)
+                EnemyEffectCache.Init(currentMapData.enemyEffects);
+
             EnemyStatUtil.CalculateStat(
                 stat, enemyData, tag, currentMapData, currentStageIndex);
 
@@ -206,6 +209,8 @@ namespace Managers
 
         public void ClearEnemiesForMapClear()
         {
+            EnemyEffectCache.Clear();
+
             if(Enemies.Count <= 0)
                 return;
 

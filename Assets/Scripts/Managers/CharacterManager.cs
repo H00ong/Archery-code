@@ -145,7 +145,15 @@ namespace Managers
             }
 
             playerController.InitModule();
-            playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.baseStat);
+
+            // 레벨 기반 스탯 적용
+            int level = PlayerManager.Instance.PlayerData.GetCharacterLevel(_currentCharacterIdentity.characterName);
+            playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.GetStatsAtLevel(level));
+
+            // 레벨 기반 이펙트 데이터 적용
+            var effectMap = _currentCharacterIdentity.GetEffectDataAtLevel(level);
+            foreach (var kvp in effectMap)
+                playerController.Stat.SetBaseEffectData(kvp.Key, kvp.Value);
 
             EventBus.Publish(EventType.PlayerSpawned);
             
@@ -158,6 +166,7 @@ namespace Managers
                 return;
 
             PoolManager.Instance.ReturnObject(_currentCharacterInstance);
+            _currentCharacterInstance = null;
         }
 
         public CharacterIdentity GetCurrentCharacterIdentity()
