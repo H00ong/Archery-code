@@ -88,6 +88,11 @@ namespace Enemy
 
         private void FixedUpdate()
         {
+            if (!rigidBody.isKinematic)
+            {
+                rigidBody.linearVelocity = Vector3.zero;
+            }
+            
             OnTick?.Invoke();
         }
 

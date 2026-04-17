@@ -94,6 +94,8 @@ public class PlayerMovement : MonoBehaviour
         if(_isDead)
             return;
 
+        playerRigidbody.linearVelocity = Vector3.zero;
+
         if (_currentMoveDir == Vector3.zero)
             return;
 
