@@ -77,6 +77,7 @@ public class InitManager : MonoBehaviour
         var skillManager = SkillManager.Instance;
         var lobbyMapManager = LobbyMapManager.Instance;
         var lobbyCharacterManager = LobbyCharacterManager.Instance;
+        var equipmentManager = EquipmentManager.Instance;
 
         try
         {
@@ -87,6 +88,10 @@ public class InitManager : MonoBehaviour
             SetProgress(0.35f, "Loading character data...");
             await characterManager.LoadCharacterIdentitiesAsync();
             Debug.Log("[InitManager] ✓ CharacterManager done");
+
+            SetProgress(0.40f, "Loading equipment data...");
+            await equipmentManager.LoadEquipmentIdentitiesAsync();
+            Debug.Log("[InitManager] ✓ EquipmentManager done");
 
             SetProgress(0.55f, "Loading orb data...");
             await orbManager.LoadOrbConfigurationsAsync();

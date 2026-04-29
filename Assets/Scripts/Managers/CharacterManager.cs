@@ -155,9 +155,15 @@ namespace Managers
             foreach (var kvp in effectMap)
                 playerController.Stat.SetBaseEffectData(kvp.Key, kvp.Value);
 
+            // 장비 스탯 적용
+            EquipmentManager.Instance.ApplyAllEquipmentStats(playerController.Stat);
+
             EventBus.Publish(EventType.PlayerSpawned);
             
-            Debug.Log($"[CharacterManager] Character spawned and stats applied: {_currentCharacterIdentity.characterName}");
+            var s = playerController.Stat;
+            Debug.Log($"[CharacterManager] Spawned '{_currentCharacterIdentity.characterName}' | " +
+                      $"HP:{s.MaxHP} ATK:{s.AttackPower} SPD:{s.MoveSpeed} ARM:{s.Armor} " +
+                      $"MRES:{s.MagicResistance} AS:{s.AttackSpeed} PS:{s.ProjectileSpeed} EFX:{s.AttackEffectType}");
         }
 
         public void DeActiveCurrentCharacter()
