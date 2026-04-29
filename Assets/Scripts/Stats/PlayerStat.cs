@@ -131,6 +131,39 @@ namespace Stat
         public void SetEquipAttackSpeed(float value)     => equipAttackSpeed = value;
         public void SetEquipProjectileSpeed(float value) => equipProjectileSpeed = value;
         public void SetEquipAttackEffectType(EffectType type) => equipAttackEffectType |= type;
+
+        // ================================================================
+        //  Equipment Getters (장비 보정치 조회 — 교체 시 기존 값 참조용)
+        // ================================================================
+
+        public int GetEquipMaxHP()             => equipMaxHP;
+        public int GetEquipAttackPower()       => equipAttackPower;
+        public float GetEquipMoveSpeed()       => equipMoveSpeed;
+        public int GetEquipArmor()             => equipArmor;
+        public int GetEquipMagicResistance()   => equipMagicResistance;
+        public float GetEquipAttackSpeed()     => equipAttackSpeed;
+        public float GetEquipProjectileSpeed() => equipProjectileSpeed;
+
+        /// <summary> Equipment EffectType을 Normal로 초기화 (합산 재계산 전 호출) </summary>
+        public void ResetEquipAttackEffectType() => equipAttackEffectType = EffectType.Normal;
+
+        /// <summary> Equipment EffectData를 모두 제거 (합산 재계산 전 호출) </summary>
+        public void ClearEquipEffectData() => _equipEffectDataMap.Clear();
+
+        /// <summary> 장비 보정치를 모두 0/기본값으로 초기화한다. ApplyAllEquipmentStats 전에 호출. </summary>
+        public void ResetEquipmentStats()
+        {
+            equipMaxHP = 0;
+            equipAttackPower = 0;
+            equipMoveSpeed = 0f;
+            equipArmor = 0;
+            equipMagicResistance = 0;
+            equipAttackSpeed = 0f;
+            equipProjectileSpeed = 0f;
+            equipAttackEffectType = EffectType.Normal;
+            _equipEffectDataMap.Clear();
+        }
+
         // ================================================================
         //  Buff Setters (인게임 버프 직접 설정)
         // ================================================================

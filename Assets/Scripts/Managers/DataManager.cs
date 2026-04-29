@@ -149,7 +149,7 @@ namespace Managers
         public void LoadPlayerData()
         {
             // TODO : Load PlayerData from SaveSystem
-            playerData = new PlayerData("BlueWizard", 5000);
+            playerData = new PlayerData("BlueWizard", "Normal Magic Wand", "Old Armor", "Old Shoes", 5000);
         }
 
         public PlayerData GetPlayerData()
