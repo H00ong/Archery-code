@@ -38,6 +38,9 @@ namespace UI
 
         private void Update()
         {
+            // EffectDetailPopup이 열려있으면 ESC를 가로채므로 SettingPopup은 닫지 않는다.
+            if (EffectDetailPopup.OpenCount > 0) return;
+
             if (Input.GetKeyDown(KeyCode.Escape))
                 _onClose?.Invoke();
         }
