@@ -30,7 +30,7 @@ namespace Managers
         private Transform _dummyCharacterPool;
         private bool _initialized;
         private int _currentIndex;
-        private int _lastSelectedIndex;
+        private int _equippedIndex;
 
         private CharacterManager _characterManager;
         private PoolManager _poolManager;
@@ -81,7 +81,7 @@ namespace Managers
             // 현재 선택된 캐릭터 인덱스로 초기화
             string currentName = PlayerManager.Instance.PlayerData.currentCharacterName;
             _currentIndex = FindIndexByName(currentName);
-            _lastSelectedIndex = _currentIndex;
+            _equippedIndex = _currentIndex;
 
             _initialized = true;
         }
@@ -168,8 +168,13 @@ namespace Managers
         {
             HideAll();
             SetDummyPoolActive(false);
+            SetLastValidState();
+        }
 
-            _currentIndex = _lastSelectedIndex;
+        public void SetLastValidState()
+        {
+            ChangeCharacterToEquipped();
+            _currentIndex = _equippedIndex;
         }
 
         public void ChangeCharacter(int direction)
@@ -177,12 +182,19 @@ namespace Managers
             int newIndex = _currentIndex + direction;
             newIndex = Mathf.Clamp(newIndex, 0, _characters.Count - 1);
 
-            if (newIndex == _currentIndex) return;
+            if (newIndex == _currentIndex)
+                return;
 
             _characters[_currentIndex].dummyInstance.SetActive(false);
             _currentIndex = newIndex;
             _characters[_currentIndex].dummyInstance.SetActive(true);
             ApplyVisual(_characters[_currentIndex].dummyInstance, _characters[_currentIndex].name);
+        }
+
+        public void ChangeCharacterToEquipped()
+        {
+            _characters[_currentIndex].dummyInstance.SetActive(false);
+            _characters[_equippedIndex].dummyInstance.SetActive(true);
         }
 
         public void SelectCurrent()
@@ -198,7 +210,7 @@ namespace Managers
             }
 
             _characterManager.SyncCharacterIdentity(name);
-            _lastSelectedIndex = _currentIndex;
+            _equippedIndex = _currentIndex;
             Debug.Log($"[LobbyCharacterManager] 캐릭터 선택: {name}");
         }
 
