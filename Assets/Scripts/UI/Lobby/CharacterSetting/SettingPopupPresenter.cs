@@ -65,7 +65,13 @@ namespace UI
             _popup.SwitchTab(index);
 
             if (_currentTab == 0)
+            {
                 _characterTabPresenter.Activate();
+            }
+            else
+            {
+                _characterTabPresenter.Deactivate();
+            }
         }
     }
 }

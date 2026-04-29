@@ -26,20 +26,32 @@ namespace UI
         [SerializeField] private TextMeshProUGUI actionButtonText;
 
         [Header("우측 캐릭터 정보")]
-        [SerializeField] private TextMeshProUGUI levelText;
         [SerializeField] private TextMeshProUGUI currentStatsText;
-        [SerializeField] private TextMeshProUGUI nextLevelStatsText;
+        [SerializeField] private TextMeshProUGUI levelGrowthStatText;
 
         [Header("하단 Contents - 현재 착용 캐릭터")]
         [SerializeField] private Image equippedCharacterIcon;
         [SerializeField] private TextMeshProUGUI equippedCharacterNameText;
         [SerializeField] private TextMeshProUGUI equippedLevelText;
         [SerializeField] private TextMeshProUGUI equippedStatsText;
+        
 
         [Header("골드")]
         [SerializeField] private TextMeshProUGUI goldText;
 
-        public void Init(Action onLeft, Action onRight, Action onAction)
+        [Header("현재 스탯 상세 팝업")]
+        [SerializeField] private Button currentStatsDetailButton;
+        [SerializeField] private EffectDetailPopup currentStatsDetailPopup;
+
+        [Header("성장 상세 팝업")]
+        [SerializeField] private Button growthDetailButton;
+        [SerializeField] private EffectDetailPopup growthDetailPopup;
+
+        [Header("착용 스탯 상세 팝업")]
+        [SerializeField] private Button equippedStatsDetailButton;
+        [SerializeField] private EffectDetailPopup equippedStatsDetailPopup;
+
+        public void Init(Action onLeft, Action onRight, Action onAction, Action onGrowthDetail, Action onCurrentStatsDetail, Action onEquippedStatsDetail)
         {
             leftButton.onClick.RemoveAllListeners();
             rightButton.onClick.RemoveAllListeners();
@@ -48,6 +60,33 @@ namespace UI
             leftButton.onClick.AddListener(() => onLeft?.Invoke());
             rightButton.onClick.AddListener(() => onRight?.Invoke());
             actionButton.onClick.AddListener(() => onAction?.Invoke());
+
+            if (growthDetailButton != null)
+            {
+                growthDetailButton.onClick.RemoveAllListeners();
+                growthDetailButton.onClick.AddListener(() => onGrowthDetail?.Invoke());
+            }
+
+            if (currentStatsDetailButton != null)
+            {
+                currentStatsDetailButton.onClick.RemoveAllListeners();
+                currentStatsDetailButton.onClick.AddListener(() => onCurrentStatsDetail?.Invoke());
+            }
+
+            if (equippedStatsDetailButton != null)
+            {
+                equippedStatsDetailButton.onClick.RemoveAllListeners();
+                equippedStatsDetailButton.onClick.AddListener(() => onEquippedStatsDetail?.Invoke());
+            }
+
+            if (growthDetailPopup != null)
+                growthDetailPopup.Init();
+
+            if (currentStatsDetailPopup != null)
+                currentStatsDetailPopup.Init();
+
+            if (equippedStatsDetailPopup != null)
+                equippedStatsDetailPopup.Init();
         }
 
         public void SetRenderTexture(RenderTexture rt)
@@ -87,16 +126,13 @@ namespace UI
 
         // ── 우측 스탯 패널 ──
 
-        public void SetLevelText(string text)
-            => levelText.text = text;
-
         public void SetCurrentStatsText(string text)
             => currentStatsText.text = text;
 
-        public void SetNextLevelStatsText(string text)
+        public void SetLevelGrowthStatText(string text)
         {
-            nextLevelStatsText.gameObject.SetActive(!string.IsNullOrEmpty(text));
-            nextLevelStatsText.text = text;
+            levelGrowthStatText.gameObject.SetActive(!string.IsNullOrEmpty(text));
+            levelGrowthStatText.text = text;
         }
 
         public void SetEquippedCharacterIcon(Sprite icon)
@@ -116,5 +152,48 @@ namespace UI
 
         public void SetGoldText(int gold)
             => goldText.text = $"{gold} G";
+
+        public void ShowGrowthDetailPopup(string detailText)
+        {
+            if (growthDetailPopup != null)
+                growthDetailPopup.Show(detailText);
+        }
+
+        public void SetGrowthDetailButtonActive(bool active)
+        {
+            if (growthDetailButton != null)
+                growthDetailButton.gameObject.SetActive(active);
+        }
+
+        public void ShowCurrentStatsDetailPopup(string detailText)
+        {
+            if (currentStatsDetailPopup != null)
+                currentStatsDetailPopup.Show(detailText);
+        }
+
+        public void SetCurrentStatsDetailButtonActive(bool active)
+        {
+            if (currentStatsDetailButton != null)
+                currentStatsDetailButton.gameObject.SetActive(active);
+        }
+
+        public void ShowEquippedStatsDetailPopup(string detailText)
+        {
+            if (equippedStatsDetailPopup != null)
+                equippedStatsDetailPopup.Show(detailText);
+        }
+
+        public void SetEquippedStatsDetailButtonActive(bool active)
+        {
+            if (equippedStatsDetailButton != null)
+                equippedStatsDetailButton.gameObject.SetActive(active);
+        }
+
+        public void CloseAllDetailPopups()
+        {
+            growthDetailPopup?.Close();
+            currentStatsDetailPopup?.Close();
+            equippedStatsDetailPopup?.Close();
+        }
     }
 }

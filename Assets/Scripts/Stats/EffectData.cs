@@ -11,8 +11,8 @@ namespace Stat
     public class EffectData
     {
         public float duration;      // 지속 시간 (초)
-        public float value;         // 효과 강도 (슬로우 %, 화상 배율 등)
-        public float dotDamage;     // 도트 데미지 양
+        public float value;         // 효과 강도 (슬로우 % ice)
+        public float dotDamage;     // 도트 데미지 양(fire, poison 등)
         public float tickInterval;  // 도트 데미지 틱 간격
 
         public EffectData()
