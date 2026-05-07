@@ -37,7 +37,7 @@ namespace Enemy
         public bool IsBoss => EnemyTagUtil.Has(enemyTags, EnemyTag.Boss);
 
         [Header("Modules")]
-        public EnemyBrain brain;
+        private EnemyBrain brain;
         [SerializeField] private EnemyIdle idle;
         [SerializeField] private EnemyMove move;
         [SerializeField] private EnemyHurt hurt;
@@ -128,6 +128,8 @@ namespace Enemy
         {
             _identity = identity;
             enemyTags = identity.Tag;
+
+            brain = identity.brain;
             
             if (enemyVisual != null)
             {
@@ -292,7 +294,7 @@ namespace Enemy
         {
             if (_attacks.Count <= 1) return;
 
-            var currentAttackIndex = UnityEngine.Random.Range(0, _attacks.Count);
+            var currentAttackIndex = 0;//UnityEngine.Random.Range(0, _attacks.Count);
             var selectedAttack = _attacks[currentAttackIndex];
             
             ActionTable[EnemyState.Attack] = (selectedAttack.OnEnter, selectedAttack.OnExit, selectedAttack.Tick);
