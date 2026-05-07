@@ -3,11 +3,11 @@ using System;
 namespace Players
 {
     /// <summary>
-    /// CharacterSO에서 사용하는 캐릭터 기본 능력치 데이터.
-    /// PlayerStat의 Base Layer에 적용된다.
+    /// 캐릭터·장비 공용 레벨당 스탯 성장치 구조체.
+    /// CharacterIdentity와 EquipmentIdentity의 levelStatGrowth 필드에 사용된다.
     /// </summary>
     [Serializable]
-    public struct CharacterBaseStatData
+    public struct LevelStatGrowth
     {
         public int maxHP;
         public int attackPower;
@@ -16,6 +16,5 @@ namespace Players
         public int magicResistance;
         public float attackSpeed;
         public float projectileSpeed;
-        public EffectType attackEffectType;
     }
 }
