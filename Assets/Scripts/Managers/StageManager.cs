@@ -27,7 +27,7 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 10;
+    private const int BossStageInterval = 2;
     private bool _initialized = false;
     private bool _allStageCleared = false;
     public bool WaitingForCollectibles { get; private set; }
@@ -232,7 +232,7 @@ public class StageManager : MonoBehaviour
         
         if (IsBossStage)
         {
-            var idx = CurrentStageIndex / BossStageInterval;
+            var idx = CurrentStageIndex / BossStageInterval - 1;
             await enemyManager.SpawnBossEnemyAsync(idx);
         }
         else
