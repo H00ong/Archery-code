@@ -11,9 +11,19 @@ namespace Enemy
         public static void CalculateStat(
             EnemyStat outStat, EnemyData e, EnemyTag tag, MapData map, int stageIndex)
         {
-            if (e == null || map == null || e.@base == null)
+            if (e == null)
             {
-                Debug.LogError("Enemy data or map data (or base) is null");
+                Debug.LogError($"[EnemyStatUtil] EnemyData is null — no JSON entry matched (name lookup failed, tag={tag})");
+                return;
+            }
+            if (map == null)
+            {
+                Debug.LogError($"[EnemyStatUtil] MapData is null — CurrentMapData not loaded yet (enemy={e.enemyName})");
+                return;
+            }
+            if (e.@base == null)
+            {
+                Debug.LogError($"[EnemyStatUtil] EnemyData.base is null — JSON 'base' field missing for {e.enemyName}");
                 return;
             }
 

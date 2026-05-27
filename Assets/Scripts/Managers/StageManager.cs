@@ -27,7 +27,7 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 2;
+    private const int BossStageInterval = 4;
     private bool _initialized = false;
     private bool _allStageCleared = false;
     public bool WaitingForCollectibles { get; private set; }
