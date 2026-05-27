@@ -15,6 +15,9 @@ namespace UI
         public UI_CharacterTabView GetCharacterTabView()
             => tabContents[0].GetComponent<UI_CharacterTabView>();
 
+        public UI_InventoryTabView GetInventoryTabView()
+            => tabContents.Length > 1 ? tabContents[1].GetComponent<UI_InventoryTabView>() : null;
+
         public void Init(Action<int> onTabSelected, Action onClose)
         {
             _onClose = onClose;

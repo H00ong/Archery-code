@@ -226,10 +226,10 @@ namespace Stat
         // ================================================================
 
         /// <summary>
-        /// CharacterSO의 CharacterBaseStatData를 Base Layer에 적용한다.
+        /// CharacterSO의 BaseStatData를 Base Layer에 적용한다.
         /// CharacterManager에서 캐릭터 생성 직후 호출된다.
         /// </summary>
-        public void ApplyBaseStat(CharacterBaseStatData data)
+        public void ApplyBaseStat(BaseStatData data)
         {
             baseMaxHP = data.maxHP;
             baseAttackPower = data.attackPower;

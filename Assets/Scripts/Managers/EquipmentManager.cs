@@ -130,7 +130,7 @@ namespace Managers
         /// <summary>
         /// 특정 장비 종류의 현재 스탯을 반환한다. 장착 중인 장비가 없으면 default를 반환한다.
         /// </summary>
-        public EquipmentBaseStatData GetStatOfEquipment(EquipmentType type)
+        public BaseStatData GetStatOfEquipment(EquipmentType type)
         {
             if (!_equippedItems.TryGetValue(type, out var identity))
                 return default;
