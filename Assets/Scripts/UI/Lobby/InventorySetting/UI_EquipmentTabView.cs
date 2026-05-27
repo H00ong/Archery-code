@@ -95,11 +95,11 @@ namespace UI
 
         public void SetEquipmentIcon(Sprite icon)
         {
-            if (equipmentDisplay != null)
-            {
-                equipmentDisplay.sprite = icon;
-                equipmentDisplay.enabled = icon != null;
-            }
+            if (equipmentDisplay == null) return;
+            equipmentDisplay.sprite = icon;
+            equipmentDisplay.enabled = icon != null;
+            equipmentDisplay.preserveAspect = true;
+            ((RectTransform)equipmentDisplay.transform).sizeDelta = new Vector2(225f, 225f);
         }
 
         public void SetEquipmentName(string name)
@@ -147,8 +147,10 @@ namespace UI
 
         public void SetEquippedEquipmentIcon(Sprite icon)
         {
-            if (equippedEquipmentIcon != null && icon != null)
-                equippedEquipmentIcon.sprite = icon;
+            if (equippedEquipmentIcon == null || icon == null) return;
+            equippedEquipmentIcon.sprite = icon;
+            equippedEquipmentIcon.preserveAspect = true;
+            ((RectTransform)equippedEquipmentIcon.transform).sizeDelta = new Vector2(78f, 78f);
         }
 
         public void SetEquippedEquipmentName(string name)

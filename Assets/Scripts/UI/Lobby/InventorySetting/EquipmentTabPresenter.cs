@@ -61,8 +61,13 @@ namespace UI
                     _equipmentNames.Add(kvp.Key);
             }
 
-            // 정렬: 미착용 가격 순/이름 순으로 안정화. 우선 이름 알파벳 기준.
-            _equipmentNames.Sort(System.StringComparer.Ordinal);
+            // 정렬: index 기준 (CharacterIdentity와 동일 방식)
+            _equipmentNames.Sort((a, b) =>
+            {
+                var idA = _equipmentManager.GetEquipmentByName(a);
+                var idB = _equipmentManager.GetEquipmentByName(b);
+                return idA.index.CompareTo(idB.index);
+            });
 
             string equippedName = _playerData.GetEquippedItemName(_equipmentType);
             int eqIdx = _equipmentNames.IndexOf(equippedName);
