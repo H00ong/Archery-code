@@ -67,9 +67,15 @@ namespace Managers
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (scene.name == "Lobby")
+            {
+                CurrentState = SceneState.Lobby;
                 EventBus.Publish(EventType.LobbySceneLoaded);
+            }
             else if (scene.name == "InGame")
+            {
+                CurrentState = SceneState.InGame;
                 EventBus.Publish(EventType.InGameSceneLoaded);
+            }
         }
 
         private void CreateDict()
