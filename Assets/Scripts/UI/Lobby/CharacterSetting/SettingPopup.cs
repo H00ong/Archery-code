@@ -10,18 +10,14 @@ namespace UI
         [SerializeField] private Button[] tabButtons;
         [SerializeField] private GameObject[] tabContents;
 
-        private Action _onClose;
-
         public UI_CharacterTabView GetCharacterTabView()
             => tabContents[0].GetComponent<UI_CharacterTabView>();
 
         public UI_InventoryTabView GetInventoryTabView()
             => tabContents.Length > 1 ? tabContents[1].GetComponent<UI_InventoryTabView>() : null;
 
-        public void Init(Action<int> onTabSelected, Action onClose)
+        public void Init(Action<int> onTabSelected)
         {
-            _onClose = onClose;
-
             for (int i = 0; i < tabButtons.Length; i++)
             {
                 int index = i;
@@ -37,15 +33,6 @@ namespace UI
         {
             for (int i = 0; i < tabContents.Length; i++)
                 tabContents[i].SetActive(i == activeIndex);
-        }
-
-        private void Update()
-        {
-            // EffectDetailPopup이 열려있으면 ESC를 가로채므로 SettingPopup은 닫지 않는다.
-            if (EffectDetailPopup.OpenCount > 0) return;
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-                _onClose?.Invoke();
         }
     }
 }

@@ -17,6 +17,11 @@ namespace Managers
         [SerializeField] private GameObject skillChoicePopupPrefab;
 
         [Space]
+        [Header("Pause Menu")]
+        [Tooltip("DDL-Canvas 아래에 배치된 PauseMenuPopup 씬 오브젝트. DontDestroyOnLoad 계층 안에 있어서 씬이 바뀌어도 유지된다.")]
+        [SerializeField] private PauseMenuPopup pauseMenuPopup;
+
+        [Space]
         [Header("Stage Transition")]
         [SerializeField] private UI_StageTransition stageTransition;
 
@@ -24,6 +29,10 @@ namespace Managers
         private GameOverPopupPresenter _gameOverPresenter;
         private SkillChoicePopupPresenter _skillChoicePresenter;
         private SettingPopupPresenter _settingPresenter;
+        private PauseMenuPresenter _pausePresenter;
+
+        // 인게임 모달(게임오버/클리어/스킬 선택)이 떠 있는 동안에는 일시정지를 열지 않는다.
+        private bool _modalOpen;
 
         private void Awake()
         {
@@ -31,6 +40,11 @@ namespace Managers
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+
+                if (pauseMenuPopup != null)
+                    _pausePresenter = new PauseMenuPresenter(pauseMenuPopup);
+                else
+                    Debug.LogWarning("[UIManager] pauseMenuPopup이 비어 있어 일시정지 메뉴가 비활성화됩니다. 인스펙터에서 PauseMenuPopup을 연결하세요.");
             }
             else
             {
@@ -45,6 +59,7 @@ namespace Managers
             EventBus.Subscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Subscribe(EventType.Retry, ClearDataInMap);
             EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
+            EventBus.Subscribe(EventType.SkillChosen, OnSkillChosen);
             EventBus.Subscribe(EventType.PlayerDied, ShowGameOverPopup);
             EventBus.Subscribe(EventType.MapCleared, ShowGameClearPopup);
         }
@@ -55,8 +70,48 @@ namespace Managers
             EventBus.Unsubscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Unsubscribe(EventType.Retry, ClearDataInMap);
             EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
+            EventBus.Unsubscribe(EventType.SkillChosen, OnSkillChosen);
             EventBus.Unsubscribe(EventType.PlayerDied, ShowGameOverPopup);
             EventBus.Unsubscribe(EventType.MapCleared, ShowGameClearPopup);
+        }
+
+        private void Update()
+        {
+            if (!Input.GetKeyDown(KeyCode.Escape)) return;
+
+            // 로딩 씬에서는 일시정지 메뉴를 열지 않는다. (로비 / 인게임에서만 동작)
+            var gm = GameManager.Instance;
+            if (gm == null || gm.CurrentState == SceneState.Loading) return;
+
+            // 0) 초기화 확인 팝업이 떠 있으면 ESC는 일시정지를 닫지 않고 그 팝업의 '취소'로 동작한다.
+            if (_pausePresenter != null && _pausePresenter.IsConfirmOpen)
+            {
+                _pausePresenter.CancelConfirm();
+                return;
+            }
+
+            // 1) 일시정지가 열려 있으면 최우선으로 닫는다.
+            if (_pausePresenter != null && _pausePresenter.IsOpen)
+            {
+                _pausePresenter.Hide();
+                return;
+            }
+
+            // 2) 효과 상세 팝업이 열려 있으면 가장 나중에 열린 것부터 닫는다.
+            if (UI.EffectDetailPopup.CloseTopmost()) return;
+
+            // 3) 로비 설정 팝업이 열려 있으면 그것부터 닫는다.
+            if (_settingPresenter != null && _settingPresenter.IsOpen)
+            {
+                _settingPresenter.Hide();
+                return;
+            }
+
+            // 4) 인게임 모달(게임오버/클리어/스킬 선택)이 떠 있으면 일시정지를 열지 않는다.
+            if (_modalOpen) return;
+
+            // 5) 일시정지 메뉴 열기.
+            _pausePresenter?.Show();
         }
 
         private void ShowSkillChoicePopup()
@@ -71,6 +126,12 @@ namespace Managers
 
             var playerSkill = PlayerController.Instance.Skill;
             _skillChoicePresenter.Show(playerSkill);
+            _modalOpen = true;
+        }
+
+        private void OnSkillChosen()
+        {
+            _modalOpen = false;
         }
 
         private void ShowGameOverPopup()
@@ -84,6 +145,7 @@ namespace Managers
             }
 
             _gameOverPresenter.Show();
+            _modalOpen = true;
         }
 
         private void ShowGameClearPopup()
@@ -97,6 +159,7 @@ namespace Managers
             }
 
             _gameClearPresenter.Show();
+            _modalOpen = true;
         }
 
         public void ClearDataInMap()
@@ -104,6 +167,10 @@ namespace Managers
             _skillChoicePresenter = null;
             _gameOverPresenter = null;
             _gameClearPresenter = null;
+
+            // 일시정지 메뉴는 영구 객체이므로 null 로 만들지 않고 닫기만 한다.
+            _pausePresenter?.Hide();
+            _modalOpen = false;
         }
 
         public async Awaitable FadeOutAsync()

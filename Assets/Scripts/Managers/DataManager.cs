@@ -148,8 +148,20 @@ namespace Managers
         #region Player
         public void LoadPlayerData()
         {
-            // TODO : Load PlayerData from SaveSystem
-            playerData = new PlayerData("BlueWizard", "Normal Magic Staff", "Old Armor", "Old Shoes", 5000);
+            var save = SaveSystem.SaveManager.Instance?.CurrentData;
+            if (save != null && !string.IsNullOrEmpty(save.currentCharacterName))
+            {
+                var charLevels = new Dictionary<string, int>(save.characterLevels ?? new Dictionary<string, int>());
+                var ownedEquipments = new HashSet<string>(save.ownedEquipments ?? new List<string>());
+                var equipped = new Dictionary<EquipmentType, string>(save.equippedItems ?? new Dictionary<EquipmentType, string>());
+                var equipLevels = new Dictionary<EquipmentType, int>(save.equipmentTypeLevels ?? new Dictionary<EquipmentType, int>());
+                playerData = new PlayerData(save.currentCharacterName, charLevels, ownedEquipments, equipped, equipLevels, save.gold);
+                Debug.Log("[DataManager] PlayerData loaded from save.");
+            }
+            else
+            {
+                playerData = new PlayerData("BlueWizard", "Normal Magic Staff", "Old Armor", "Old Shoes", 5000);
+            }
         }
 
         public PlayerData GetPlayerData()

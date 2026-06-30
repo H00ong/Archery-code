@@ -14,6 +14,8 @@ namespace UI
 
         public event Action<bool> OnPopupToggled;
 
+        public bool IsOpen { get; private set; }
+
         public SettingPopupPresenter(SettingPopup popup,
             LobbyCharacterCamera characterCamera)
         {
@@ -31,7 +33,7 @@ namespace UI
             if (inventoryTabView != null)
                 _inventoryTabPresenter = new InventoryTabPresenter(inventoryTabView);
 
-            _popup.Init(OnTabSelected, Hide);
+            _popup.Init(OnTabSelected);
             _popup.Close();
         }
 
@@ -50,6 +52,7 @@ namespace UI
 
             _characterTabPresenter.Activate();
 
+            IsOpen = true;
             OnPopupToggled?.Invoke(true);
         }
 
@@ -59,6 +62,7 @@ namespace UI
             _lobbyCharacterManager.Hide();
 
             _popup.Close();
+            IsOpen = false;
             OnPopupToggled?.Invoke(false);
         }
 

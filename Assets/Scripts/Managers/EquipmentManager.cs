@@ -94,6 +94,7 @@ namespace Managers
             playerData.SetEquippedItem(type, equipmentName);
 
             Debug.Log($"[EquipmentManager] Equipped {equipmentName} (Type: {type})");
+            EventBus.Publish(EventType.EquipmentChanged);
         }
 
         /// <summary>
@@ -219,6 +220,7 @@ namespace Managers
 
             playerData.SetEquipmentTypeLevel(type, currentLevel + 1);
             Debug.Log($"[EquipmentManager] '{type}' 레벨업: {currentLevel} → {currentLevel + 1}");
+            EventBus.Publish(EventType.EquipmentLeveledUp);
             return true;
         }
 
@@ -236,6 +238,7 @@ namespace Managers
                 return false;
 
             UnlockEquipment(equipmentName);
+            EventBus.Publish(EventType.EquipmentPurchased);
             return true;
         }
     }

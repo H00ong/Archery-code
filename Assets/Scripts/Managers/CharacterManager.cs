@@ -94,11 +94,18 @@ namespace Managers
                 }
                 Debug.Log($"[CharacterManager] Loaded {_characterMap.Count} character identities.");
 
-                // TODO: SaveManager에서 해금 목록 불러오기
+                // Save 데이터에서 해금 목록 복원
+                _ownedCharacters.Clear();
+                var save = SaveSystem.SaveManager.Instance?.CurrentData;
+                if (save != null && save.ownedCharacters != null && save.ownedCharacters.Count > 0)
                 {
-                    var playerData = PlayerManager.Instance.PlayerData;
-                    _ownedCharacters.Add(playerData.currentCharacterName);
+                    foreach (var n in save.ownedCharacters)
+                        if (!string.IsNullOrEmpty(n)) _ownedCharacters.Add(n);
                 }
+
+                var playerData = PlayerManager.Instance.PlayerData;
+                if (!string.IsNullOrEmpty(playerData.currentCharacterName))
+                    _ownedCharacters.Add(playerData.currentCharacterName);
             }
             else
             {
@@ -212,6 +219,8 @@ namespace Managers
 
         public IReadOnlyDictionary<string, CharacterIdentity> GetCharacterMap() => _characterMap;
 
+        public IReadOnlyCollection<string> GetOwnedCharacters() => _ownedCharacters;
+
         public bool IsCharacterUnlocked(string characterName) => _ownedCharacters.Contains(characterName);
 
         public void UnlockCharacter(string characterName)
@@ -239,6 +248,7 @@ namespace Managers
 
             playerData.SetCharacterLevel(characterName, currentLevel + 1);
             Debug.Log($"[CharacterManager] '{characterName}' 레벨업: {currentLevel} → {currentLevel + 1}");
+            EventBus.Publish(EventType.CharacterLeveledUp);
             return true;
         }
         
@@ -257,6 +267,7 @@ namespace Managers
 
             UnlockCharacter(characterName);
             playerData.SetCharacterLevel(characterName, 1);
+            EventBus.Publish(EventType.CharacterPurchased);
             return true;
         }
     }

@@ -36,7 +36,6 @@ namespace Managers
         private readonly List<GameObject> _preloadedMaps = new List<GameObject>();
         private GameObject _preloadedBossMap;
 
-        // TODO : json 저장
         public int CurrentMapIndex { get; private set; } = 0;
         public int MaxMapIndex { get; private set; } = -1;
         public MapData CurrentMapData { get; private set; }
@@ -58,6 +57,10 @@ namespace Managers
         {
             _poolManager = PoolManager.Instance;
             _dataManager = DataManager.Instance;
+
+            var save = SaveSystem.SaveManager.Instance?.CurrentData;
+            if (save != null && save.maxMapIndex > MaxMapIndex)
+                MaxMapIndex = save.maxMapIndex;
         }
 
         void OnEnable()
@@ -83,8 +86,7 @@ namespace Managers
         {
             if (CurrentMapIndex > MaxMapIndex)
                 MaxMapIndex = CurrentMapIndex;
-            
-            // TODO : 세이브 시스템에 맵 클리어 데이터 저장
+            // SaveManager가 MapCleared 이벤트로 자동 저장한다.
         }
 
         private void OnStageMapClear()

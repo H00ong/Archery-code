@@ -1,12 +1,15 @@
 using Enemy;
 using Managers;
+using Map;
+using Objects;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 public class EnemyDie : MonoBehaviour, IEnemyBehavior
 {
     private EnemyController _ctx;
     private PoolManager _poolManager;
-    
+
     public virtual void Init(EnemyController ctx, BaseModuleData data = null)
     {
         _ctx = ctx;
@@ -16,59 +19,81 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
     public virtual void OnEnter()
     {
         EnemyManager.Instance.RemoveEnemy(_ctx);
-        
+
         _ctx.ColliderActive(false);
         _ctx.RigidbodyActive(false);
-        
+
+        var mapData = MapManager.Instance != null ? MapManager.Instance.CurrentMapData : null;
+        bool isBoss = _ctx.IsBoss;
+
         if (_ctx.expItemPrefab != null)
         {
-            SpawnExpItemAsync().Forget();
+            int expAmount = ComputeAmount(_ctx.baseExpAmount, mapData?.expDrop, isBoss);
+            SpawnDropAsync(_ctx.expItemPrefab, expAmount, isExp: true).Forget();
+        }
+
+        if (_ctx.goldItemPrefab != null)
+        {
+            int goldAmount = ComputeAmount(_ctx.baseGoldAmount, mapData?.goldDrop, isBoss);
+            SpawnDropAsync(_ctx.goldItemPrefab, goldAmount, isExp: false).Forget();
         }
     }
-    
-    private async Awaitable SpawnExpItemAsync()
+
+    private static int ComputeAmount(int baseAmount, DropConfig cfg, bool isBoss)
     {
-        GameObject expItem = null;
+        if (baseAmount <= 0) return 0;
+        if (cfg == null) return baseAmount;
+
+        float roll = Random.Range(cfg.minRandom, cfg.maxRandom);
+        float mul = cfg.multiplier * roll;
+        if (isBoss && cfg.bossMultiplier > 0f) mul *= cfg.bossMultiplier;
+
+        return Mathf.Max(1, Mathf.RoundToInt(baseAmount * mul));
+    }
+
+    private async Awaitable SpawnDropAsync(AssetReferenceGameObject prefab, int amount, bool isExp)
+    {
+        GameObject item = null;
 
         try
         {
-            if (!_poolManager.TryGetObject(_ctx.expItemPrefab, out expItem, _poolManager.extra))
+            if (!_poolManager.TryGetObject(prefab, out item, _poolManager.extra))
             {
-                expItem = await _poolManager.GetObjectAsync(_ctx.expItemPrefab, _poolManager.extra);
+                item = await _poolManager.GetObjectAsync(prefab, _poolManager.extra);
             }
 
             destroyCancellationToken.ThrowIfCancellationRequested();
 
-            if (expItem != null)
+            if (item == null) return;
+
+            if (isExp)
             {
-                expItem.transform.position = transform.position;
-                expItem.SetActive(true);
+                if (item.TryGetComponent<ExpItem>(out var exp))
+                    exp.SetAmount(amount);
             }
+            else
+            {
+                if (item.TryGetComponent<GoldItem>(out var gold))
+                    gold.SetAmount(amount);
+            }
+
+            item.transform.position = transform.position;
+            item.SetActive(true);
         }
         catch (System.OperationCanceledException)
         {
-            if (expItem != null)
-                _poolManager.ReturnObject(expItem);
-
-            return;
+            if (item != null)
+                _poolManager.ReturnObject(item);
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[EnemyDie] 중 치명적 에러 발생: {ex.Message}");
-
-            if (expItem != null)
-                _poolManager.ReturnObject(expItem);
-
-            return;
+            Debug.LogError($"[EnemyDie] 드롭 스폰 중 에러: {ex.Message}");
+            if (item != null)
+                _poolManager.ReturnObject(item);
         }
     }
-        
-    public virtual void OnExit()
-    {
-    }
 
-    public virtual void Tick()
-    {
+    public virtual void OnExit() { }
 
-    }
+    public virtual void Tick() { }
 }
