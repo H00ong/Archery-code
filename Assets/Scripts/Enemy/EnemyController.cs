@@ -60,6 +60,9 @@ namespace Enemy
         
         [Header("Drop Item")]
         [SerializeField] public AssetReferenceGameObject expItemPrefab;
+        [SerializeField] public AssetReferenceGameObject goldItemPrefab;
+        [SerializeField] public int baseExpAmount = 10;
+        [SerializeField] public int baseGoldAmount = 10;
 
         [Header("Default Tuning")]
         [SerializeField] private float defaultAttackSpeed;
