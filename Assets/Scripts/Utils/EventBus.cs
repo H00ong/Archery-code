@@ -47,4 +47,15 @@ public enum EventType
     AllCollectiblesCollected,
     LobbySceneLoaded,
     InGameSceneLoaded,
+
+    // SaveSystem triggers
+    CharacterPurchased,
+    CharacterLeveledUp,
+    CharacterSelected,
+    EquipmentPurchased,
+    EquipmentLeveledUp,
+    EquipmentChanged,
+    SettingsChanged,
+    GameSaved,
+    GameLoaded,
 }

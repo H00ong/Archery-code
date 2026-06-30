@@ -99,6 +99,10 @@ namespace Players
             _equipmentTypeLevels[type] = level;
         }
 
+        // ── Save Snapshot ──
+        public IReadOnlyDictionary<string, int> GetAllCharacterLevels() => _characterLevels;
+        public IReadOnlyDictionary<EquipmentType, int> GetAllEquipmentTypeLevels() => _equipmentTypeLevels;
+
         // ── Gold ──
 
         public bool SpendGold(int amount)

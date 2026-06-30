@@ -38,6 +38,7 @@ namespace Managers
         {
             PlayerData.SetCharacterName(characterIdentity.characterName);
             SyncPlayerData(PlayerData);
+            EventBus.Publish(EventType.CharacterSelected);
         }
     }
 }

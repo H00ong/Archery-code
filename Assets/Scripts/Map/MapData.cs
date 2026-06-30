@@ -24,6 +24,17 @@ namespace Map
         public StageGrowth stageGrowth;
         public List<int> enemyCountGrid;
         public List<EffectConfig> enemyEffects;
+        public DropConfig expDrop;
+        public DropConfig goldDrop;
+    }
+
+    [System.Serializable]
+    public class DropConfig
+    {
+        public float multiplier = 1f;
+        public float minRandom = 0.85f;
+        public float maxRandom = 1.15f;
+        public float bossMultiplier = 1f;
     }
 
     [System.Serializable]
