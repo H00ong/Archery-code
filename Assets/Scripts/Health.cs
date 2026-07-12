@@ -40,6 +40,12 @@ public class Health : MonoBehaviour, IDamageable
     private int currentHealth;
     private bool isLive = true;
 
+    /// <summary> 현재 체력 (UI 바인딩용 읽기 전용) </summary>
+    public int CurrentHealth => currentHealth;
+
+    /// <summary> 최대 체력 (UI 바인딩용 읽기 전용) </summary>
+    public int MaxHealth => maxHealth;
+
     // 방어 스탯 캐싱
     private BaseStat _stat;
 
