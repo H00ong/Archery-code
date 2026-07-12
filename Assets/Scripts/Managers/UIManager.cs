@@ -25,6 +25,10 @@ namespace Managers
         [Header("Stage Transition")]
         [SerializeField] private UI_StageTransition stageTransition;
 
+        [Space]
+        [Header("InGame HUD")]
+        private InGameHud _inGameHud;
+
         private MapClearPopupPresenter _gameClearPresenter;
         private GameOverPopupPresenter _gameOverPresenter;
         private SkillChoicePopupPresenter _skillChoicePresenter;
@@ -56,6 +60,7 @@ namespace Managers
         void OnEnable()
         {
             EventBus.Subscribe(EventType.LobbySceneLoaded, SetupSettingPopup);
+            EventBus.Subscribe(EventType.InGameSceneLoaded, OnInGameSceneLoaded);
             EventBus.Subscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Subscribe(EventType.Retry, ClearDataInMap);
             EventBus.Subscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -67,6 +72,7 @@ namespace Managers
         void OnDisable()
         {
             EventBus.Unsubscribe(EventType.LobbySceneLoaded, SetupSettingPopup);
+            EventBus.Unsubscribe(EventType.InGameSceneLoaded, OnInGameSceneLoaded);
             EventBus.Unsubscribe(EventType.TransitionToLobby, ClearDataInMap);
             EventBus.Unsubscribe(EventType.Retry, ClearDataInMap);
             EventBus.Unsubscribe(EventType.LevelUp, ShowSkillChoicePopup);
@@ -171,6 +177,26 @@ namespace Managers
             // 일시정지 메뉴는 영구 객체이므로 null 로 만들지 않고 닫기만 한다.
             _pausePresenter?.Hide();
             _modalOpen = false;
+
+            // 인게임 HUD 참조 해제 (씬이 바뀌므로 다음 InGame 로드 때 재탐색)
+            _inGameHud = null;
+        }
+
+        /// <summary>InGame 씬 로드 시 씬 내의 InGameHud를 탐색해 캐싱한다.</summary>
+        private void OnInGameSceneLoaded()
+        {
+            _inGameHud = FindFirstObjectByType<InGameHud>(FindObjectsInactive.Include);
+            if (_inGameHud != null)
+                _inGameHud.gameObject.SetActive(false); // FadeIn 직전까지 숨김
+            else
+                Debug.LogWarning("[UIManager] InGameHud를 찾을 수 없습니다. 인게임 씬 Canvas에 배치했는지 확인하세요.");
+        }
+
+        /// <summary>StageManager가 FadeIn 직전에 호출 — 화면이 열릴 때 HUD가 이미 켜진 상태가 된다.</summary>
+        public void ShowInGameHud()
+        {
+            if (_inGameHud != null)
+                _inGameHud.gameObject.SetActive(true);
         }
 
         public async Awaitable FadeOutAsync()
