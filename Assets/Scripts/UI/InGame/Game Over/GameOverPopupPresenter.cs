@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 public class GameOverPopupPresenter
@@ -14,8 +15,12 @@ public class GameOverPopupPresenter
     {
         var _view = _popup.GetGameOverView();
 
+        int gold = PlayerManager.Instance != null ? PlayerManager.Instance.RunGold : 0;
+
         if (_viewPresenter == null)
-            _viewPresenter = new GameOverViewPresenter(_view, OnRetry, OnLobby);
+            _viewPresenter = new GameOverViewPresenter(_view, OnRetry, OnLobby, gold);
+        else
+            _view.SetGold(gold);
 
         _popup.Open();
     }

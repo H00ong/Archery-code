@@ -15,8 +15,12 @@ public class MapClearPopupPresenter
     {
         var _view = _mapClearPopup.GetMapClearView();
 
+        int gold = PlayerManager.Instance != null ? PlayerManager.Instance.RunGold : 0;
+
         if (_viewPresenter == null)
-            _viewPresenter = new MapClearViewPresenter(_view, OnLobby);
+            _viewPresenter = new MapClearViewPresenter(_view, OnLobby, gold);
+        else
+            _view.SetGold(gold);
 
         _mapClearPopup.Open();
     }
