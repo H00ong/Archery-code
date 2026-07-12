@@ -11,7 +11,7 @@ namespace Objects
 
         protected override void OnCollected()
         {
-            PlayerManager.Instance.PlayerData.AddGold(goldAmount);
+            PlayerManager.Instance.EarnGold(goldAmount);
         }
     }
 }
