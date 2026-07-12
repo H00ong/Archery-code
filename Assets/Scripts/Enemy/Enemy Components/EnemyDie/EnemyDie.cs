@@ -26,13 +26,13 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
         var mapData = MapManager.Instance != null ? MapManager.Instance.CurrentMapData : null;
         bool isBoss = _ctx.IsBoss;
 
-        if (_ctx.expItemPrefab != null)
+        if (_ctx.expItemPrefab != null && _ctx.expItemPrefab.RuntimeKeyIsValid())
         {
             int expAmount = ComputeAmount(_ctx.baseExpAmount, mapData?.expDrop, isBoss);
             SpawnDropAsync(_ctx.expItemPrefab, expAmount, isExp: true).Forget();
         }
 
-        if (_ctx.goldItemPrefab != null)
+        if (_ctx.goldItemPrefab != null && _ctx.goldItemPrefab.RuntimeKeyIsValid())
         {
             int goldAmount = ComputeAmount(_ctx.baseGoldAmount, mapData?.goldDrop, isBoss);
             SpawnDropAsync(_ctx.goldItemPrefab, goldAmount, isExp: false).Forget();
