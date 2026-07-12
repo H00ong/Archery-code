@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class UI_GameOverView : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI gameOverText;
+    [SerializeField] TextMeshProUGUI goldText;
     [SerializeField] Button retryButton;
     [SerializeField] Button lobbyButton;
 
@@ -22,5 +23,11 @@ public class UI_GameOverView : MonoBehaviour
 
         retryButton.onClick.AddListener(onRetry);
         lobbyButton.onClick.AddListener(onLobby);
+    }
+
+    public void SetGold(int gold)
+    {
+        if (goldText != null)
+            goldText.text = $"+{gold} G";
     }
 }

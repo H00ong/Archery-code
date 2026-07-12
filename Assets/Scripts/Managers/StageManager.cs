@@ -183,6 +183,10 @@ public class StageManager : MonoBehaviour
 
         destroyCancellationToken.ThrowIfCancellationRequested();
 
+        // FadeIn 직전 — 화면이 밝아지기 전에 HUD 활성화
+        if (UIManager.Instance)
+            UIManager.Instance.ShowInGameHud();
+
         // Fade in — 스테이지 텍스트 표시 후 화면 복원, 그 뒤 Combat 시작
         var label = IsBossStage ? "BOSS" : $"Stage {CurrentStageIndex + 1}";
 

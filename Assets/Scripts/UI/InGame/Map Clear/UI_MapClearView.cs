@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class UI_MapClearView : MonoBehaviour
 {
     [SerializeField] TextMeshProUGUI mapClearText;
+    [SerializeField] TextMeshProUGUI goldText;
     [SerializeField] Button lobbyButton;
 
     void Awake()
@@ -17,5 +18,11 @@ public class UI_MapClearView : MonoBehaviour
     {
         lobbyButton.onClick.RemoveAllListeners();
         lobbyButton.onClick.AddListener(onLobby);
+    }
+
+    public void SetGold(int gold)
+    {
+        if (goldText != null)
+            goldText.text = $"+{gold} G";
     }
 }
