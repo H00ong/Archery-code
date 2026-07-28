@@ -19,6 +19,11 @@ public class PauseMenuPopup : MonoBehaviour
 
     public void Open()
     {
+        // popup 자신 및 부모 계층이 InGame 씨 전환 등으로 비활성화되어 있을 수 있으므로
+        // Open 시 자신과 부모 루트 Canvas를 명시적으로 활성화해 준다.
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
         GetPauseMenuView().gameObject.SetActive(true);
     }
 

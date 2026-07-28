@@ -38,6 +38,9 @@ namespace Managers
         // 인게임 모달(게임오버/클리어/스킬 선택)이 떠 있는 동안에는 일시정지를 열지 않는다.
         private bool _modalOpen;
 
+        // 페이드 트랜지션(씨 로딩 전후 암전환) 진행 중 여부. 트랜지션 중에는 ESC 무시 — 궁수의 전설 등 대다수 모바일 게임의 관례. 
+        public bool IsTransitioning { get; private set; }
+
         private void Awake()
         {
             if (Instance == null)
@@ -46,7 +49,13 @@ namespace Managers
                 DontDestroyOnLoad(gameObject);
 
                 if (pauseMenuPopup != null)
+                {
+                    // UI_StageTransition의 canvasGroup 필드가 DDL-Canvas의 CanvasGroup을
+                    // 잘못 가리키면 FadeIn 후 alpha=0이 되어 PauseMenu 전체가 안 보인다.
+                    // Awake 시점에 부모 CanvasGroup alpha를 강제 복구한다.
+                    ResetParentCanvasGroupAlpha(pauseMenuPopup.gameObject);
                     _pausePresenter = new PauseMenuPresenter(pauseMenuPopup);
+                }
                 else
                     Debug.LogWarning("[UIManager] pauseMenuPopup이 비어 있어 일시정지 메뉴가 비활성화됩니다. 인스펙터에서 PauseMenuPopup을 연결하세요.");
             }
@@ -54,6 +63,28 @@ namespace Managers
             {
                 Destroy(gameObject);
                 return;
+            }
+        }
+
+        /// <summary>
+        /// obj의 부모 계층을 올라가며 alpha &lt; 1인 CanvasGroup을 찾아 1로 복구한다.
+        /// UI_StageTransition.canvasGroup이 DDL-Canvas를 잘못 가리켜
+        /// FadeIn 후 전체가 투명해지는 문제를 방어한다.
+        /// </summary>
+        private static void ResetParentCanvasGroupAlpha(GameObject obj)
+        {
+            var t = obj.transform.parent;
+            while (t != null)
+            {
+                if (t.TryGetComponent<CanvasGroup>(out var cg) && cg.alpha < 1f)
+                {
+                    Debug.LogWarning($"[UIManager] '{t.name}'의 CanvasGroup.alpha={cg.alpha}. 1로 복구합니다. " +
+                                     "(UI_StageTransition의 canvasGroup 참조가 잘못 연결된 것으로 보입니다.)");
+                    cg.alpha = 1f;
+                    cg.interactable = true;
+                    cg.blocksRaycasts = true;
+                }
+                t = t.parent;
             }
         }
 
@@ -88,7 +119,10 @@ namespace Managers
             // 로딩 씬에서는 일시정지 메뉴를 열지 않는다. (로비 / 인게임에서만 동작)
             var gm = GameManager.Instance;
             if (gm == null || gm.CurrentState == SceneState.Loading) return;
-
+            // 페이드 트랜지션이 진행 중이면 입력을 무시한다.
+            // 이유: 암전환 중 pause를 열면 timeScale=0이 되어 이상한 상태로 넘어가거나, view의 부모 canvas가 거지 페이드 레이어에 가려 pause menu가 안 보이거나 깔꾸거리는 UX가 발생한다.
+            // (궁수의 전설 등 대부분의 모바일 게임도 동일한 방식으로 캘링한다.)
+            if (IsTransitioning) return;
             // 0) 초기화 확인 팝업이 떠 있으면 ESC는 일시정지를 닫지 않고 그 팝업의 '취소'로 동작한다.
             if (_pausePresenter != null && _pausePresenter.IsConfirmOpen)
             {
@@ -131,8 +165,8 @@ namespace Managers
             }
 
             var playerSkill = PlayerController.Instance.Skill;
+            _modalOpen = true;                     // Show() 호출 전에 설정 — 내부에서 SkillChosen이 동기 발행될 경우 OnSkillChosen이 false로 돌려줌
             _skillChoicePresenter.Show(playerSkill);
-            _modalOpen = true;
         }
 
         private void OnSkillChosen()
@@ -201,19 +235,38 @@ namespace Managers
 
         public async Awaitable FadeOutAsync()
         {
-            if (stageTransition)
+            IsTransitioning = true;
+            try
             {
-                stageTransition.gameObject.SetActive(true);
-                await stageTransition.FadeOutAsync();
+                if (stageTransition)
+                {
+                    stageTransition.gameObject.SetActive(true);
+                    await stageTransition.FadeOutAsync();
+                }
+            }
+            finally
+            {
+                // FadeOut 완료 후에도 이후 FadeIn이 이어질 수로 자명하게 진행 중 상태이므로 FadeIn 쪽에서 해제한다.
+                // 단독 FadeOut만 사용하는 경우를 위해 여기서도 해제.
+                IsTransitioning = false;
             }
         }
 
         public async Awaitable FadeInAsync(string stageLabel = null)
         {
-            if (stageTransition)
-                await stageTransition.FadeInAsync(stageLabel);
+            IsTransitioning = true;
+            try
+            {
+                if (stageTransition)
+                    await stageTransition.FadeInAsync(stageLabel);
 
-            stageTransition.gameObject.SetActive(false);
+                if (stageTransition)
+                    stageTransition.gameObject.SetActive(false);
+            }
+            finally
+            {
+                IsTransitioning = false;
+            }
         }
 
         public void SetupSettingPopup()

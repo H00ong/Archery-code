@@ -15,6 +15,9 @@ namespace UI
 
         private void Awake()
         {
+            // [RequireComponent]로 자신의 GameObject에 CanvasGroup이 반드시 존재한다.
+            // 인스펙터에서 부모의 CanvasGroup 등을 잘못 연결한 경우를 방어한다.
+            canvasGroup = GetComponent<CanvasGroup>();
             canvasGroup.alpha = 0f;
             canvasGroup.blocksRaycasts = false;
             if (stageText) stageText.gameObject.SetActive(false);
