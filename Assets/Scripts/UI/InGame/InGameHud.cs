@@ -9,7 +9,7 @@ using UnityEngine.UI;
 /// 인게임 HUD.
 /// - 체력 슬라이더 + 현재 장착 캐릭터 이미지
 /// - 경험치 슬라이더 + 슬라이더 내부 레벨 텍스트
-/// - Tab 키로 획득한 스킬 아이콘 목록 토글
+/// - toggleKey(기본 Tab)를 누르는 동안만 획득 스킬 아이콘 목록 표시 (hold 방식)
 /// 싱글톤(PlayerController / LevelManager / CharacterManager / SkillManager)을 참조하여
 /// 매 프레임 폴링으로 갱신한다. (UI_ProgressBar와 동일한 폴링 패턴)
 /// </summary>
@@ -31,7 +31,8 @@ public class InGameHud : MonoBehaviour
     [SerializeField] private KeyCode toggleKey = KeyCode.Tab;
 
     private Health _health;
-    private readonly List<Image> _spawnedIcons = new();
+    // 스킬 ID → 아이콘 Image. 한 번 만든 아이콘은 재사용하고, 새 스킬만 추가 생성한다.
+    private readonly Dictionary<string, Image> _iconDict = new();
 
     private void OnEnable()
     {
@@ -78,6 +79,9 @@ public class InGameHud : MonoBehaviour
             characterIcon.sprite = identity.characterIcon;
             characterIcon.enabled = true;
         }
+
+        // 새 판이 시작되면 이전 판의 스킬 아이콘을 모두 제거한다.
+        ClearSkillIcons();
     }
 
     private void UpdateHealth()
@@ -117,13 +121,26 @@ public class InGameHud : MonoBehaviour
     private void HandleSkillToggle()
     {
         if (skillListPanel == null) return;
-        if (!Input.GetKeyDown(toggleKey)) return;
 
-        bool open = !skillListPanel.activeSelf;
-        skillListPanel.SetActive(open);
+        bool held    = Input.GetKey(toggleKey);
+        bool visible = skillListPanel.activeSelf;
 
-        if (open)
+        if (held && !visible)
+        {
+            // 키를 막 누른 순간 — 패널을 보이고 새 스킬만 추가
+            skillListPanel.SetActive(true);
             RefreshSkillIcons();
+        }
+        else if (!held && visible)
+        {
+            // 키를 뗀 순간 — 패널만 숨긴다. 아이콘은 파괴하지 않고 재사용한다.
+            skillListPanel.SetActive(false);
+        }
+        else if (held && visible)
+        {
+            // 이미 열려 있는 동안에도 매 프레임 체크해 새로 배운 스킬 아이콘을 즉시 추가한다.
+            RefreshSkillIcons();
+        }
     }
 
     private void OnSkillChosen()
@@ -136,10 +153,13 @@ public class InGameHud : MonoBehaviour
     private void RefreshSkillIcons()
     {
         var container = skillIconContainer != null ? skillIconContainer : skillListPanel?.transform;
-        if (container == null || skillIconPrefab == null)
-            return;
+        if (container == null) return;
 
-        ClearSkillIcons();
+        if (skillIconPrefab == null)
+        {
+            Debug.LogWarning("[InGameHud] skillIconPrefab이 할당되지 않았습니다. 인스펙터에서 스킬 아이콘 Image 프리팹을 연결하세요.");
+            return;
+        }
 
         var pc = PlayerController.Instance;
         if (pc == null || pc.Skill == null) return;
@@ -149,25 +169,31 @@ public class InGameHud : MonoBehaviour
 
         foreach (var id in pc.Skill.acquiredSkillModule.Keys)
         {
+            // 이미 아이콘이 있는 스킬은 건너뛴다 (새로 배운 것만 생성).
+            if (_iconDict.ContainsKey(id)) continue;
+
             if (!skillManager.SkillDict.TryGetValue(id, out var def) || def == null)
+            {
+                Debug.LogWarning($"[InGameHud] 스킬 ID '{id}'를 SkillDict에서 찾을 수 없습니다.");
                 continue;
-            if (def.icon == null)
-                continue;
+            }
 
             var icon = Instantiate(skillIconPrefab, container);
-            icon.sprite = def.icon;
+
+            if (def.icon != null)
+                icon.sprite = def.icon;
+            else
+                Debug.LogWarning($"[InGameHud] '{id}' SkillDefinition.icon이 null입니다. 인스펙터에서 Sprite를 할당하세요.");
+
             icon.enabled = true;
-            _spawnedIcons.Add(icon);
+            _iconDict[id] = icon;
         }
     }
 
     private void ClearSkillIcons()
     {
-        for (int i = 0; i < _spawnedIcons.Count; i++)
-        {
-            if (_spawnedIcons[i] != null)
-                Destroy(_spawnedIcons[i].gameObject);
-        }
-        _spawnedIcons.Clear();
+        foreach (var icon in _iconDict.Values)
+            if (icon != null) Destroy(icon.gameObject);
+        _iconDict.Clear();
     }
 }
