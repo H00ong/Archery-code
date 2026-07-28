@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using Effects;
 using Stat;
 using UnityEngine;
 
 namespace Players
 {
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MonoBehaviour, IStunReceiver
     {
         public static PlayerController Instance { get; private set; }
 
@@ -17,6 +18,10 @@ namespace Players
         };
 
         [HideInInspector] public PlayerState currentState = PlayerState.Idle;
+
+        [Header("Hit Effect Settings")]
+        public bool enableIceSlowEffect = true;
+        public bool enableLightningStunEffect = true;
 
         public PlayerStat Stat { get; private set; }
         public PlayerMovement Movement { get; private set; }
@@ -95,6 +100,38 @@ namespace Players
         public void ResetGameBuffStat()
         {
             Stat.ResetInGameStats();
+        }
+
+        // ================================================================
+        //  IStunReceiver 구현 (Lightning 등)
+        // ================================================================
+
+        public bool IsStunned { get; private set; }
+
+        /// <summary> Lightning 등 스턴 시작 — 이동·공격 컴포넌트를 일시 비활성화하여 프레이어를 정지시킨다. </summary>
+        public void BeginStun()
+        {
+            if (IsPlayerDead || IsStunned) return;
+            if (!enableLightningStunEffect) return;
+
+            IsStunned = true;
+
+            if (Movement != null) Movement.enabled = false;
+            if (Attack != null)   Attack.enabled = false;
+
+            ChangePlayerAnimation(PlayerState.Idle);
+        }
+
+        /// <summary> 스턴 종료 — 플레이어 복귀. </summary>
+        public void EndStun()
+        {
+            if (!IsStunned) return;
+            IsStunned = false;
+
+            if (IsPlayerDead) return;
+
+            if (Movement != null) Movement.enabled = true;
+            if (Attack != null)   Attack.enabled = true;
         }
     }
 }

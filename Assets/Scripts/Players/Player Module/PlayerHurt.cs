@@ -35,6 +35,7 @@ namespace Players
 
             playerHealth.OnDie += OnPlayerDie;
             playerHealth.OnHit += OnPlayerHit;
+            playerHealth.OnStatusChanged += OnPlayerStatusChanged;
         }
 
         private void OnDisable()
@@ -43,6 +44,7 @@ namespace Players
             {
                 playerHealth.OnDie -= OnPlayerDie;
                 playerHealth.OnHit -= OnPlayerHit;
+                playerHealth.OnStatusChanged -= OnPlayerStatusChanged;
             }
         }
 
@@ -57,6 +59,20 @@ namespace Players
         private void OnPlayerHit()
         {
             Debug.Log("Player Hit!");
+        }
+
+        private void OnPlayerStatusChanged(DamageInfo damageInfo, bool isStart)
+        {
+            if (!playerController.enableIceSlowEffect) return;
+            if (!Utils.HasEffectType(damageInfo.type, EffectType.Ice)) return;
+
+            var iceData = damageInfo.GetEffectData(EffectType.Ice);
+            if (iceData == null) return;
+
+            if (isStart)
+                playerController.Movement.UpdateMoveSpeed(-iceData.value);
+            else
+                playerController.Movement.UpdateMoveSpeed(0f);
         }
 
         public void Die()

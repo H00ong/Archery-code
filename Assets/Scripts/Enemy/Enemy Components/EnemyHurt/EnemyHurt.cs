@@ -23,6 +23,9 @@ public class EnemyHurt : MonoBehaviour, IEnemyBehavior
 
     public virtual void Tick()
     {
+        // 스턴(Lightning 등) 중이마음 Hurt 종료를 무시하여 Hurt 상태를 유지한다.
+        if (_ctx.IsStunned) return;
+
         if (_ctx.HurtEndTrigger) 
         {
             _ctx.OnModuleComplete();

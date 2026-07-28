@@ -22,6 +22,10 @@ public class OrbManager : MonoBehaviour
     [SerializeField] float _defaultDistance;
     [SerializeField] float _orbDamageModifier = 1f;
     [SerializeField] float _defaultRotateSpeed = 40f;
+
+    /// <summary> OrbDamageIncrease 스킬 등에 의해 누적되는 보너스 배수. 기본 damageModifier에 더해진다. </summary>
+    private float _orbDamageBonus = 0f;
+    private float TotalDamageModifier => _orbDamageModifier + _orbDamageBonus;
     
     int _generatedOrbSetCount = 0;
     float _rotateSpeed;
@@ -212,10 +216,29 @@ public class OrbManager : MonoBehaviour
         {
             var orb = orbPool.orbs[i];
 
-            var config = new OrbConfig(_orbPivot, orbPool.rotateSpeed, type, _orbDamageModifier);
+            var config = new OrbConfig(_orbPivot, orbPool.rotateSpeed, type, TotalDamageModifier);
             orb.InitializeOrb(config);
             SetOrbPosition(orb.transform, orbPool.distance, count, i);
             orb.gameObject.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// 오브 데미지 보너스를 설정하고 현재 생성된 모든 오브에 즉시 반영한다.
+    /// OrbDamageIncrease 스킬에서 호출된다.
+    /// </summary>
+    public void SetOrbDamageBonus(float bonus)
+    {
+        _orbDamageBonus = bonus;
+        float total = TotalDamageModifier;
+
+        foreach (var kv in _orbPoolDict)
+        {
+            foreach (var orb in kv.Value.orbs)
+            {
+                if (orb != null)
+                    orb.UpdateDamageModifier(total);
+            }
         }
     }
 

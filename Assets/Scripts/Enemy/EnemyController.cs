@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Effects;
 using Managers;
 using Map;
 using Players;
@@ -10,7 +11,7 @@ using UnityEngine.AddressableAssets;
 
 namespace Enemy
 {
-    public class EnemyController : MonoBehaviour
+    public class EnemyController : MonoBehaviour, IStunReceiver
     {
         public static readonly Dictionary<EnemyState, int> StateAnimHashes = new()
         {
@@ -75,6 +76,9 @@ namespace Enemy
         public bool HurtEndTrigger { get; set; }
         public bool AttackEndTrigger { get; set; }
         public bool HasMultiAttackModules => _attacks.Count > 1;
+
+        /// <summary> Lightning 등 스턴 상태 여부. EnemyHurt에서 이 부를 확인해 Hurt 상태를 유지한다. </summary>
+        public bool IsStunned { get; private set; }
     
         private Action OnEnter, OnExit, OnTick;
         private Dictionary<EnemyState, (Action enter, Action exit, Action tick)> ActionTable;
@@ -313,6 +317,33 @@ namespace Enemy
         }
 
         private void OnDie() => ChangeState(EnemyState.Dead);
+
+        // ================================================================
+        //  IStunReceiver 구현 (Lightning 등)
+        // ================================================================
+
+        /// <summary> Lightning 등 스턴 시작 — Hurt 상태로 강제 진입시키고 자동 종료를 지연시킨다. </summary>
+        public void BeginStun()
+        {
+            if (CurrentState == EnemyState.Dead) return;
+
+            IsStunned = true;
+
+            // 보스도 Lightning으로는 Hurt 상태로 강제 진입 (기본 OnHit은 보스 록)
+            if (CurrentState != EnemyState.Hurt)
+                ChangeState(EnemyState.Hurt);
+            else
+                SetHurtEndTrigger(false); // 현재 Hurt 중이면 종료 트리거 리셋
+        }
+
+        /// <summary> 스턴 종료 — Hurt 종료 트리거를 활성화하여 다음 프레임에 자연스럽게 스테이트 전환되도록 한다. </summary>
+        public void EndStun()
+        {
+            IsStunned = false;
+
+            if (CurrentState == EnemyState.Hurt)
+                SetHurtEndTrigger(true);
+        }
 
         public void ReturnImmediately()
         {

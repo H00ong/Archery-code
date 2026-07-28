@@ -193,6 +193,19 @@ namespace Stat
         public void SetBuffEffectData(EffectType type, EffectData data)
             => _buffEffectDataMap[type] = data;
 
+        /// <summary>
+        /// 인게임 버프 EffectData를 기존 값에 누적한다.
+        /// 여러 속성 강화 스킬이 같은 타입을 강화할 때 서로 덮어쓰지 않도록 사용.
+        /// </summary>
+        public void AddBuffEffectData(EffectType type, EffectData data)
+        {
+            if (data == null) return;
+            if (_buffEffectDataMap.TryGetValue(type, out var existing) && existing != null)
+                _buffEffectDataMap[type] = existing + data;
+            else
+                _buffEffectDataMap[type] = data;
+        }
+
         // ================================================================
         //  Modifier Methods (기존 스킬 시스템 호환)
         // ================================================================

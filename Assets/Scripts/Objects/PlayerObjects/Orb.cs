@@ -38,6 +38,12 @@ public class Orb : Objects.SceneObject
         _damageModifier = config.damageModifier;
     }
 
+    /// <summary> 데미지 배수만 갱신 (OrbDamageIncrease 스킬 등에서 사용). </summary>
+    public void UpdateDamageModifier(float damageModifier)
+    {
+        _damageModifier = damageModifier;
+    }
+
     private void Rotate() 
     {
         transform.RotateAround(_rotatePivot.position, Vector3.up, _rotateSpeed * Time.deltaTime);

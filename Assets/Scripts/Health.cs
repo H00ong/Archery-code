@@ -55,6 +55,7 @@ public class Health : MonoBehaviour, IDamageable
         new DotEffectHandler(EffectType.Fire),
         new DotEffectHandler(EffectType.Poison),
         new IceEffectHandler(),
+        new LightningEffectHandler(),
     };
 
     // 효과 상태 Dictionary
