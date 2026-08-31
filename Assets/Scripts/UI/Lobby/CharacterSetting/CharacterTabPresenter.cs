@@ -169,10 +169,13 @@ namespace UI
             var viewingEffects = identity.GetEffectDataAtLevel(1);
             var equippedEffects = equippedIdentity?.GetEffectDataAtLevel(equippedLevel);
 
-            _view.SetCurrentStatsText("Level : 1\n" + LobbyStatFormatter.FormatStatsWithComparison(viewingStats, equippedStats, viewingEffects, equippedEffects,
-                identity.baseStat.attackEffectType, equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal));
+            var stats = LobbyStatFormatter.FormatStatsWithComparison(viewingStats, equippedStats, viewingEffects, equippedEffects,
+                identity.baseStat.attackEffectType, equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal);
+            _view.SetCurrentStatsText("Level : 1\n" + stats.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
-            _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+
+            var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+            _view.SetLevelGrowthStatText(growth.Combined);
             _view.SetGrowthDetailButtonActive(true);
         }
 
@@ -190,12 +193,14 @@ namespace UI
                 _view.SetActionButtonInteractable(_playerData.gold >= cost);
 
             var currentEffects = identity.GetEffectDataAtLevel(level);
-            _view.SetCurrentStatsText($"Level : {level}\n" + LobbyStatFormatter.FormatStats(identity.GetStatsAtLevel(level), currentEffects));
+            var stats = LobbyStatFormatter.FormatStats(identity.GetStatsAtLevel(level), currentEffects);
+            _view.SetCurrentStatsText($"Level : {level}\n" + stats.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
 
             if (!isMaxLevel)
             {
-                _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+                var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+                _view.SetLevelGrowthStatText(growth.Combined);
                 _view.SetGrowthDetailButtonActive(true);
             }
             else
@@ -219,13 +224,15 @@ namespace UI
             var viewingEffects = identity.GetEffectDataAtLevel(level);
             var equippedEffects = equippedIdentity?.GetEffectDataAtLevel(equippedLevel);
 
-            _view.SetCurrentStatsText($"Level : {level}\n" + LobbyStatFormatter.FormatStatsWithComparison(viewingStats, equippedStats, viewingEffects, equippedEffects,
-                identity.baseStat.attackEffectType, equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal));
+            var stats = LobbyStatFormatter.FormatStatsWithComparison(viewingStats, equippedStats, viewingEffects, equippedEffects,
+                identity.baseStat.attackEffectType, equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal);
+            _view.SetCurrentStatsText($"Level : {level}\n" + stats.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
 
             if (level < identity.maxLevel)
             {
-                _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+                var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+                _view.SetLevelGrowthStatText(growth.Combined);
                 _view.SetGrowthDetailButtonActive(true);
             }
             else
@@ -247,7 +254,8 @@ namespace UI
             _view.SetEquippedCharacterName(equippedName);
             _view.SetEquippedLevelText($"Lv.{level}");
             var equippedEffectsForStats = equippedIdentity.GetEffectDataAtLevel(level);
-            _view.SetEquippedStatsText(LobbyStatFormatter.FormatStats(equippedIdentity.GetStatsAtLevel(level), equippedEffectsForStats));
+            var equippedStatText = LobbyStatFormatter.FormatStats(equippedIdentity.GetStatsAtLevel(level), equippedEffectsForStats);
+            _view.SetEquippedStatsText(equippedStatText.Combined);
             _view.SetEquippedStatsDetailButtonActive(equippedEffectsForStats is { Count: > 0 });
         }
 

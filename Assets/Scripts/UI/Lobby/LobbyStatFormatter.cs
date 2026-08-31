@@ -12,11 +12,37 @@ namespace UI
     /// </summary>
     public static class LobbyStatFormatter
     {
+        /// <summary>
+        /// 스탯 텍스트를 기본 스탯 블록과 Magic Effect 블록으로 분리해 담는 구조체.
+        /// Magic Effect를 별도 TMP 필드에 배치하면 상세 버튼을 바로 옆에 붙일 수 있고,
+        /// 이펙트가 많아져도 기본 스탯 영역을 침범(overflow)하지 않는다.
+        /// </summary>
+        public readonly struct StatText
+        {
+            /// <summary> HP/ATK/SPD/ARM/MR/AS 등 기본 스탯 블록. (Magic Effect 제외) </summary>
+            public readonly string Stats;
+            /// <summary> Magic Effect 헤더 + ▲▼ 줄. 이펙트가 없으면 빈 문자열. </summary>
+            public readonly string MagicEffect;
+
+            public StatText(string stats, string magicEffect)
+            {
+                Stats = stats;
+                MagicEffect = magicEffect ?? string.Empty;
+            }
+
+            public bool HasMagicEffect => !string.IsNullOrEmpty(MagicEffect);
+
+            /// <summary> 기본 스탯 + Magic Effect를 하나로 합친 텍스트. Magic Effect가 없으면 Stats만 반환한다. </summary>
+            public string Combined => HasMagicEffect
+                ? (string.IsNullOrEmpty(Stats) ? MagicEffect : Stats + "\n" + MagicEffect)
+                : Stats;
+        }
+
         // ─────────────────────────────────────────────────────
         // 스탯 포맷
         // ─────────────────────────────────────────────────────
 
-        public static string FormatStats(BaseStatData stat, Dictionary<EffectType, EffectData> effectMap = null)
+        public static StatText FormatStats(BaseStatData stat, Dictionary<EffectType, EffectData> effectMap = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"HP: {stat.maxHP}");
@@ -26,29 +52,13 @@ namespace UI
             sb.AppendLine($"MR: {stat.magicResistance}");
             sb.Append($"AS: {stat.attackSpeed:F2}");
 
-            if (stat.attackEffectType != EffectType.Normal && effectMap is { Count: > 0 })
-            {
-                var effectNames = new List<string>();
-                foreach (var kvp in effectMap)
-                {
-                    if (kvp.Key == EffectType.Normal) continue;
-                    if (!Utils.HasEffectType(stat.attackEffectType, kvp.Key)) continue;
-                    effectNames.Add($"<color={GetEffectColor(kvp.Key)}>{GetEffectLabel(kvp.Key)}</color>");
-                }
-                if (effectNames.Count > 0)
-                {
-                    sb.AppendLine();
-                    sb.Append($"Magic Effect: {string.Join(", ", effectNames)}");
-                }
-            }
-
-            return sb.ToString();
+            return new StatText(sb.ToString(), BuildSimpleEffectSummary(stat, effectMap));
         }
 
         /// <summary>
         /// 보고 있는 스탯과 현재 장착 스탯을 비교하여 ▲▼ 표시로 포맷한다.
         /// </summary>
-        public static string FormatStatsWithComparison(
+        public static StatText FormatStatsWithComparison(
             BaseStatData viewing, BaseStatData equipped,
             Dictionary<EffectType, EffectData> viewingEffects, Dictionary<EffectType, EffectData> equippedEffects,
             EffectType viewingEffectType, EffectType equippedEffectType)
@@ -61,38 +71,8 @@ namespace UI
             sb.AppendLine(FormatCompareInt("MR", viewing.magicResistance, equipped.magicResistance));
             sb.Append(FormatCompareFloat("AS", viewing.attackSpeed, equipped.attackSpeed, "F2"));
 
-            AppendEffectDataSummary(sb, viewingEffects, equippedEffects, viewingEffectType, equippedEffectType);
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// 자신의 이펙트를 ▲(초록)으로 표시. currentStatsText 전용.
-        /// </summary>
-        public static string FormatStatsWithEffectArrows(BaseStatData stat, Dictionary<EffectType, EffectData> effectMap)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"HP: {stat.maxHP}");
-            sb.AppendLine($"ATK: {stat.attackPower}");
-            sb.AppendLine($"SPD: {stat.moveSpeed:F1}");
-            sb.AppendLine($"ARM: {stat.armor}");
-            sb.AppendLine($"MR: {stat.magicResistance}");
-            sb.Append($"AS: {stat.attackSpeed:F2}");
-
-            if (stat.attackEffectType != EffectType.Normal && effectMap is { Count: > 0 })
-            {
-                foreach (var kvp in effectMap)
-                {
-                    if (kvp.Key == EffectType.Normal) continue;
-                    if (!Utils.HasEffectType(stat.attackEffectType, kvp.Key)) continue;
-                    string label = GetEffectLabel(kvp.Key);
-                    string color = GetEffectColor(kvp.Key);
-                    sb.AppendLine();
-                    sb.Append($"<color={color}>{label}</color> <color=#22C55E>▲</color>");
-                }
-            }
-
-            return sb.ToString();
+            string magicEffect = BuildEffectDataSummary(viewingEffects, equippedEffects, viewingEffectType, equippedEffectType);
+            return new StatText(sb.ToString(), magicEffect);
         }
 
         // ─────────────────────────────────────────────────────
@@ -175,7 +155,7 @@ namespace UI
         /// <summary>
         /// 레벨당 성장 스탯 요약. 기본 스탯은 ▲▼ 비교, 이펙트는 변화 여부만 한 줄 표시.
         /// </summary>
-        public static string FormatGrowthStats(
+        public static StatText FormatGrowthStats(
             LevelStatGrowth growth, LevelStatGrowth equippedGrowth,
             EffectGrowth[] viewingEffectGrowths, EffectGrowth[] equippedEffectGrowths)
         {
@@ -199,10 +179,10 @@ namespace UI
             if (g.projectileSpeed != 0f || eg.projectileSpeed != 0f)
                 sb.AppendLine(FormatCompareFloat("PS", g.projectileSpeed, eg.projectileSpeed, "F1", "+"));
 
-            AppendEffectGrowthSummary(sb, viewingEffectGrowths, equippedEffectGrowths);
-
             TrimTrailingNewline(sb);
-            return sb.ToString();
+
+            string magicEffect = BuildEffectGrowthSummary(viewingEffectGrowths, equippedEffectGrowths);
+            return new StatText(sb.ToString(), magicEffect);
         }
 
         /// <summary>
@@ -298,16 +278,6 @@ namespace UI
             _ => "#FFFFFF",
         };
 
-        public static int CompareEffectGrowth(EffectGrowth a, EffectGrowth b)
-        {
-            float totalA = a.durationGrowth + a.valueGrowth + a.dotDamageGrowth;
-            float totalB = b.durationGrowth + b.valueGrowth + b.dotDamageGrowth;
-            float diff = totalA - totalB;
-            if (diff > 0.001f) return 1;
-            if (diff < -0.001f) return -1;
-            return 0;
-        }
-
         public static void TrimTrailingNewline(StringBuilder sb)
         {
             if (sb.Length > 0 && sb[sb.Length - 1] == '\n')
@@ -320,8 +290,48 @@ namespace UI
         // 내부 헬퍼
         // ─────────────────────────────────────────────────────
 
-        private static void AppendEffectDataSummary(
-            StringBuilder sb,
+        // ─────────────────────────────────────────────────────
+        // 내부 헬퍼 — Magic Effect 블록을 별도 문자열로 생성
+        // ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 비교 없이 자신의 Magic Effect 이름만 한 줄로 나열한다. (FormatStats 전용) 없으면 빈 문자열.
+        /// </summary>
+        private static string BuildSimpleEffectSummary(BaseStatData stat, Dictionary<EffectType, EffectData> effectMap)
+        {
+            if (stat.attackEffectType == EffectType.Normal || effectMap is not { Count: > 0 })
+                return string.Empty;
+
+            var effectNames = new List<string>();
+            foreach (var kvp in effectMap)
+            {
+                if (kvp.Key == EffectType.Normal) continue;
+                if (!Utils.HasEffectType(stat.attackEffectType, kvp.Key)) continue;
+                effectNames.Add($"<color={GetEffectColor(kvp.Key)}>{GetEffectLabel(kvp.Key)}</color>");
+            }
+            if (effectNames.Count == 0)
+                return string.Empty;
+
+            return "Magic Effect\n" + string.Join("\n", effectNames);
+        }
+
+        /// <summary> 비교 대상 대비 이펙트 한 줄의 변화 상태. </summary>
+        private enum EffectChangeState { None, Buff, Nerf, Mixed }
+
+        /// <summary> 이펙트 이름 + 변화 상태에 따른 화살표(▲▼)/네모(■, 부분 증감 혼재)를 한 줄로 합친다. </summary>
+        private static string FormatEffectLine(EffectType effectType, EffectChangeState state)
+        {
+            string coloredLabel = $"<color={GetEffectColor(effectType)}>{GetEffectLabel(effectType)}</color>";
+            return state switch
+            {
+                EffectChangeState.Buff => $"{coloredLabel} <color=#22C55E>▲</color>",
+                EffectChangeState.Nerf => $"{coloredLabel} <color=#EF4444>▼</color>",
+                EffectChangeState.Mixed => $"{coloredLabel} <color=#FACC15>■</color>",
+                _ => coloredLabel,
+            };
+        }
+
+        private static string BuildEffectDataSummary(
             Dictionary<EffectType, EffectData> viewingEffects,
             Dictionary<EffectType, EffectData> equippedEffects,
             EffectType viewingEffectType,
@@ -333,9 +343,7 @@ namespace UI
             if (equippedEffects != null)
                 foreach (var k in equippedEffects.Keys) allTypes.Add(k);
 
-            var headerNames = new List<string>();
-            var buffLines   = new List<string>();
-            var nerfLines   = new List<string>();
+            var lines = new List<string>();
 
             foreach (var effectType in allTypes)
             {
@@ -346,38 +354,21 @@ namespace UI
                 bool equippedHas = equippedEffects != null && equippedEffects.TryGetValue(effectType, out _)
                                    && Utils.HasEffectType(equippedEffectType, effectType);
 
-                string label = GetEffectLabel(effectType);
-                string color = GetEffectColor(effectType);
-                string coloredLabel = $"<color={color}>{label}</color>";
+                if (!viewingHas && !equippedHas) continue;
 
-                if (viewingHas)
-                    headerNames.Add(coloredLabel);
-
-                if (viewingHas && !equippedHas)
-                    buffLines.Add($"{coloredLabel} <color=#22C55E>▲</color>");
-                else if (!viewingHas && equippedHas)
-                    nerfLines.Add($"{coloredLabel} <color=#EF4444>▼</color>");
+                var state = viewingHas && equippedHas ? EffectChangeState.None
+                    : viewingHas ? EffectChangeState.Buff
+                    : EffectChangeState.Nerf;
+                lines.Add(FormatEffectLine(effectType, state));
             }
 
-            if (headerNames.Count > 0)
-            {
-                sb.AppendLine();
-                sb.Append($"Magic Effect: {string.Join(", ", headerNames)}");
-            }
-            foreach (var line in buffLines)
-            {
-                sb.AppendLine();
-                sb.Append(line);
-            }
-            foreach (var line in nerfLines)
-            {
-                sb.AppendLine();
-                sb.Append(line);
-            }
+            if (lines.Count == 0)
+                return string.Empty;
+
+            return "Magic Effect\n" + string.Join("\n", lines);
         }
 
-        private static void AppendEffectGrowthSummary(
-            StringBuilder sb,
+        private static string BuildEffectGrowthSummary(
             EffectGrowth[] viewingEffects,
             EffectGrowth[] equippedEffects)
         {
@@ -387,40 +378,52 @@ namespace UI
             if (equippedEffects != null)
                 foreach (var e in equippedEffects) allEffectTypes.Add(e.effectType);
 
-            var growthHeaderNames = new List<string>();
-            var growthBuffLines   = new List<string>();
-            var growthNerfLines   = new List<string>();
+            var lines = new List<string>();
 
             foreach (var effectType in allEffectTypes)
             {
                 if (effectType == EffectType.Normal) continue;
 
+                bool viewingHas = viewingEffects != null && System.Array.Exists(viewingEffects, e => e.effectType == effectType);
+                bool equippedHas = equippedEffects != null && System.Array.Exists(equippedEffects, e => e.effectType == effectType);
+                if (!viewingHas && !equippedHas) continue;
+
                 var vg = FindEffectGrowth(viewingEffects, effectType);
                 var eqg = FindEffectGrowth(equippedEffects, effectType);
-
-                bool viewingHasGrowth = viewingEffects != null &&
-                    System.Array.Exists(viewingEffects, e => e.effectType == effectType);
-
-                int cmp = CompareEffectGrowth(vg, eqg);
-                string label = GetEffectLabel(effectType);
-                string color = GetEffectColor(effectType);
-                string coloredLabel = $"<color={color}>{label}</color>";
-
-                if (viewingHasGrowth)
-                    growthHeaderNames.Add(coloredLabel);
-
-                if (cmp > 0)
-                    growthBuffLines.Add($"{coloredLabel} <color=#22C55E>▲</color>");
-                else if (cmp < 0)
-                    growthNerfLines.Add($"{coloredLabel} <color=#EF4444>▼</color>");
+                var state = GetEffectGrowthChangeState(vg, eqg, viewingHas, equippedHas);
+                lines.Add(FormatEffectLine(effectType, state));
             }
 
-            if (growthHeaderNames.Count > 0)
-                sb.AppendLine($"Magic Effect: {string.Join(", ", growthHeaderNames)}");
-            foreach (var line in growthBuffLines)
-                sb.AppendLine(line);
-            foreach (var line in growthNerfLines)
-                sb.AppendLine(line);
+            if (lines.Count == 0)
+                return string.Empty;
+
+            return "Magic Effect\n" + string.Join("\n", lines);
+        }
+
+        /// <summary> 둘 다 가진 이펙트는 세부 성장치(duration/value/dot)를 비교해 일부만 증가+일부만 감소면 Mixed로 판정한다. </summary>
+        private static EffectChangeState GetEffectGrowthChangeState(EffectGrowth a, EffectGrowth b, bool viewingHas, bool equippedHas)
+        {
+            if (viewingHas && !equippedHas) return EffectChangeState.Buff;
+            if (!viewingHas && equippedHas) return EffectChangeState.Nerf;
+
+            bool anyIncrease = false;
+            bool anyDecrease = false;
+
+            void Check(float av, float bv)
+            {
+                float diff = av - bv;
+                if (diff > 0.001f) anyIncrease = true;
+                else if (diff < -0.001f) anyDecrease = true;
+            }
+
+            Check(a.durationGrowth, b.durationGrowth);
+            Check(a.valueGrowth, b.valueGrowth);
+            Check(a.dotDamageGrowth, b.dotDamageGrowth);
+
+            if (anyIncrease && anyDecrease) return EffectChangeState.Mixed;
+            if (anyIncrease) return EffectChangeState.Buff;
+            if (anyDecrease) return EffectChangeState.Nerf;
+            return EffectChangeState.None;
         }
 
         private static EffectGrowth FindEffectGrowth(EffectGrowth[] arr, EffectType type)
