@@ -7,14 +7,15 @@ using UnityEngine;
 namespace UI
 {
     /// <summary>
-    /// Inventory 하부 탭(Weapon/Armor/Shoes) 1개에 대응되는 Presenter.
+    /// Inventory 하부 탭(Weapon/Armor/Shoes)에 대응되는 Presenter.
     /// CharacterTabPresenter와 동일한 구조를 갖되, 특정 EquipmentType으로 필터링된 장비 목록을 순회한다.
+    /// 하나의 View/Presenter 인스턴스를 Weapon/Armor/Shoes가 공유하며, sub-tab 전환 시 Activate(type)으로 대상 종류만 바꾼다.
     /// 장비 레벨은 종류별로 공유되며(레벨업은 착용 중인 장비에서만 가능), 데이터는 EquipmentManager를 사용한다.
     /// </summary>
     public class EquipmentTabPresenter
     {
         private readonly UI_EquipmentTabView _view;
-        private readonly EquipmentType _equipmentType;
+        private EquipmentType _equipmentType;
         private readonly EquipmentManager _equipmentManager;
         private readonly PlayerData _playerData;
 
@@ -27,18 +28,18 @@ namespace UI
         private int _currentViewingLevel;
         private int _currentEquippedLevel;
 
-        public EquipmentTabPresenter(UI_EquipmentTabView view, EquipmentType equipmentType)
+        public EquipmentTabPresenter(UI_EquipmentTabView view)
         {
             _view = view;
-            _equipmentType = equipmentType;
             _equipmentManager = EquipmentManager.Instance;
             _playerData = PlayerManager.Instance.PlayerData;
 
             _view.Init(OnLeft, OnRight, OnActionButton, OnGrowthDetail, OnCurrentStatsDetail, OnEquippedStatsDetail);
         }
 
-        public void Activate()
+        public void Activate(EquipmentType equipmentType)
         {
+            _equipmentType = equipmentType;
             BuildEquipmentList();
             UpdateView();
             UpdateEquippedContents();
@@ -210,12 +211,15 @@ namespace UI
             var viewingEffects = identity.GetEffectDataAtLevel(1);
             var equippedEffects = equippedIdentity?.GetEffectDataAtLevel(equippedLevel);
 
-            _view.SetCurrentStatsText("Level : 1\n" + LobbyStatFormatter.FormatStatsWithComparison(
+            var comparison = LobbyStatFormatter.FormatStatsWithComparison(
                 viewingStats, equippedStats, viewingEffects, equippedEffects,
                 identity.baseStat.attackEffectType,
-                equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal));
+                equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal);
+            _view.SetCurrentStatsText("Level : 1\n" + comparison.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
-            _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+
+            var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+            _view.SetLevelGrowthStatText(growth.Combined);
             _view.SetGrowthDetailButtonActive(true);
         }
 
@@ -233,12 +237,14 @@ namespace UI
                 _view.SetActionButtonInteractable(_playerData.gold >= cost);
 
             var currentEffects = identity.GetEffectDataAtLevel(level);
-            _view.SetCurrentStatsText($"Level : {level}\n" + LobbyStatFormatter.FormatStats(identity.GetStatsAtLevel(level), currentEffects));
+            var stats = LobbyStatFormatter.FormatStats(identity.GetStatsAtLevel(level), currentEffects);
+            _view.SetCurrentStatsText($"Level : {level}\n" + stats.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
 
             if (!isMaxLevel)
             {
-                _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+                var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+                _view.SetLevelGrowthStatText(growth.Combined);
                 _view.SetGrowthDetailButtonActive(true);
             }
             else
@@ -265,15 +271,17 @@ namespace UI
             var viewingEffects = identity.GetEffectDataAtLevel(level);
             var equippedEffects = equippedIdentity?.GetEffectDataAtLevel(equippedLevel);
 
-            _view.SetCurrentStatsText($"Level : {level}\n" + LobbyStatFormatter.FormatStatsWithComparison(
+            var comparison = LobbyStatFormatter.FormatStatsWithComparison(
                 viewingStats, equippedStats, viewingEffects, equippedEffects,
                 identity.baseStat.attackEffectType,
-                equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal));
+                equippedIdentity?.baseStat.attackEffectType ?? EffectType.Normal);
+            _view.SetCurrentStatsText($"Level : {level}\n" + comparison.Combined);
             _view.SetCurrentStatsDetailButtonActive(true);
 
             if (level < identity.maxLevel)
             {
-                _view.SetLevelGrowthStatText(LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths));
+                var growth = LobbyStatFormatter.FormatGrowthStats(identity.levelStatGrowth, equippedIdentity?.levelStatGrowth ?? default, identity.effectGrowths, equippedIdentity?.effectGrowths);
+                _view.SetLevelGrowthStatText(growth.Combined);
                 _view.SetGrowthDetailButtonActive(true);
             }
             else
@@ -295,7 +303,8 @@ namespace UI
             _view.SetEquippedEquipmentName(equippedName);
             _view.SetEquippedLevelText($"Lv.{level}");
             var equippedEffectsForStats = equippedIdentity.GetEffectDataAtLevel(level);
-            _view.SetEquippedStatsText(LobbyStatFormatter.FormatStats(equippedIdentity.GetStatsAtLevel(level), equippedEffectsForStats));
+            var equippedStatText = LobbyStatFormatter.FormatStats(equippedIdentity.GetStatsAtLevel(level), equippedEffectsForStats);
+            _view.SetEquippedStatsText(equippedStatText.Combined);
             _view.SetEquippedStatsDetailButtonActive(equippedEffectsForStats is { Count: > 0 });
         }
 
