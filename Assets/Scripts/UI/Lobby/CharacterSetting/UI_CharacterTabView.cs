@@ -127,10 +127,22 @@ namespace UI
         // ── 우측 스탯 패널 ──
 
         public void SetCurrentStatsText(string text)
-            => currentStatsText.text = text;
+        {
+            if (currentStatsText == null)
+            {
+                Debug.LogWarning("[UI_CharacterTabView] currentStatsText 참조가 비어있습니다. 인스펙터를 확인하세요.");
+                return;
+            }
+            currentStatsText.text = text;
+        }
 
         public void SetLevelGrowthStatText(string text)
         {
+            if (levelGrowthStatText == null)
+            {
+                Debug.LogWarning("[UI_CharacterTabView] levelGrowthStatText 참조가 비어있습니다. 인스펙터를 확인하세요.");
+                return;
+            }
             levelGrowthStatText.gameObject.SetActive(!string.IsNullOrEmpty(text));
             levelGrowthStatText.text = text;
         }
@@ -148,7 +160,14 @@ namespace UI
             => equippedLevelText.text = text;
 
         public void SetEquippedStatsText(string text)
-            => equippedStatsText.text = text;
+        {
+            if (equippedStatsText == null)
+            {
+                Debug.LogWarning("[UI_CharacterTabView] equippedStatsText 참조가 비어있습니다. 인스펙터를 확인하세요.");
+                return;
+            }
+            equippedStatsText.text = text;
+        }
 
         public void SetGoldText(int gold)
             => goldText.text = $"{gold} G";
