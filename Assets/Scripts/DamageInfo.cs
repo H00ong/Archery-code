@@ -13,6 +13,10 @@ public enum EffectType
     Lightning = 1 << 4, // 16
     Magma     = 1 << 5, // 32
     Dark      = 1 << 6, // 64
+
+    // 데미지 속성이 아닌, BarrelManager 딕셔너리 키로만 쓰이는 배럴 식별용 플래그
+    Shield    = 1 << 7, // 128 - 실드 배럴 식별용
+    Heal      = 1 << 8, // 256 - 체력 회복 배럴 식별용
 }
 
 [System.Serializable]
@@ -41,7 +45,7 @@ public class DamageInfo
         this.effectDataMap = new Dictionary<EffectType, EffectData>();
 
         foreach (var flag in Utils.AllEffectTypes)
-            effectDataMap[flag] = new EffectData(3.0f, 0.3f, 1f, 0.3f);
+            effectDataMap[flag] = EffectData.Fallback;
     }
 
     // Stat 기반 생성자 - 공격자의 BaseStat에서 EffectType별 EffectData를 읽어 초기화
@@ -55,7 +59,7 @@ public class DamageInfo
         foreach (var flag in Utils.AllEffectTypes)
         {
             var data = attackerStat?.GetEffectData(flag);
-            effectDataMap[flag] = data ?? new EffectData(3.0f, 0.3f, 1f, 0.3f);
+            effectDataMap[flag] = data ?? EffectData.Fallback;
         }
     }
 }

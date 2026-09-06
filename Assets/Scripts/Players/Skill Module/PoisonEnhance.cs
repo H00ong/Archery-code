@@ -9,8 +9,8 @@ namespace Players.SkillModule
     /// </summary>
     public class PoisonEnhance : PlayerSkillModuleBase, IPlayerUpgrader
     {
-        [SerializeField, Min(0f)] private float dotDamagePerLevel = 0.5f;
-        [SerializeField, Min(0f)] private float durationPerLevel = 0.5f;
+        [SerializeField, Min(0f)] private float dotDamagePerLevel = 0.25f;
+        [SerializeField, Min(0f)] private float durationPerLevel = 0.45f;
         [SerializeField, Min(0f)] private float tickIntervalBase = 0.3f;
 
         public override void Init(PlayerSkill _skill)
@@ -37,7 +37,7 @@ namespace Players.SkillModule
                 tickInterval: tickIntervalBase
             );
 
-            stat.SetBuffEffectData(EffectType.Poison, buff);
+            stat.SetBuffEffectData(EffectType.Poison, GetType().Name, buff);
         }
     }
 }

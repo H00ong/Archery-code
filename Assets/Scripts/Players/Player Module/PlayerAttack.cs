@@ -100,6 +100,8 @@ public class PlayerAttack : MonoBehaviour
             countOfMultiShot = Mathf.Max(1, multi.MultiShotCount);
         }
 
+        var projectileModifier = BuildProjectileModifier();
+
         for (int i = 0; i < countOfMultiShot; i++)
         {
             var bulletWave = new List<GameObject>();
@@ -129,6 +131,7 @@ public class PlayerAttack : MonoBehaviour
 
                 var proj = go.GetComponent<Projectile>();
                 proj.InitProjectile(projInst);
+                proj.ApplyModifier(projectileModifier);
 
                 bulletWave.Add(go);
             }
@@ -149,6 +152,22 @@ public class PlayerAttack : MonoBehaviour
         RebuildShotPlan();
 
         return shotPlan;
+    }
+
+    private ProjectileModifier BuildProjectileModifier()
+    {
+        var skills = _playerSkill.acquiredSkillModule;
+
+        int pierce = skills.TryGetValue("PierceShot", out var p) && p is PierceShot pierceShot
+            ? pierceShot.PierceCount : 0;
+
+        int reflect = skills.TryGetValue("ReflectShot", out var r) && r is ReflectShot reflectShot
+            ? reflectShot.ReflectCount : 0;
+
+        float homing = skills.TryGetValue("HomingShot", out var h) && h is HomingShot homingShot
+            ? homingShot.TurnSpeed : 0f;
+
+        return new ProjectileModifier(pierce, reflect, homing);
     }
 
     private void RebuildShotPlan()

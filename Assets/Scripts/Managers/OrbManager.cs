@@ -15,12 +15,12 @@ public class OrbPool
 public class OrbManager : MonoBehaviour
 {
     public static OrbManager Instance;
-    private const float OrbDistanceIncrement = 0.5f;
+    private const float OrbDistanceIncrement = 0.75f;
 
     Transform _orbPivot;
     [SerializeField] private string _label = "orb_config";
     [SerializeField] float _defaultDistance;
-    [SerializeField] float _orbDamageModifier = 1f;
+    [SerializeField] float _orbDamageModifier = 1.8f;
     [SerializeField] float _defaultRotateSpeed = 40f;
 
     /// <summary> OrbDamageIncrease 스킬 등에 의해 누적되는 보너스 배수. 기본 damageModifier에 더해진다. </summary>

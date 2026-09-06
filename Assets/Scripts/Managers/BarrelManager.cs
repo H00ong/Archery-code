@@ -184,6 +184,51 @@ namespace Managers
             }
         }
 
+        /// <summary>
+        /// Barrel.cs가 플레이어 픽업 시 호출하는 진입점. BarrelScriptable.kind에 따라 분기한다.
+        /// </summary>
+        public void OnBarrelPickedUp(EffectType type)
+        {
+            if (!_barrelSoDict.TryGetValue(type, out var so))
+            {
+                Debug.LogError($"[BarrelManager] Unknown barrel type on pickup: {type}");
+                return;
+            }
+
+            switch (so.kind)
+            {
+                case BarrelKind.Attack:
+                    MeteorAttackActive(type);
+                    break;
+                case BarrelKind.Shield:
+                    ApplyShieldPickup(type, so.shieldAmount);
+                    break;
+                case BarrelKind.Heal:
+                    ApplyHealPickup(type, so.healAmount);
+                    break;
+            }
+        }
+
+        // 스킬 레벨(attackCountPerBarrel을 레벨 배수로 재사용)에 비례해 보호막량을 늘려준다.
+        private void ApplyShieldPickup(EffectType type, int baseAmount)
+        {
+            var player = PlayerController.Instance;
+            if (player == null) return;
+
+            int level = _barrelConfigDict.TryGetValue(type, out var config) ? Mathf.Max(1, config.attackCountPerBarrel) : 1;
+            player.Health.AddShield(baseAmount * level);
+        }
+
+        // 스킬 레벨(attackCountPerBarrel을 레벨 배수로 재사용)에 비례해 회복량을 늘려준다.
+        private void ApplyHealPickup(EffectType type, int baseAmount)
+        {
+            var player = PlayerController.Instance;
+            if (player == null) return;
+
+            int level = _barrelConfigDict.TryGetValue(type, out var config) ? Mathf.Max(1, config.attackCountPerBarrel) : 1;
+            player.Hurt.TryTakeHeal(baseAmount * level);
+        }
+
         public void MeteorAttackActive(EffectType type)
         {
             var config = _barrelConfigDict[type];

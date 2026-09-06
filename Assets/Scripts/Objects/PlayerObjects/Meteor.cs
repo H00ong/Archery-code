@@ -5,6 +5,9 @@ using Managers;
 using Objects;
 using Players;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public readonly struct MeteorConfig
 {
@@ -94,4 +97,28 @@ public class Meteor : SceneObject
 
         Gizmos.DrawWireSphere(transform.position, attackRange);
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Particle Color/Yellow")]
+    private void SetParticleColorYellow() => SetParticleStartColor(Color.yellow, "Set meteor particles to yellow");
+
+    [ContextMenu("Particle Color/Purple")]
+    private void SetParticleColorPurple() => SetParticleStartColor(new Color(0.65f, 0.2f, 1f), "Set meteor particles to purple");
+
+    [ContextMenu("Particle Color/Red")]
+    private void SetParticleColorRed() => SetParticleStartColor(Color.red, "Set meteor particles to red");
+
+    private void SetParticleStartColor(Color color, string undoName)
+    {
+        var particleSystems = GetComponentsInChildren<ParticleSystem>(true);
+        Undo.RecordObjects(particleSystems, undoName);
+
+        foreach (var particleSystem in particleSystems)
+        {
+            var main = particleSystem.main;
+            main.startColor = color;
+            EditorUtility.SetDirty(particleSystem);
+        }
+    }
+#endif
 }

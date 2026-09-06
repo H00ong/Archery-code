@@ -48,7 +48,7 @@ namespace Enemy
 
             if (_ctx.HasMultiAttackModules)
             {
-                _ctx.anim.SetFloat(AnimHashes.AttackIndex, _animIndex);
+                _ctx.anim.SetInteger(AnimHashes.AttackIndex, _animIndex);
             }
         }
 

@@ -43,13 +43,18 @@ public class GroundZone : SceneObject
     /// <param name="effectType">속성 타입</param>
     /// <param name="tickInterval">틱 간격 (초)</param>
     /// <param name="duration">장판 지속 시간 (초)</param>
+    /// <param name="radiusScale">반경 배율 (1 = 프리팹 기본 크기)</param>
     public void Initialize(BaseStat playerStat, float damageMultiplierPerMinute,
-                           EffectType effectType, float tickInterval, float duration)
+                           EffectType effectType, float tickInterval, float duration,
+                           float radiusScale = 1f)
     {
         _playerStat          = playerStat;
         _damageMultiplierPerMinute = damageMultiplierPerMinute;
         _tickInterval        = Mathf.Max(0.1f, tickInterval);
         _duration            = duration;
+
+        if (radiusScale > 0f && !Mathf.Approximately(radiusScale, 1f))
+            transform.localScale *= radiusScale;
 
         // DamageInfo는 한 번 생성 후 damageAmount만 매 틱 갱신
         _damageInfo = new DamageInfo(0f, effectType, playerStat, gameObject);

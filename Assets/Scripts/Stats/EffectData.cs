@@ -35,6 +35,12 @@ namespace Stat
         public static EffectData Zero => new(0f, 0f, 0f, 0f);
 
         /// <summary>
+        /// 어느 레이어에도 해당 속성 데이터가 없을 때 쓰이는 폴백값.
+        /// (속성 오브·베럴처럼 스킬 버프 없이도 독립적으로 속성 데미지를 넣는 경로용)
+        /// </summary>
+        public static EffectData Fallback => new(1f, 0.2f, 0.5f, 0.3f);
+
+        /// <summary>
         /// 두 EffectData를 합산한다.
         /// tickInterval은 base 값을 유지(스택 불가)한다.
         /// </summary>

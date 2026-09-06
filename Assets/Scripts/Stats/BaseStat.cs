@@ -27,6 +27,13 @@ namespace Stat
         public abstract int MagicResistance { get; }
 
         public abstract EffectType AttackEffectType { get; }
+
+        /// <summary>
+        /// 스킬 버프를 제외한, 캐릭터·장비에서 타고난 공격 속성.
+        /// 속성 부여 스킬(AttackGrant)의 등장 조건 판정에 사용된다.
+        /// </summary>
+        public virtual EffectType InnateAttackEffectType => AttackEffectType;
+
         /// <summary>
         /// 해당 EffectType에 대응하는 최종 EffectData를 반환한다.
         /// 데이터가 없으면 null을 반환한다.

@@ -34,6 +34,11 @@ namespace Players
                 UpgradeSkillModule(so);
             else
                 LearnSkill(so);
+
+            // maxLevel 1짜리 스킬은 처음 배우는 순간(LearnSkill) 이미 max에 도달하므로,
+            // 여기서 한 번만 확인해야 두 경로(Learn/Upgrade) 모두에서 빠짐없이 제거된다.
+            if (acquiredSkillModule.TryGetValue(so.id, out var mod) && mod.Level >= so.maxLevel)
+                _availableSkills.Remove(so);
         }
 
         private void LearnSkill(SkillDefinition so)
@@ -48,9 +53,6 @@ namespace Players
         private void UpgradeSkillModule(SkillDefinition so)
         {
             acquiredSkillModule[so.id].UpdateSkill();
-
-            if (acquiredSkillModule[so.id].Level >= so.maxLevel)
-                _availableSkills.Remove(so);
         }
 
         public int GetLevel(SkillDefinition def)
@@ -60,14 +62,16 @@ namespace Players
 
         public List<SkillDefinition> GetRandomChoices(int count = 3)
         {
-            if (_availableSkills.Count == 0)
+            var stat = PlayerController.Instance != null ? PlayerController.Instance.Stat : null;
+            var pool = _availableSkills.Where(s => s.IsAvailable(stat)).ToList();
+
+            if (pool.Count == 0)
             {
                 Debug.LogWarning("[PlayerSkill] 획득 가능한 스킬이 없습니다!");
                 return new List<SkillDefinition>();
             }
 
             var rng = new System.Random();
-            var pool = new List<SkillDefinition>(_availableSkills);
             for (int i = pool.Count - 1; i > 0; i--)
             {
                 int j = rng.Next(i + 1);
@@ -82,6 +86,8 @@ namespace Players
 
         public void UpgradeAttackSpeed(float modifier) => PlayerController.Instance.Attack.UpdateAttackSpeed(modifier);
         public void UpgradeMoveSpeed(float modifier) => PlayerController.Instance.Movement.UpdateMoveSpeed(modifier);
+        public void UpgradeAttackPower(int amount) => PlayerController.Instance.Stat.SetBuffAttackPower(amount);
+        public void UpgradeProjectileSpeed(float amount) => PlayerController.Instance.Stat.SetBuffProjectileSpeed(amount);
 
         #endregion
     }

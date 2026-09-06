@@ -65,7 +65,9 @@ namespace Stat
         // ================================================================
         private readonly Dictionary<EffectType, EffectData> _baseEffectDataMap = new();
         private readonly Dictionary<EffectType, EffectData> _equipEffectDataMap = new();
-        private readonly Dictionary<EffectType, EffectData> _buffEffectDataMap = new();
+
+        // Buff Layer는 스킬(source)별로 따로 보관한다. AttackGrant와 Enhance가 같은 속성을 동시에 강화해도 덮어쓰지 않게 하기 위함.
+        private readonly Dictionary<EffectType, Dictionary<string, EffectData>> _buffEffectDataMap = new();
 
         // ================================================================
         //  최종 합산 Properties  (Total = Base + Equipment + InGameBuff)
@@ -95,6 +97,9 @@ namespace Stat
         /// <summary> 기본 공격 속성 타입 (Fire, Ice 등) </summary>
         public override EffectType AttackEffectType => attackEffectType | equipAttackEffectType | buffAttackEffectType;
 
+        /// <summary> 스킬 버프를 제외한 타고난 공격 속성 = Base + Equipment </summary>
+        public override EffectType InnateAttackEffectType => attackEffectType | equipAttackEffectType;
+
         // ================================================================
         //  EffectData — 최종 합산 (Base + Equipment + Buff)
         // ================================================================
@@ -107,14 +112,18 @@ namespace Stat
         {
             bool hasBase = _baseEffectDataMap.TryGetValue(type, out var baseData);
             bool hasEquip = _equipEffectDataMap.TryGetValue(type, out var equipData);
-            bool hasBuff = _buffEffectDataMap.TryGetValue(type, out var buffData);
+            bool hasBuff = _buffEffectDataMap.TryGetValue(type, out var buffSources) && buffSources.Count > 0;
 
             if (!hasBase && !hasEquip && !hasBuff)
                 return null;
 
-            var result = baseData ?? EffectData.Zero;
+            var result = baseData?.Clone() ?? EffectData.Zero;
             if (hasEquip) result += equipData;
-            if (hasBuff) result += buffData;
+            if (hasBuff)
+            {
+                foreach (var contribution in buffSources.Values)
+                    result += contribution;
+            }
 
             return result;
         }
@@ -189,21 +198,26 @@ namespace Stat
         public void SetEquipEffectData(EffectType type, EffectData data)
             => _equipEffectDataMap[type] = data;
 
-        /// <summary> 인게임 버프 EffectData 보정치 설정 </summary>
-        public void SetBuffEffectData(EffectType type, EffectData data)
-            => _buffEffectDataMap[type] = data;
-
         /// <summary>
-        /// 인게임 버프 EffectData를 기존 값에 누적한다.
-        /// 여러 속성 강화 스킬이 같은 타입을 강화할 때 서로 덮어쓰지 않도록 사용.
+        /// 인게임 버프 EffectData 보정치를 source(스킬 단위)별로 설정한다.
+        /// 같은 source로 다시 호출하면 갱신되고, 서로 다른 source는 합산된다.
+        /// data가 null이면 해당 source의 기여분을 제거한다.
         /// </summary>
-        public void AddBuffEffectData(EffectType type, EffectData data)
+        public void SetBuffEffectData(EffectType type, string source, EffectData data)
         {
-            if (data == null) return;
-            if (_buffEffectDataMap.TryGetValue(type, out var existing) && existing != null)
-                _buffEffectDataMap[type] = existing + data;
+            if (string.IsNullOrEmpty(source)) return;
+
+            if (!_buffEffectDataMap.TryGetValue(type, out var bySource))
+            {
+                if (data == null) return;
+                bySource = new Dictionary<string, EffectData>();
+                _buffEffectDataMap[type] = bySource;
+            }
+
+            if (data == null)
+                bySource.Remove(source);
             else
-                _buffEffectDataMap[type] = data;
+                bySource[source] = data;
         }
 
         // ================================================================

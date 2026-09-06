@@ -6,9 +6,7 @@ namespace Players.SkillModule
     /// <summary>
     /// 장판 스킬: 주기적으로 플레이어 발 밑에 장판(AOE 지역)을 소환한다.
     /// 장판 안에 있는 적은 분당 데미지(DPS)를 지속적으로 받는다.
-    ///
-    /// Level 1 → 기본 소환 주기로 장판 생성
-    /// Level 2 → 소환 주기 40% 단축 (더 자주 장판 깔림)
+    /// 레벨이 오를때마다 데미지와 범위가 함께 증가한다.
     /// </summary>
     public class GroundZoneSkill : PlayerSkillModuleBase
     {
@@ -20,7 +18,7 @@ namespace Players.SkillModule
         [SerializeField, Min(1f)] private float damageMultiplierPerMinute = 120f;
 
         [Tooltip("데미지 틱 간격 (초)")]
-        [SerializeField, Min(0.1f)] private float tickInterval = 0.5f;
+        [SerializeField, Min(0.1f)] private float tickInterval = 2f;
 
         [Tooltip("장판 한 장의 지속 시간 (초)")]
         [SerializeField, Min(1f)] private float zoneDuration = 6f;
@@ -28,11 +26,20 @@ namespace Players.SkillModule
         [Tooltip("장판 소환 주기 (초). Level 2에서 단축됨.")]
         [SerializeField, Min(0.5f)] private float spawnInterval = 4f;
 
+        [Tooltip("레벨당 데미지 증가량 (0.25 → Lv2에서 1.25배, Lv3에서 1.5배)")]
+        [SerializeField, Min(0f)] private float damageBonusPerLevel = 0.25f;
+
+        [Tooltip("레벨당 반경 증가량 (0.15 → Lv2에서 1.15배, Lv3에서 1.3배)")]
+        [SerializeField, Min(0f)] private float radiusBonusPerLevel = 0.15f;
+
         [Tooltip("장판 속성")]
         [SerializeField] private EffectType elementType = EffectType.Normal;
 
         private float _spawnTimer;
         private PlayerController _player;
+
+        private float DamageScale => 1f + damageBonusPerLevel * (Level - 1);
+        private float RadiusScale => 1f + radiusBonusPerLevel * (Level - 1);
 
         public override void Init(PlayerSkill skill)
         {
@@ -46,8 +53,6 @@ namespace Players.SkillModule
         public override void UpdateSkill()
         {
             base.UpdateSkill();
-            // Level 2: 소환 주기 40% 단축
-            spawnInterval = Mathf.Max(0.5f, spawnInterval * 0.6f);
         }
 
         private void Update()
@@ -81,10 +86,11 @@ namespace Players.SkillModule
 
             zone.Initialize(
                 _player.Stat,
-                damageMultiplierPerMinute,
+                damageMultiplierPerMinute * DamageScale,
                 elementType,
                 tickInterval,
-                zoneDuration
+                zoneDuration,
+                RadiusScale
             );
         }
     }

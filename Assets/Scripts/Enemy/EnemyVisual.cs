@@ -83,6 +83,7 @@ namespace Enemy
             _health.OnStatusChanged -= VisualizeEffect;
             _health.OnStatusChanged += VisualizeEffect;
 
+            _activeEffectTypes.Clear();
             RestoreOriginalEmissionColors();
 
             if (_health == null)
@@ -101,18 +102,32 @@ namespace Enemy
             }
         }
 
+        // 동시에 여러 속성이 걸렸을 때, 하나가 끝난다고 전체 색을 다 지우지 않고 나머지 활성 속성을 유지하기 위함.
+        private readonly HashSet<EffectType> _activeEffectTypes = new();
+
         private void VisualizeEffect(DamageInfo damageInfo, bool isStart)
         {
-            // 모든 효과 타입을 순회하며 체크
             foreach (var kvp in _effectColorMap)
             {
-                if (Utils.HasEffectType(damageInfo.type, kvp.Key))
-                {
-                    if (isStart)
-                        SetEmissionColor(kvp.Value);
-                    else
-                        RestoreOriginalEmissionColors();
-                }
+                if (!Utils.HasEffectType(damageInfo.type, kvp.Key))
+                    continue;
+
+                if (isStart)
+                    _activeEffectTypes.Add(kvp.Key);
+                else
+                    _activeEffectTypes.Remove(kvp.Key);
+            }
+
+            if (_activeEffectTypes.Count == 0)
+            {
+                RestoreOriginalEmissionColors();
+                return;
+            }
+
+            foreach (var kvp in _effectColorMap)
+            {
+                if (_activeEffectTypes.Contains(kvp.Key))
+                    SetEmissionColor(kvp.Value);
             }
         }
 

@@ -22,6 +22,8 @@ namespace Enemy
     {
         private const float DefaultDuration = 4.0f;
         private const float DefaultMoveSpeed = 3.0f;
+        private const float IceAnimationSlowScale = 0.5f;
+        private const float MaxIceAnimationSlow = 0.5f;
 
         protected EnemyController _ctx;
         protected PlayerController _player;
@@ -94,15 +96,24 @@ namespace Enemy
 
         private void ChangeMoveSpeed(DamageInfo damageInfo, bool isStart)
         {
-            if(!damageInfo.effectDataMap.TryGetValue(EffectType.Ice, out var effectData))
+            // damageInfo.effectDataMap은 모든 EffectType 항목을 항상 갖고 있으므로(폴백 포함),
+            // type 플래그를 확인하지 않으면 Fire/Poison/Lightning 등 다른 효과가 시작·종료될 때마다
+            // 실제로는 Ice가 아닌데도 여기서 감속이 잘못 걸리거나 풀렸다.
+            if (!Utils.HasEffectType(damageInfo.type, EffectType.Ice))
+                return;
+
+            if (!damageInfo.effectDataMap.TryGetValue(EffectType.Ice, out var effectData))
             {
                 return;
             }
         
             if (isStart)
             {
-                _moveSpeed = _originMoveSpeed * (1f - effectData.value);
-                _ctx.anim.speed = _originalAnimSpeed * (1f - effectData.value);
+                float moveSlow = Mathf.Clamp01(effectData.value);
+                float animationSlow = Mathf.Min(moveSlow * IceAnimationSlowScale, MaxIceAnimationSlow);
+
+                _moveSpeed = _originMoveSpeed * (1f - moveSlow);
+                _ctx.anim.speed = _originalAnimSpeed * (1f - animationSlow);
             }
             else
             {

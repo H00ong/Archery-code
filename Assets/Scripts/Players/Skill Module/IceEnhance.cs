@@ -9,8 +9,8 @@ namespace Players.SkillModule
     /// </summary>
     public class IceEnhance : PlayerSkillModuleBase, IPlayerUpgrader
     {
-        [SerializeField, Min(0f)] private float durationPerLevel = 0.5f;
-        [SerializeField, Min(0f)] private float slowValuePerLevel = 0.1f;
+        [SerializeField, Min(0f)] private float durationPerLevel = 0.3f;
+        [SerializeField, Range(0f, 1f)] private float slowValuePerLevel = 0.08f;
 
         public override void Init(PlayerSkill _skill)
         {
@@ -36,7 +36,7 @@ namespace Players.SkillModule
                 tickInterval: 0f
             );
 
-            stat.SetBuffEffectData(EffectType.Ice, buff);
+            stat.SetBuffEffectData(EffectType.Ice, GetType().Name, buff);
         }
     }
 }
