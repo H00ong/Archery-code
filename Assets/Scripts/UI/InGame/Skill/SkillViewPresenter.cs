@@ -14,13 +14,13 @@ namespace UI
             int nextLevel = level + 1;
 
             view.SetName(def.id.ToString());
+            view.SetIcon(def.icon);
 
-            if (level == 0)
-                view.SetLevelNew();
-            else
-                view.SetLevel(nextLevel, def.maxLevel, willBeMax: nextLevel == def.maxLevel);
+            view.SetLevel(nextLevel, def.maxLevel, willBeMax: nextLevel == def.maxLevel);
 
-            view.SetDescription("Description");
+            view.SetDescription(string.IsNullOrWhiteSpace(def.description)
+                ? "Description not set."
+                : def.description);
             view.SetClickedAction(() => onChosen?.Invoke(def));
         }
     }

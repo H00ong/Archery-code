@@ -20,6 +20,15 @@ public class InGameHud : MonoBehaviour
     [SerializeField] private TextMeshProUGUI hpText;        // 선택: "현재/최대" 표시
     [SerializeField] private Image characterIcon;           // 현재 장착 캐릭터 이미지
 
+    [Header("HP Regen")]
+    [SerializeField] private TextMeshProUGUI regenText;     // HP 슬라이더 왼쪽 끝에 배치할 "+N/sec" 텍스트
+    [SerializeField] private GameObject regenRoot;          // 회복 스킬 미보유 시 비활성화할 루트 (비워두면 regenText 자체를 사용)
+
+    [Header("Shield")]
+    [SerializeField] private Slider shieldSlider;            // 보호막 전용 슬라이더 (HP 슬라이더와 별개 오브젝트)
+    [SerializeField] private TextMeshProUGUI shieldText;     // 선택: "현재/최대" 표시
+    [SerializeField] private GameObject shieldRoot;           // 보호막이 0이면 비활성화할 루트 (비워두면 shieldSlider 자체를 사용)
+
     [Header("Experience / Level")]
     [SerializeField] private Slider expSlider;
     [SerializeField] private TextMeshProUGUI levelText;     // 경험치 슬라이더 안에 배치되는 레벨 텍스트
@@ -96,6 +105,49 @@ public class InGameHud : MonoBehaviour
 
         if (hpText != null)
             hpText.text = $"{cur}/{max}";
+
+        UpdateShield();
+        UpdateRegen();
+    }
+
+    private void UpdateRegen()
+    {
+        if (regenText == null) return;
+
+        var root = regenRoot != null ? regenRoot : regenText.gameObject;
+        var pc = PlayerController.Instance;
+
+        if (pc == null || !pc.Skill.acquiredSkillModule.TryGetValue("HealthRegen", out var mod)
+            || mod is not Players.SkillModule.HealthRegen regen || regen.RegenPerSecond <= 0f)
+        {
+            root.SetActive(false);
+            return;
+        }
+
+        root.SetActive(true);
+        regenText.text = $"+{regen.RegenPerSecond:0.#}/sec";
+    }
+
+    private void UpdateShield()
+    {
+        int shield = _health.Shield;
+        var root = shieldRoot != null ? shieldRoot : shieldSlider != null ? shieldSlider.gameObject : shieldText?.gameObject;
+
+        if (root == null) return;
+
+        if (shield <= 0)
+        {
+            root.SetActive(false);
+            return;
+        }
+
+        root.SetActive(true);
+        int maxShield = _health.MaxShield;
+        if (shieldSlider != null)
+            shieldSlider.value = maxShield > 0 ? (float)shield / maxShield : 0f;
+
+        if (shieldText != null)
+            shieldText.text = $"{shield}/{maxShield}";
     }
 
     private void UpdateExp()
@@ -103,12 +155,14 @@ public class InGameHud : MonoBehaviour
         var lm = LevelManager.Instance;
         if (lm == null) return;
 
+        bool isMaxLevel = lm.currentLevel >= lm.maxLevel;
+
         if (levelText != null)
-            levelText.text = $"Lv.{lm.currentLevel}";
+            levelText.text = isMaxLevel ? $"Lv.{lm.currentLevel} Max" : $"Lv.{lm.currentLevel}";
 
         if (expSlider == null) return;
 
-        if (lm.currentLevel >= lm.maxLevel)
+        if (isMaxLevel)
         {
             expSlider.value = 1f;
             return;
