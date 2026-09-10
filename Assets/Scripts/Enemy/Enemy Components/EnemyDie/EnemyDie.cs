@@ -1,6 +1,5 @@
 using Enemy;
 using Managers;
-using Map;
 using Objects;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -23,32 +22,22 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
         _ctx.ColliderActive(false);
         _ctx.RigidbodyActive(false);
 
-        var mapData = MapManager.Instance != null ? MapManager.Instance.CurrentMapData : null;
+        var dropManager = DropManager.Instance;
+        if (dropManager == null) return;
+
         bool isBoss = _ctx.IsBoss;
 
-        if (_ctx.expItemPrefab != null && _ctx.expItemPrefab.RuntimeKeyIsValid())
+        var expPrefab = dropManager.ExpItemPrefab;
+        if (expPrefab != null && expPrefab.RuntimeKeyIsValid() && dropManager.TryGetExpDropAmount(isBoss, out int expAmount))
         {
-            int expAmount = ComputeAmount(_ctx.baseExpAmount, mapData?.expDrop, isBoss);
-            SpawnDropAsync(_ctx.expItemPrefab, expAmount, isExp: true).Forget();
+            SpawnDropAsync(expPrefab, expAmount, isExp: true).Forget();
         }
 
-        if (_ctx.goldItemPrefab != null && _ctx.goldItemPrefab.RuntimeKeyIsValid())
+        var goldPrefab = dropManager.GoldItemPrefab;
+        if (goldPrefab != null && goldPrefab.RuntimeKeyIsValid() && dropManager.TryGetGoldDropAmount(isBoss, out int goldAmount))
         {
-            int goldAmount = ComputeAmount(_ctx.baseGoldAmount, mapData?.goldDrop, isBoss);
-            SpawnDropAsync(_ctx.goldItemPrefab, goldAmount, isExp: false).Forget();
+            SpawnDropAsync(goldPrefab, goldAmount, isExp: false).Forget();
         }
-    }
-
-    private static int ComputeAmount(int baseAmount, DropConfig cfg, bool isBoss)
-    {
-        if (baseAmount <= 0) return 0;
-        if (cfg == null) return baseAmount;
-
-        float roll = Random.Range(cfg.minRandom, cfg.maxRandom);
-        float mul = cfg.multiplier * roll;
-        if (isBoss && cfg.bossMultiplier > 0f) mul *= cfg.bossMultiplier;
-
-        return Mathf.Max(1, Mathf.RoundToInt(baseAmount * mul));
     }
 
     private async Awaitable SpawnDropAsync(AssetReferenceGameObject prefab, int amount, bool isExp)
@@ -77,7 +66,8 @@ public class EnemyDie : MonoBehaviour, IEnemyBehavior
                     gold.SetAmount(amount);
             }
 
-            item.transform.position = transform.position;
+            float yOffset = MapManager.Instance != null ? MapManager.Instance.GetItemDropYOffset() : 0f;
+            item.transform.position = transform.position + Vector3.up * yOffset;
             item.SetActive(true);
         }
         catch (System.OperationCanceledException)

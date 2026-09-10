@@ -40,6 +40,10 @@ namespace Map
         [Header("Patrol")]
         [SerializeField] private List<PatrolPoint> patrolPoints;
 
+        [Header("Item Drop")]
+        [SerializeField] private float itemDropYOffset = 0.5f;
+        public float ItemDropYOffset => itemDropYOffset;
+
         public void Init()
         {
             foreach (var point in enemySpawnPoints)
