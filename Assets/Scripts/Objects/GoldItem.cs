@@ -1,11 +1,10 @@
 using Managers;
-using UnityEngine;
 
 namespace Objects
 {
     public class GoldItem : CollectItem
     {
-        [SerializeField] private int goldAmount = 10;
+        private int goldAmount;
 
         public void SetAmount(int amount) => goldAmount = amount;
 

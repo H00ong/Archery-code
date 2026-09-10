@@ -23,6 +23,15 @@ namespace Managers
             100, 150, 220, 340, 500, 750, 1100, 1600, 2300
         };
 
+        // 레벨업까지 필요한 처치 수. 마지막 값 이후로는 계속 고정된다.
+        private static readonly int[] KillsPerLevelTable = { 3, 5, 7, 11, 13 };
+
+        /// <summary> 현재 레벨에서 레벨업까지 필요한 처치 수 </summary>
+        public int KillsToLevelUp => GetKillsPerLevelUp(currentLevel);
+
+        /// <summary> 현재 레벨 기준, 적 1마리가 주는 기준 경험치 (랜덤 보정 전) </summary>
+        public int ExpPerKill => GetExpPerKill(currentLevel);
+
         private bool _isLevelingUp = false;
 
         private void Awake()
@@ -109,6 +118,22 @@ namespace Managers
             }
 
             return expTable[index];
+        }
+
+        public static int GetKillsPerLevelUp(int level)
+        {
+            int index = Mathf.Clamp(level - 1, 0, KillsPerLevelTable.Length - 1);
+            return KillsPerLevelTable[index];
+        }
+
+        public int GetExpPerKill(int level)
+        {
+            if (level >= maxLevel) return 0;
+
+            int required = GetRequiredExpForLevel(level);
+            int kills = Mathf.Max(1, GetKillsPerLevelUp(level));
+
+            return Mathf.Max(1, Mathf.RoundToInt(required / (float)kills));
         }
     }
 }

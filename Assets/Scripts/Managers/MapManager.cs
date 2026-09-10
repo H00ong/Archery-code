@@ -349,6 +349,11 @@ namespace Managers
             return currentMap != null ? currentMap.PredefinedEnemies : null;
         }
 
+        public float GetItemDropYOffset()
+        {
+            return currentMap != null ? currentMap.ItemDropYOffset : 0f;
+        }
+
         #endregion
     }
 }
