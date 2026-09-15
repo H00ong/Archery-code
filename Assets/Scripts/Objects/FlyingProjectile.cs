@@ -8,13 +8,11 @@ namespace Objects
     {
         public override void InitProjectile(ShootingInstruction instruction)
         {
-            _isActive = true;
-            
+            // 부모 초기화를 거쳐야 DamageInfo/hitObjects/피어스·반사·유도 상태가 정상적으로 세팅된다 (누락 시 OnTriggerEnter에서 DamageInfo null 참조).
+            base.InitProjectile(instruction);
+
             var pos = instruction.Position;
             var dest = instruction.Destination;
-            var time = instruction.Lifetime;
-            var speed = instruction.Speed;
-            var dmg = instruction.DamageInfo;
 
             var distance = Utils.GetXZDistance(dest, pos);
             var flyTime = distance / instruction.Speed;

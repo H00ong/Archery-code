@@ -68,6 +68,7 @@ namespace Objects
         private float _homingTurnSpeed;
         private Transform _homingTarget;
         private int _lastReflectFrame = -1;
+        private Vector3 _prevPosition;
 
         private bool HasExplosion => explosionEffect != null && explosionEffect.RuntimeKeyIsValid();
 
@@ -85,6 +86,14 @@ namespace Objects
         {
             CheckLifeTime();
             UpdateHoming();
+        }
+
+        protected virtual void LateUpdate()
+        {
+            if (_isActive)
+            {
+                _prevPosition = transform.position;
+            }
         }
 
         private void CheckLifeTime()
@@ -113,8 +122,10 @@ namespace Objects
             _reflectRemaining = 0;
             _homingTurnSpeed = 0f;
             _homingTarget = null;
+            _lastReflectFrame = -1;
 
             transform.position = instruction.Position;
+            _prevPosition = instruction.Position;
             var direction = instruction.Destination - instruction.Position;
             direction.y = 0f;
             direction.Normalize();
@@ -133,6 +144,9 @@ namespace Objects
         private void UpdateHoming()
         {
             if (!_isActive || _homingTurnSpeed <= 0f) return;
+
+            // 반사 직후 몇 프레임 동안은 유도로 인해 다시 벽으로 꺾이는 것을 방지한다.
+            if (_lastReflectFrame > 0 && Time.frameCount - _lastReflectFrame < 5) return;
 
             if (!IsValidHomingTarget(_homingTarget))
                 _homingTarget = FindNearestEnemy();
@@ -261,10 +275,11 @@ namespace Objects
         private void OnTriggerStay(Collider other)
         {
             if (!_isActive || !destroyOnObstacle) return;
-            if (Time.frameCount == _lastReflectFrame) return;
+            // 반사 직후 몇 프레임 동안은 벽과 겹쳐있을 수 있으므로 즉시 소멸시키지 않는다.
+            if (_lastReflectFrame > 0 && Time.frameCount - _lastReflectFrame < 5) return;
             if (!other.CompareTag(Utils.ToString(TagType.Obstacle))) return;
 
-            // 밀어낸 뒤에도 벽 안에 남아 있으면 반대편으로 빠져나가기 전에 소멸시킨다.
+            // 밀어낸 뒤에도 오랫동안 벽 안에 남아 있으면 반대편으로 빠져나가기 전에 소멸시킨다.
             Terminate();
         }
 
@@ -275,8 +290,31 @@ namespace Objects
             velocity.y = 0f;
             if (velocity.sqrMagnitude < 0.0001f) return false;
 
-            if (!TryResolveSurface(surface, velocity, out Vector3 outwardNormal, out float pushDistance))
+            Vector3 outwardNormal;
+            Vector3 entryPoint;
+
+            // 1. 이전 위치에서 현재 위치로 레이캐스트하여 장애물 입구 충돌점과 정확한 표면 법선을 구한다.
+            Vector3 moveDir = transform.position - _prevPosition;
+            float moveDist = moveDir.magnitude;
+            Vector3 rayDir = moveDist > 0.0001f ? moveDir.normalized : velocity.normalized;
+            Ray ray = new Ray(_prevPosition, rayDir);
+            float rayDistance = Mathf.Max(moveDist + 0.5f, 2.0f);
+
+            if (surface.Raycast(ray, out RaycastHit hit, rayDistance))
+            {
+                outwardNormal = hit.normal;
+                outwardNormal.y = 0f;
+                outwardNormal.Normalize();
+                entryPoint = hit.point;
+            }
+            else if (!TryResolveSurface(surface, velocity, out outwardNormal, out float pushDistance))
+            {
                 return false;
+            }
+            else
+            {
+                entryPoint = transform.position + outwardNormal * pushDistance;
+            }
 
             Vector3 reflected = Vector3.Reflect(velocity.normalized, outwardNormal);
             reflected.y = 0f;
@@ -284,8 +322,9 @@ namespace Objects
 
             reflected.Normalize();
 
-            // 트리거 감지 시점엔 이미 벽 안쪽이라, 밖으로 밀어내지 않으면 다음 충돌이 감지되지 않는다.
-            transform.position += outwardNormal * (pushDistance + reflectSkinWidth);
+            // 충돌 표면 밖으로 위치 밀어내기
+            transform.position = entryPoint + outwardNormal * reflectSkinWidth;
+            _prevPosition = transform.position;
 
             rigidBody.linearVelocity = reflected * _speed;
             transform.rotation = Quaternion.LookRotation(reflected);
