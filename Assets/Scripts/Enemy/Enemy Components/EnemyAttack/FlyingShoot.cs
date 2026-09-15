@@ -22,12 +22,9 @@ namespace Enemy
         {
             base.Init(ctx, data);
 
-            if (!_ctx.isDebugMode)
-            {
-                var shootingStats = _stat.flyingShooting;
-                _flyingProjectileSpeed = shootingStats.flyingProjectileSpeed;
-                _flyingProjectileAtk = shootingStats.flyingProjectileAtk;
-            }
+            var shootingStats = _stat.flyingShooting;
+            _flyingProjectileSpeed = shootingStats.flyingProjectileSpeed;
+            _flyingProjectileAtk = shootingStats.flyingProjectileAtk;
 
             _poolManager = PoolManager.Instance;
 
