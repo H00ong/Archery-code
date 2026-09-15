@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Enemy;
 using UnityEngine;
 
@@ -10,6 +11,8 @@ namespace Players
 
         private PlayerController playerController;
         private Health playerHealth;
+        private readonly HashSet<EnemyController> contactEnemies = new();
+        private readonly HashSet<Collider> ignoredEnemyColliders = new();
 
         void Awake()
         {
@@ -38,6 +41,36 @@ namespace Players
             playerHealth.OnStatusChanged += OnPlayerStatusChanged;
         }
 
+        private void FixedUpdate()
+        {
+            if (playerHealth == null || playerHealth.IsDead() || !playerCollider.enabled)
+                return;
+
+            var overlappingEnemies = new HashSet<EnemyController>();
+            Collider[] colliders = Physics.OverlapBox(
+                playerCollider.bounds.center,
+                playerCollider.bounds.extents,
+                Quaternion.identity);
+
+            foreach (var collider in colliders)
+            {
+                GameObject hitRoot = collider.attachedRigidbody
+                    ? collider.attachedRigidbody.gameObject
+                    : collider.gameObject;
+
+                if (!hitRoot.TryGetComponent<EnemyController>(out var enemy))
+                    continue;
+
+                IgnoreEnemyPush(enemy);
+                overlappingEnemies.Add(enemy);
+
+                if (contactEnemies.Add(enemy))
+                    TakeEnemyContactDamage(enemy, hitRoot);
+            }
+
+            contactEnemies.RemoveWhere(enemy => !overlappingEnemies.Contains(enemy));
+        }
+
         private void OnDisable()
         {
             if (playerHealth != null)
@@ -46,6 +79,8 @@ namespace Players
                 playerHealth.OnHit -= OnPlayerHit;
                 playerHealth.OnStatusChanged -= OnPlayerStatusChanged;
             }
+
+            contactEnemies.Clear();
         }
 
         private void OnPlayerDie()
@@ -54,6 +89,7 @@ namespace Players
 
             playerCollider.enabled = false;
             playerRigidbody.isKinematic = true;
+            contactEnemies.Clear();
         }
 
         private void OnPlayerHit()
@@ -85,19 +121,25 @@ namespace Players
             return playerHealth.TryTakeHeal(healAmount);
         }
 
-        private void OnCollisionEnter(Collision collision)
+        private void IgnoreEnemyPush(EnemyController enemy)
         {
-            if (PlayerController.Instance.IsPlayerDead)
-                return;
+            foreach (var enemyCollider in enemy.enemyColliders)
+            {
+                if (!enemyCollider || ignoredEnemyColliders.Contains(enemyCollider))
+                    continue;
 
-            var hitRoot = collision.collider.attachedRigidbody ? collision.collider.attachedRigidbody.gameObject
-                : collision.collider.gameObject;
+                Physics.IgnoreCollision(playerCollider, enemyCollider, true);
+                ignoredEnemyColliders.Add(enemyCollider);
+            }
+        }
 
-            if (!hitRoot.TryGetComponent<EnemyController>(out var enemy))
+        private void TakeEnemyContactDamage(EnemyController enemy, GameObject hitRoot)
+        {
+            if (PlayerController.Instance.IsPlayerDead || enemy.health == null)
                 return;
                 
             float atk = enemy.GetAtk();
-            var damageInfo = new DamageInfo(atk, EffectType.Normal, hitRoot);
+            var damageInfo = new DamageInfo(atk, enemy.stat.AttackEffectType, enemy.stat, hitRoot);
             playerHealth.TakeDamage(damageInfo);
         }
 #if UNITY_EDITOR

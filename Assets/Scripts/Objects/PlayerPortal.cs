@@ -18,6 +18,7 @@ namespace Objects
 
         private void ActivePortal()
         {
+            obstacleCd.enabled = false;
             portalCd.enabled = true;
         }
 

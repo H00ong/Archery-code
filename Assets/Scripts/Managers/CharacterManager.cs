@@ -151,9 +151,8 @@ namespace Managers
                 throw new System.InvalidOperationException("PlayerController not found on spawned character prefab.");
             }
 
-            playerController.InitModule();
-
-            // 레벨 기반 스탯 적용
+            // 레벨 기반 스탯 적용 (InitModule의 Health.InitializeHealth(Stat.MaxHP)보다 먼저 실행되어야
+            // Health의 최대체력이 baseMaxHP 기본값(100)이 아닌 최종 합산값으로 초기화된다)
             int level = PlayerManager.Instance.PlayerData.GetCharacterLevel(_currentCharacterIdentity.characterName);
             playerController.Stat.ApplyBaseStat(_currentCharacterIdentity.GetStatsAtLevel(level));
 
@@ -164,6 +163,8 @@ namespace Managers
 
             // 장비 스탯 적용
             EquipmentManager.Instance.ApplyAllEquipmentStats(playerController.Stat);
+
+            playerController.InitModule();
 
             EventBus.Publish(EventType.PlayerSpawned);
             

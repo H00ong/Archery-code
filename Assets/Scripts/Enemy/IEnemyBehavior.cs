@@ -42,14 +42,7 @@ namespace Enemy
             _ctx = ctx;
             _rigidbody = ctx.rigidBody;
 
-            if (!_ctx.isDebugMode)
-            {
-                _originMoveSpeed = _ctx.stat.MoveSpeed;
-            }
-            else
-            {
-                _originMoveSpeed = DefaultMoveSpeed;
-            }
+            _originMoveSpeed = _ctx.stat.MoveSpeed;
 
             if (data is MoveModuleData mData)
             {
@@ -136,11 +129,7 @@ namespace Enemy
         public virtual void Init(EnemyController ctx, BaseModuleData data = null)
         {
             _ctx = ctx;
-
-            if (!_ctx.isDebugMode)
-            {
-                _stat = _ctx.stat;
-            }
+            _stat = _ctx.stat;
 
             _ctx.SetAttackEndTrigger(false);
             

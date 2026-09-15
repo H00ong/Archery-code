@@ -23,9 +23,6 @@ namespace Enemy
 
         private const float EnemyReturnDelay = .25f;
 
-        [Header("Debug")] 
-        public bool isDebugMode = true;
-
         [Header("Identity")] 
         [SerializeField, RegistryKey("enemyNames")] public string enemyName;
         [SerializeField] public EnemyTag enemyTags;
@@ -50,7 +47,7 @@ namespace Enemy
         public Health health;
         public Animator anim;
         public Rigidbody rigidBody;
-        public Collider enemyCollider;
+        public List<Collider> enemyColliders = new List<Collider>();
         public EnemyReferenceHub enemyReference;
         public EnemyVisual enemyVisual;
         public EnemyHealthBar healthBar;
@@ -59,7 +56,7 @@ namespace Enemy
         [SerializeField] private float defaultIdleTime = 2f;
 
         [Header("Default Tuning")]
-        [SerializeField] private float defaultAttackSpeed;
+        [SerializeField] private float defaultAttackSpeed = 1.0f;
 
 
         [HideInInspector] public Vector3 lastPlayerPosition;
@@ -145,24 +142,29 @@ namespace Enemy
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
-            if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
-            if (!health) health = GetComponent<Health>();
-            if (!enemyReference) enemyReference = GetComponent<EnemyReferenceHub>();
-            if (!enemyVisual) enemyVisual = GetComponent<EnemyVisual>();
+            if (enemyColliders == null || enemyColliders.Count == 0) FindAllColliders();
+            if (!health) health = gameObject.GetOrAddComponent<Health>();
+            if (!enemyReference) enemyReference = gameObject.GetOrAddComponent<EnemyReferenceHub>();
+            if (!enemyVisual) enemyVisual = gameObject.GetOrAddComponent<EnemyVisual>();
             if (!healthBar) healthBar = GetComponentInChildren<EnemyHealthBar>();
         }
 
         private void SetStat()
         {
-            if (!isDebugMode)
+            _stat = gameObject.GetOrAddComponent<EnemyStat>();
+            EnemyManager.Instance.SetEnemyStat(enemyName, enemyTags, _stat);
+        }
+
+        public void ColliderActive(bool active)
+        {
+            foreach (var col in enemyColliders)
             {
-                _stat = gameObject.GetOrAddComponent<EnemyStat>();
-                EnemyManager.Instance.SetEnemyStat(enemyName, enemyTags, _stat);
-                return;
+                if (col) col.enabled = active;
             }
         }
 
-        public void ColliderActive(bool active) => enemyCollider.enabled = active;
+        [ContextMenu("Find All Colliders")]
+        private void FindAllColliders() => enemyColliders = new List<Collider>(GetComponentsInChildren<Collider>());
 
         public void RigidbodyActive(bool active)
         {
@@ -313,7 +315,10 @@ namespace Enemy
                 entry = ActionTable[next];
             }
 
-            OnExit?.Invoke();
+            // 사망 시에는 이동/공격 모듈의 종료 회전이 마지막 방향을 덮어쓰지 않도록 한다.
+            if (next != EnemyState.Dead)
+                OnExit?.Invoke();
+                
             SafeSetBool(StateAnimHashes[CurrentState], false);
 
             CurrentState = next;
@@ -333,7 +338,7 @@ namespace Enemy
         {
             if (_attacks.Count <= 1) return;
 
-            var currentAttackIndex = 0;//UnityEngine.Random.Range(0, _attacks.Count);
+            var currentAttackIndex = UnityEngine.Random.Range(0, _attacks.Count);
             var selectedAttack = _attacks[currentAttackIndex];
             
             ActionTable[EnemyState.Attack] = (selectedAttack.OnEnter, selectedAttack.OnExit, selectedAttack.Tick);
@@ -436,7 +441,7 @@ namespace Enemy
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
             if (!health) health = GetComponent<Health>();
-            if (!enemyCollider) enemyCollider = GetComponentInChildren<Collider>();
+            if (enemyColliders == null || enemyColliders.Count == 0) FindAllColliders();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
             if (!idle) GetComponent<EnemyIdle>();
             if(!die) GetComponent<EnemyDie>();

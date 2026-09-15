@@ -20,6 +20,12 @@ namespace Map
         [Header("Map Info")]
         [SerializeField] private Transform floor;
 
+        [Header("Map Creation Guide")]
+        [Tooltip("선택 사항입니다. 지정하지 않으면 Floor의 Bounds 중심을 자동으로 사용합니다.")]
+        [SerializeField] private Transform mapGuideCenter;
+        [Tooltip("새 맵 제작 시 공통으로 사용할 가로(X), 높이(Y), 세로(Z) 크기입니다.")]
+        [SerializeField] private Vector3 mapGuideSize = new Vector3(22f, 6.48f, 36f);
+
         [Header("Surface")]
         [SerializeField] private NavMeshSurface surface;
 
@@ -62,6 +68,73 @@ namespace Map
         }
 
         public List<PatrolPoint> GetAllPatrolPoints() => patrolPoints;
+
+        private void OnDrawGizmos()
+        {
+            Vector3 guideSize = new Vector3(
+                Mathf.Max(0.1f, mapGuideSize.x),
+                Mathf.Max(0.1f, mapGuideSize.y),
+                Mathf.Max(0.1f, mapGuideSize.z));
+            GetMapGuidePose(out Vector3 guidePosition, out Quaternion guideRotation);
+
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+            Color previousColor = Gizmos.color;
+
+            Gizmos.matrix = Matrix4x4.TRS(guidePosition, guideRotation, Vector3.one);
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(Vector3.up * (guideSize.y * 0.5f), guideSize);
+
+            Gizmos.matrix = previousMatrix;
+            Gizmos.color = previousColor;
+        }
+
+        private void GetMapGuidePose(out Vector3 position, out Quaternion rotation)
+        {
+            if (mapGuideCenter != null)
+            {
+                position = mapGuideCenter.position;
+                rotation = mapGuideCenter.rotation;
+                return;
+            }
+
+            if (TryGetFloorBounds(out Bounds floorBounds))
+            {
+                position = new Vector3(floorBounds.center.x, floorBounds.max.y, floorBounds.center.z);
+                rotation = floor.rotation;
+                return;
+            }
+
+            position = transform.position;
+            rotation = transform.rotation;
+        }
+
+        private bool TryGetFloorBounds(out Bounds bounds)
+        {
+            bounds = default;
+
+            if (floor == null)
+                return false;
+
+            Renderer[] renderers = floor.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                bounds = renderers[0].bounds;
+                for (int i = 1; i < renderers.Length; i++)
+                    bounds.Encapsulate(renderers[i].bounds);
+
+                return true;
+            }
+
+            Collider[] colliders = floor.GetComponentsInChildren<Collider>();
+            if (colliders.Length == 0)
+                return false;
+
+            bounds = colliders[0].bounds;
+            for (int i = 1; i < colliders.Length; i++)
+                bounds.Encapsulate(colliders[i].bounds);
+
+            return true;
+        }
 
         public Vector3 GetRandomNavMeshPoint()
         {

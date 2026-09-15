@@ -23,12 +23,9 @@ namespace Enemy
         {
             base.Init(ctx, data);
 
-            if (!_ctx.isDebugMode)
-            {
-                var shootingStats = _stat.shooting;
-                _projectileSpeed = shootingStats.projectileSpeed;
-                _projectileAtk = shootingStats.projectileAtk;
-            }
+            var shootingStats = _stat.shooting;
+            _projectileSpeed = shootingStats.projectileSpeed;
+            _projectileAtk = shootingStats.projectileAtk;
 
             _poolManager = PoolManager.Instance;
 
@@ -50,16 +47,24 @@ namespace Enemy
 
             if (_ctx.HasMultiAttackModules)
             {
-                _ctx.anim.SetFloat(AnimHashes.AttackIndex, _animIndex);
+                _ctx.anim.SetInteger(AnimHashes.AttackIndex, _animIndex);
             }
         }
 
 
         public override void OnAnimEvent()
         {
+            // Projectile.InitProjectile은 direction.y를 0으로 고정해 스폰 높이 그대로 수평 비행하므로,
+            // dest.y 보정만으로는 부족하고 스폰 지점의 y도 같은 기준으로 맞춰야 한다.
+            float fixedHeight = _ctx.lastPlayerPosition.y + destinationHeightOffset;
+
             var cachedPoints = new List<(Vector3 pos, Vector3 dest)>(_shootingPoints.Count);
             foreach (var point in _shootingPoints)
-                cachedPoints.Add((point.position, GetDestination(point)));
+            {
+                Vector3 spawnPos = point.position;
+                spawnPos.y = fixedHeight;
+                cachedPoints.Add((spawnPos, GetDestination(point)));
+            }
 
             ShootAsync(cachedPoints).Forget();
         }
@@ -91,16 +96,31 @@ namespace Enemy
             }
         }
 
+        private const float destinationHeightOffset = .8f;
+        private const float minTargetingDistance = 1f;
+
         private Vector3 GetDestination(Transform point)
         {
             if (_playerTargeting)
             {
-                return _ctx.lastPlayerPosition;
+                Vector3 playerPos = _ctx.lastPlayerPosition;
+                Vector3 toPlayer = playerPos - point.position;
+                toPlayer.y = 0f;
+
+                // 발사 지점과 플레이어가 수평상 거의 겹치면 방향 벡터가 0에 가까워져
+                // Projectile의 LookRotation이 엉뚱한(플레이어 뒤쪽 등) 방향을 향하게 되므로 최소 사거리를 보장한다.
+                Vector3 dest = toPlayer.sqrMagnitude < minTargetingDistance * minTargetingDistance
+                    ? point.position + point.forward * minTargetingDistance
+                    : playerPos;
+
+                dest.y = playerPos.y + destinationHeightOffset;
+                return dest;
             }
             else
             {
                 Vector3 forward = point.forward;
                 Vector3 dest = point.position + forward * 100f;
+                dest.y = _ctx.lastPlayerPosition.y + destinationHeightOffset;
                 return dest;
             }
         }

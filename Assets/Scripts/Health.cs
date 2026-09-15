@@ -127,7 +127,7 @@ public class Health : MonoBehaviour, IDamageable
         foreach (var handler in _effectHandlers)
         {
             if (effectStates.TryGetValue(handler.Type, out var state))
-                handler.Tick(state, Time.deltaTime, _stat, OnStatusChanged, ApplyDotDamage);
+                handler.Tick(state, Time.deltaTime, _stat, OnStatusChanged, dmg => ApplyDotDamage(handler.Type, dmg));
         }
     }
 
@@ -199,7 +199,7 @@ public class Health : MonoBehaviour, IDamageable
         }
     }
 
-    private void ApplyDotDamage(float damage)
+    private void ApplyDotDamage(EffectType type, float damage)
     {
         if (!isLive)
             return;
@@ -216,6 +216,10 @@ public class Health : MonoBehaviour, IDamageable
         }
 
         currentHealth -= finalDamage;
+
+        // 플레이어의 Fire/Poison 도트 데미지만 확인용으로 로그 남김
+        if ((type == EffectType.Fire || type == EffectType.Poison) && CompareTag(Utils.ToString(TagType.Player)))
+            Debug.Log($"[Health] Player took {type} DOT damage: {finalDamage} (HP {currentHealth}/{maxHealth})");
 
         if (currentHealth <= 0)
         {

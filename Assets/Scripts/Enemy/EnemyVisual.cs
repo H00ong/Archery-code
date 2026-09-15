@@ -49,6 +49,16 @@ namespace Enemy
             if (material == null)
                 return;
 
+            if (objectRenderers.Count == 0)
+            {
+                AutoFindRenderers();
+            }
+
+            if (objectRenderers.Count == 0)
+            {
+                return;
+            }
+
             foreach (var renderer in objectRenderers)
             {
                 if (renderer != null)
@@ -66,6 +76,9 @@ namespace Enemy
             if (material == null)
                 return;
 
+            if (accessoryRenderers.Count == 0)
+                return;
+
             foreach (var renderer in accessoryRenderers)
             {
                 if (renderer != null)
@@ -79,6 +92,17 @@ namespace Enemy
         {
             _enemyController = GetComponent<EnemyController>();
             _health = _enemyController.GetComponent<Health>();
+
+            // ApplyMaterials가 null 머티리얼로 호출되어 auto find가 안 된 경우까지 대비.
+            if (objectRenderers.Count == 0)
+            {
+                AutoFindRenderers();
+
+                if (objectRenderers.Count > 0 && objectRenderers[0] != null)
+                {
+                    CacheOriginalEmissionColors(objectRenderers[0].material);
+                }
+            }
 
             _health.OnStatusChanged -= VisualizeEffect;
             _health.OnStatusChanged += VisualizeEffect;
@@ -169,12 +193,10 @@ namespace Enemy
             ApplyAccessoryMaterial(accessoryMat);
         }
 
-#if UNITY_EDITOR
         [ContextMenu("Auto Find Renderers")]
         private void AutoFindRenderers()
         {
             objectRenderers.Clear();
-            accessoryRenderers.Clear();
 
             var allRenderers = GetComponentsInChildren<Renderer>(true);
             foreach (var renderer in allRenderers)
@@ -182,8 +204,9 @@ namespace Enemy
                 objectRenderers.Add(renderer);
             }
 
+#if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
-        }
 #endif
+        }
     }
 }
