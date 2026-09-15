@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class FollowMeleeAttack : MeleeAttack, IAnimationListener
+    public class FollowMeleeAttack : MeleeAttack
     {
         private const float DefaultMoveSpeed = 3f;
         private const float DefaultAttackRange = 2f;
@@ -22,14 +22,7 @@ namespace Enemy
         {
             base.Init(ctx, data);
 
-            if (!_ctx.isDebugMode)
-            {
-                _moveSpeed = ctx.stat.MoveSpeed;
-            }
-            else
-            {
-                _moveSpeed = DefaultMoveSpeed;
-            }
+            _moveSpeed = ctx.stat.MoveSpeed;
 
             if (data is FollowMeleeAttackData fmData)
             {
@@ -51,6 +44,9 @@ namespace Enemy
             
             _chaseTimer = _chaseDuration;
             _isChasing = true;
+
+            // StateIndex가 지난 공격 사이클의 값(0이 아님)으로 남아있으면 Animator가 Follow를 건너뛰고 바로 공격 스윙으로 진입한다.
+            _ctx.anim.SetInteger(AnimHashes.StateIndex, 0);
             
             if(_ctx.HasMultiAttackModules)
             {
@@ -88,6 +84,10 @@ namespace Enemy
             if (_chaseTimer <= 0f || isInRange)
             {
                 _isChasing = false;
+
+                _ctx.rigidBody.linearVelocity = Vector3.zero;
+                _ctx.rigidBody.angularVelocity = Vector3.zero;
+
                 _ctx.anim.SetInteger(AnimHashes.StateIndex, _animIndex);
                 return;
             }
@@ -100,7 +100,11 @@ namespace Enemy
 
         private void ChaseMoveForward()
         {
-            Vector3 targetPos = transform.position + transform.forward * _moveSpeed * Time.fixedDeltaTime;
+            // EnemyController가 매 프레임 velocity=0을 같은 값으로 대입해 깨움 신호가 발생하지 않을 수 있으므로, 추격 재개 시 명시적으로 깨운다.
+            _ctx.rigidBody.WakeUp();
+
+            Vector3 targetPos = _ctx.rigidBody.position
+                                + transform.forward * _moveSpeed * Time.fixedDeltaTime;
             _ctx.rigidBody.MovePosition(targetPos);
         }
 
