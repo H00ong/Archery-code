@@ -16,12 +16,20 @@ public class Barrel : SceneObject
     protected override void OnEnable()
     {
         base.OnEnable();
+        EventBus.Subscribe(EventType.StageCleared, OnStageCleared);
         StartCoroutine(TerminateCoroutine());
     }
 
     protected override void OnDisable()
     {
+        EventBus.Unsubscribe(EventType.StageCleared, OnStageCleared);
         base.OnDisable();
+    }
+
+    private void OnStageCleared()
+    {
+        StopAllCoroutines();
+        PoolManager.Instance.ReturnObject(gameObject);
     }
 
     private void Start()
