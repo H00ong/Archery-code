@@ -83,6 +83,7 @@ namespace UI
             if (_equipmentNames.Count == 0) return;
             int newIndex = Mathf.Clamp(_currentIndex - 1, 0, _equipmentNames.Count - 1);
             if (newIndex == _currentIndex) return;
+            _view.CloseAllDetailPopups();
             _currentIndex = newIndex;
             UpdateView();
         }
@@ -92,6 +93,7 @@ namespace UI
             if (_equipmentNames.Count == 0) return;
             int newIndex = Mathf.Clamp(_currentIndex + 1, 0, _equipmentNames.Count - 1);
             if (newIndex == _currentIndex) return;
+            _view.CloseAllDetailPopups();
             _currentIndex = newIndex;
             UpdateView();
         }

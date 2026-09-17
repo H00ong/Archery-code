@@ -52,12 +52,14 @@ namespace UI
 
         private void OnLeft()
         {
+            _view.CloseAllDetailPopups();
             _lobbyCharacterManager.ChangeCharacter(-1);
             UpdateView();
         }
 
         private void OnRight()
         {
+            _view.CloseAllDetailPopups();
             _lobbyCharacterManager.ChangeCharacter(1);
             UpdateView();
         }
