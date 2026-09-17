@@ -21,9 +21,6 @@ namespace Game.Player.Attack
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Debug Mode")]
-    [SerializeField] bool debugMode;
-    [Space]
     [Header("Required Objects")]
     [SerializeField] private Transform shootingPos;
     [Space]

@@ -32,8 +32,7 @@ public class MeleeAttack : EnemyAttack
 
     protected void MoveForward() 
     {
-        Vector3 targetPos = _ctx.rigidBody.position
-                            + transform.forward * _attackMoveSpeed * Time.fixedDeltaTime;
-        _ctx.rigidBody.MovePosition(targetPos);
+        _ctx.rigidBody.linearVelocity =
+        transform.forward * _attackMoveSpeed;
     }
 }
