@@ -21,17 +21,15 @@ namespace Stat
         // ================================================================
         // A. Base Layer (기본 능력치) — 캐릭터 고유 기본값
         // ================================================================
-        [Header("Base — 캐릭터 고유 기본 능력치")]
-        [SerializeField] private int baseMaxHP = 100;           // 기본 최대 체력
-        [SerializeField] private int baseAttackPower = 1;       // 기본 공격력
-        [SerializeField] private float baseMoveSpeed = 5f;      // 기본 이동 속도
-        [SerializeField] private int baseArmor;                 // 기본 물리 방어력
-        [SerializeField] private int baseMagicResistance;       // 기본 마법 저항력
-        [SerializeField] private float baseAttackSpeed = 1f;    // 기본 공격 속도 (애니메이션)
-        [SerializeField] private float baseProjectileSpeed = 10f; // 기본 투사체 속도
-
-        [Header("Base — 기본 공격 속성")]
-        [SerializeField] private EffectType attackEffectType = EffectType.Normal; // 기본 공격 속성
+        // ApplyBaseStat(CharacterIdentity 데이터)에서 항상 덮어써지므로 Inspector 노출(SerializeField) 불필요
+        private int baseMaxHP;           // 기본 최대 체력
+        private int baseAttackPower;     // 기본 공격력
+        private float baseMoveSpeed;     // 기본 이동 속도
+        private int baseArmor;           // 기본 물리 방어력
+        private int baseMagicResistance; // 기본 마법 저항력
+        private float baseAttackSpeed;   // 기본 공격 속도 (애니메이션)
+        private float baseProjectileSpeed; // 기본 투사체 속도
+        private EffectType attackEffectType = EffectType.Normal; // 기본 공격 속성
 
         // ================================================================
         // B. Equipment Layer (장비 보정치) — 로비에서 장착, 게임 재시작 시 유지

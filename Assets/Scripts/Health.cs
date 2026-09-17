@@ -37,7 +37,7 @@ public class Health : MonoBehaviour, IDamageable
     public event Action OnHit;
     public event Action<DamageInfo, bool> OnStatusChanged;
 
-    public int maxHealth = 100;
+    private int maxHealth = 100;
     private int currentHealth;
     private bool isLive = true;
 
