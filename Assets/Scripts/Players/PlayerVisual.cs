@@ -48,6 +48,10 @@ public class PlayerVisual : MonoBehaviour
             return;
         }
 
+        // Inspector에 미리 지정되어 있으면 그대로 사용하고, 비어 있을 때만 자동 탐색한다 (EnemyVisual과 동일한 규칙)
+        if (characterMeshRenderers == null || characterMeshRenderers.Count == 0)
+            FindMeshRenderers();
+
         _health.OnStatusChanged -= VisualizeEffect;
         _health.OnStatusChanged += VisualizeEffect;
 

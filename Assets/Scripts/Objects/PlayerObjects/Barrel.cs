@@ -52,7 +52,8 @@ public class Barrel : SceneObject
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag(Utils.TagMap[TagType.Player]) && !_isTouched)
+        GameObject root = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
+        if (root.CompareTag(Utils.TagMap[TagType.Player]) && !_isTouched)
         {
             _isTouched = true;
 

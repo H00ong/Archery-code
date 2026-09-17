@@ -22,10 +22,19 @@ namespace Players
         private void CachingComponent()
         {
             if (playerCollider == null)
-                playerCollider = GetComponent<Collider>();
+                playerCollider = GetComponentInChildren<Collider>();
 
             if (playerRigidbody == null)
                 playerRigidbody = GetComponent<Rigidbody>();
+        }
+
+        [ContextMenu("Find Collider")]
+        private void FindCollider()
+        {
+            playerCollider = GetComponentInChildren<Collider>();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
         }
 
         public void Init()

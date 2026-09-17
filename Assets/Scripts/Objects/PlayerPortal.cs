@@ -47,7 +47,8 @@ namespace Objects
 
         private void OnPlayerEnterPortal(Collider other)
         {
-            if (other.CompareTag(playerTag))
+            GameObject root = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
+            if (root.CompareTag(playerTag))
             {
                 StageManager.Instance.HandleCommand(StageCommandType.EnterPortal);
             }

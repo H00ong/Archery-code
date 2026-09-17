@@ -62,7 +62,9 @@ namespace Objects
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player"))
+            // 자식 콜라이더가 아닌 루트(리지드바디) 오브젝트의 태그로 플레이어 여부를 판정
+            GameObject root = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
+            if (root.CompareTag("Player"))
                 Collect();
         }
 
