@@ -47,6 +47,14 @@ namespace Managers
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnDestroy()
+        {
+            ClearAllPools();
+
+            if (Instance == this)
+                Instance = null;
+        }
+
         public async Awaitable PrewarmAsync(AssetReferenceGameObject aref, int count = 5)
         {
             string key = aref.AssetGUID;
@@ -178,6 +186,9 @@ namespace Managers
             
                 if (pool.prefabHandle.IsValid())
                     Addressables.Release(pool.prefabHandle);
+
+                pool.prefabHandle = default;
+                pool.prefab = null;
             }
             _pools.Clear();
             _instanceToKey.Clear();
@@ -185,6 +196,9 @@ namespace Managers
     
         private async Awaitable EnsurePoolLoadedAsync(string key, AssetReferenceGameObject aref)
         {
+            var cancellationToken = destroyCancellationToken;
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (!_pools.TryGetValue(key, out var pool))
             {
                 pool = new Pool();
@@ -195,8 +209,10 @@ namespace Managers
             {
                 try
                 {
-                    pool.prefabHandle = aref.LoadAssetAsync<GameObject>();
+                    pool.prefabHandle = Addressables.LoadAssetAsync<GameObject>(aref.RuntimeKey);
                     await pool.prefabHandle.Task;
+
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     if (pool.prefabHandle.Status != AsyncOperationStatus.Succeeded)
                     {
@@ -205,8 +221,6 @@ namespace Managers
 
                     pool.prefab = pool.prefabHandle.Result;
                     pool.root = inactive;
-
-                    destroyCancellationToken.ThrowIfCancellationRequested();
                 }
                 catch (Exception)
                 {
@@ -215,6 +229,7 @@ namespace Managers
                         Addressables.Release(pool.prefabHandle);
                     }
 
+                    pool.prefabHandle = default;
                     throw;
                 }
             }
@@ -223,7 +238,7 @@ namespace Managers
                 // pool.prefabHandle is valid but prefab is null, likely still loading
                 await pool.prefabHandle.Task;
                 
-                destroyCancellationToken.ThrowIfCancellationRequested();
+                cancellationToken.ThrowIfCancellationRequested();
                 
                 if (pool.prefabHandle.Status != AsyncOperationStatus.Succeeded)
                 {

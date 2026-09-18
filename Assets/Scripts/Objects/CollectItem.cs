@@ -22,12 +22,6 @@ namespace Objects
             _activeCount = 0;
         }
 
-        private void Start()
-        {
-            if (PlayerController.Instance != null)
-                playerTransform = PlayerController.Instance.transform;
-        }
-
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -47,6 +41,8 @@ namespace Objects
 
         private void Update()
         {
+            var player = PlayerController.Instance;
+            playerTransform = player != null && player.isActiveAndEnabled ? player.transform : null;
             if (playerTransform == null) return;
 
             if (_isMovingToPlayer || StageManager.Instance.WaitingForCollectibles)

@@ -72,7 +72,8 @@ namespace Objects
 
         private bool HasExplosion => explosionEffect != null && explosionEffect.RuntimeKeyIsValid();
 
-        private readonly List<GameObject> hitObjects = new List<GameObject>();
+        // 콜라이더가 여러 개인 대상(예: 자식 히트박스)이 중복 집계되지 않도록 GameObject가 아닌 IDamageable 단위로 기록한다.
+        private readonly List<IDamageable> hitObjects = new List<IDamageable>();
 
         protected DamageInfo DamageInfo { get; set; }
 
@@ -80,6 +81,28 @@ namespace Objects
         {
             projectileCollider = GetComponentInChildren<Collider>();
             projectileCollider.isTrigger = true;
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            EventBus.Subscribe(EventType.StageCleared, OnStageCleared);
+        }
+
+        protected override void OnDisable()
+        {
+            EventBus.Unsubscribe(EventType.StageCleared, OnStageCleared);
+            base.OnDisable();
+        }
+
+        // 스테이지가 넘어갈 때 아직 살아있는 투사체를 풀로 즉시 회수한다 (폭발 이펙트 없이).
+        private void OnStageCleared()
+        {
+            if (!_isActive) return;
+
+            _isActive = false;
+            _lifetimeTimer = 0f;
+            PoolManager.Instance.ReturnObject(gameObject);
         }
 
         protected virtual void Update()
@@ -234,7 +257,7 @@ namespace Objects
 
             if (damage != null && !isSelf)
             {
-                if (CheckHitObjects(other.gameObject))
+                if (CheckHitObjects(damage))
                 {
                     damage.TakeDamage(DamageInfo);
 
@@ -426,7 +449,7 @@ namespace Objects
             PoolManager.Instance.ReturnObject(gameObject);
         }
 
-        private bool CheckHitObjects(GameObject hitObject)
+        private bool CheckHitObjects(IDamageable hitObject)
         {
             if (hitObjects.Contains(hitObject)) 
                 return false;
