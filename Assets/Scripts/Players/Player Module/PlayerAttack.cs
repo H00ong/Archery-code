@@ -42,6 +42,7 @@ public class PlayerAttack : MonoBehaviour
         _stat = PlayerController.Instance.Stat;
         _playerSkill = PlayerController.Instance.Skill;
         _playerProjectile = CharacterManager.Instance.CurrentProjectilePrefab;
+        PlayerController.Instance.Anim.SetFloat(AnimHashes.AttackSpeed, _stat.AttackSpeed);
     }
 
     public void Attack()

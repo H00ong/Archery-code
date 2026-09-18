@@ -178,7 +178,7 @@ public class StageManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[StageManager] Error during stage loading: {e.Message}");
+            Debug.LogError($"[StageManager] Error during stage loading: {e}");
         }
 
         destroyCancellationToken.ThrowIfCancellationRequested();

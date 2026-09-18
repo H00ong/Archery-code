@@ -96,6 +96,7 @@ namespace Managers
 
                 // Save 데이터에서 해금 목록 복원
                 _ownedCharacters.Clear();
+                _ownedCharacters.Add(SaveSystem.SaveData.DefaultCharacterName);
                 var save = SaveSystem.SaveManager.Instance?.CurrentData;
                 if (save != null && save.ownedCharacters != null && save.ownedCharacters.Count > 0)
                 {
@@ -150,6 +151,8 @@ namespace Managers
                 Debug.LogError("[CharacterManager] PlayerController not found on spawned character prefab.");
                 throw new System.InvalidOperationException("PlayerController not found on spawned character prefab.");
             }
+
+            _currentCharacterInstance.SetActive(true);
 
             // 레벨 기반 스탯 적용 (InitModule의 Health.InitializeHealth(Stat.MaxHP)보다 먼저 실행되어야
             // Health의 최대체력이 baseMaxHP 기본값(100)이 아닌 최종 합산값으로 초기화된다)

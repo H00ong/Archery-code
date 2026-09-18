@@ -127,6 +127,7 @@ public class InitManager : MonoBehaviour
             return;
         }
 
+        SaveSystem.SaveManager.Instance?.Save();
         SetProgress(1f, "Loading complete!");
         IsLoaded = true;
     }

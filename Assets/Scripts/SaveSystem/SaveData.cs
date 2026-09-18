@@ -7,6 +7,7 @@ namespace SaveSystem
     public class SaveData
     {
         public const int CurrentVersion = 1;
+        public const string DefaultCharacterName = "BlueWizard";
 
         public int saveVersion = CurrentVersion;
         public string lastSavedAt;
@@ -31,5 +32,20 @@ namespace SaveSystem
 
         // Meta
         public bool isFirstLaunch = true;
+
+        public void EnsureDefaultCharacter()
+        {
+            ownedCharacters ??= new List<string>();
+            characterLevels ??= new Dictionary<string, int>();
+
+            if (!ownedCharacters.Contains(DefaultCharacterName))
+                ownedCharacters.Add(DefaultCharacterName);
+
+            if (!characterLevels.ContainsKey(DefaultCharacterName))
+                characterLevels[DefaultCharacterName] = 1;
+
+            if (!string.IsNullOrEmpty(currentCharacterName) && !ownedCharacters.Contains(currentCharacterName))
+                ownedCharacters.Add(currentCharacterName);
+        }
     }
 }

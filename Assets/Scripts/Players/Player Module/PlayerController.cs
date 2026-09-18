@@ -35,12 +35,12 @@ namespace Players
 
         private void Awake()
         {
-            SetupSingleton();
             InitComponent();
         }
 
         void OnEnable()
         {
+            SetupSingleton();
             EventBus.Subscribe(EventType.TransitionToLobby, ResetGameBuffStat);
             EventBus.Subscribe(EventType.Retry, ResetGameBuffStat);
         }
@@ -49,6 +49,8 @@ namespace Players
         {
             EventBus.Unsubscribe(EventType.TransitionToLobby, ResetGameBuffStat);
             EventBus.Unsubscribe(EventType.Retry, ResetGameBuffStat);
+            if (Instance == this)
+                Instance = null;
         }
 
         public void InitModule()

@@ -4,6 +4,7 @@ using Enemy;
 using Map;
 using Newtonsoft.Json;
 using Players;
+using SaveSystem;
 using UnityEngine;
 
 namespace Managers
@@ -160,7 +161,7 @@ namespace Managers
             }
             else
             {
-                playerData = new PlayerData("BlueWizard", "Normal Magic Staff", "Old Armor", "Old Shoes", 5000);
+                playerData = new PlayerData(SaveData.DefaultCharacterName, "Normal Magic Staff", "Old Armor", "Old Shoes", 5000);
             }
         }
 

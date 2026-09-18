@@ -100,7 +100,10 @@ namespace SaveSystem
                 string json = File.ReadAllText(SavePath);
                 CurrentData = JsonConvert.DeserializeObject<SaveData>(json, JsonSettings);
                 if (CurrentData != null)
+                {
+                    CurrentData.EnsureDefaultCharacter();
                     Debug.Log($"[SaveManager] Loaded save (v{CurrentData.saveVersion}) from {SavePath}");
+                }
             }
             catch (Exception ex)
             {
@@ -120,6 +123,7 @@ namespace SaveSystem
                 }
                 string json = File.ReadAllText(BackupPath);
                 CurrentData = JsonConvert.DeserializeObject<SaveData>(json, JsonSettings);
+                CurrentData?.EnsureDefaultCharacter();
             }
             catch (Exception ex)
             {
