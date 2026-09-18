@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private const float threshold = 0.01f; // 입력이 너무 작은 경우 무시하기 위한 임계값
-
     [SerializeField] private Rigidbody playerRigidbody;
 
     private PlayerController _playerController;
@@ -43,8 +41,6 @@ public class PlayerMovement : MonoBehaviour
     {
         playerRigidbody.constraints = RigidbodyConstraints.FreezePositionY |
                           RigidbodyConstraints.FreezeRotation;
-
-        playerRigidbody.mass = 9999f;
     }
 
     void Update()
@@ -91,17 +87,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(_isDead)
+        if (_isDead)
             return;
-
-        playerRigidbody.linearVelocity = Vector3.zero;
-
+            
         if (_currentMoveDir == Vector3.zero)
+        {
+            playerRigidbody.linearVelocity = Vector3.zero;
             return;
+        }
 
-        Vector3 targetPos = playerRigidbody.position + _currentMoveDir * _stat.MoveSpeed * Time.fixedDeltaTime;
-
-        playerRigidbody.MovePosition(targetPos);
+        playerRigidbody.linearVelocity = _currentMoveDir.normalized * _stat.MoveSpeed;
     }
     
     public void UpdateMoveSpeed(float modifier)
