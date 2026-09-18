@@ -83,8 +83,7 @@ namespace Enemy
 
         protected void MoveForward()
         {
-            Vector3 targetPos = _rigidbody.position + transform.forward * _moveSpeed * Time.fixedDeltaTime;
-            _rigidbody.MovePosition(targetPos);
+            _rigidbody.linearVelocity = transform.forward * _moveSpeed;
         }
 
         private void ChangeMoveSpeed(DamageInfo damageInfo, bool isStart)
@@ -148,6 +147,7 @@ namespace Enemy
             transform.rotation = Quaternion.LookRotation(dir);
 
             _ctx.SetAttackEndTrigger(false);
+            _ctx.rigidBody.linearVelocity = Vector3.zero;
         }
 
         public virtual void Tick() { }

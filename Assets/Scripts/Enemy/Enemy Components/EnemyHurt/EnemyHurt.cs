@@ -11,6 +11,7 @@ public class EnemyHurt : MonoBehaviour, IEnemyBehavior
     public virtual void OnEnter()
     {
         _ctx.SetHurtEndTrigger(false);
+        _ctx.rigidBody.linearVelocity = Vector3.zero;
         
         Vector3 dir = Utils.GetXZDirectionVector(_ctx.player.transform.position, _ctx.transform.position);
         transform.rotation = Quaternion.LookRotation(dir);

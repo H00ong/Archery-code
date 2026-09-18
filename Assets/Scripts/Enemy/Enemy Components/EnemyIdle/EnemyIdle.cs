@@ -23,6 +23,7 @@ public class EnemyIdle : MonoBehaviour, IEnemyBehavior
     public void OnEnter()
     {
         _idleTimer = _defaultIdleTime;
+        _ctx.rigidBody.linearVelocity = Vector3.zero;
     }
 
     public void OnExit()

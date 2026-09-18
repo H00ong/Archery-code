@@ -85,11 +85,6 @@ namespace Enemy
 
         private void FixedUpdate()
         {
-            if (!rigidBody.isKinematic)
-            {
-                rigidBody.linearVelocity = Vector3.zero;
-            }
-            
             OnTick?.Invoke();
         }
 
@@ -118,6 +113,7 @@ namespace Enemy
             RigidbodyActive(true);
             ColliderActive(true);
             SetStat();
+            Debug.Log($"[Enemy Speed] {enemyName} | Tags: {enemyTags} | Final MoveSpeed: {_stat.MoveSpeed}", this);
             InitModule(_identity);
 
             anim.SetFloat(AnimHashes.AttackSpeed, defaultAttackSpeed);
@@ -441,12 +437,12 @@ namespace Enemy
         {
             if (!anim) anim = GetComponentInChildren<Animator>();
             if (!health) health = GetComponent<Health>();
-            if (enemyColliders == null || enemyColliders.Count == 0) FindAllColliders();
             if (!rigidBody) rigidBody = GetComponent<Rigidbody>();
             if (!idle) GetComponent<EnemyIdle>();
             if(!die) GetComponent<EnemyDie>();
             if(!hurt) GetComponent<EnemyHurt>();
             if (!move) GetComponent<EnemyMove>();
+            FindAllColliders();
         }
 #endif
     }

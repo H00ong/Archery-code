@@ -73,6 +73,10 @@ namespace Enemy
             {
                 MoveForward();
             }
+            else
+            {
+                _ctx.rigidBody.linearVelocity = Vector3.zero;
+            }
         }
 
         private void ChasePlayer()
@@ -100,12 +104,11 @@ namespace Enemy
 
         private void ChaseMoveForward()
         {
-            // EnemyController가 매 프레임 velocity=0을 같은 값으로 대입해 깨움 신호가 발생하지 않을 수 있으므로, 추격 재개 시 명시적으로 깨운다.
+            // 이전 상태에서 잠들어 있었을 수 있으므로 안전하게 깨운다.
             _ctx.rigidBody.WakeUp();
 
-            Vector3 targetPos = _ctx.rigidBody.position
-                                + transform.forward * _moveSpeed * Time.fixedDeltaTime;
-            _ctx.rigidBody.MovePosition(targetPos);
+            // rigidBody.transform.forward는 리깅 구조에 따라 실제 바라보는 방향과 어긋날 수 있어 transform.forward를 사용한다.
+            _ctx.rigidBody.linearVelocity = transform.forward * _moveSpeed;
         }
 
         private void OnDrawGizmos()

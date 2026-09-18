@@ -28,11 +28,13 @@ public class MeleeAttack : EnemyAttack
 
         if (_ctx.AttackMoveTrigger) 
             MoveForward();
+        else
+            _ctx.rigidBody.linearVelocity = Vector3.zero;
     }
 
     protected void MoveForward() 
     {
-        _ctx.rigidBody.linearVelocity =
-        transform.forward * _attackMoveSpeed;
+        // rigidBody.transform.forward는 리깅 구조에 따라 실제 바라보는 방향과 어긋날 수 있어 transform.forward를 사용한다.
+        _ctx.rigidBody.linearVelocity = transform.forward * _attackMoveSpeed;
     }
 }
