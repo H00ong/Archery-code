@@ -6,26 +6,23 @@ namespace Objects
     public class PlayerPortal : MonoBehaviour
     {
         private readonly string playerTag = Utils.ToString(TagType.Player);
+        private bool isActive;
         
-        [SerializeField] private Collider obstacleCd;
         [SerializeField] private Collider portalCd;
         
         private void DeactivePortal()
         {
-            obstacleCd.enabled = true;
-            portalCd.enabled = false;
+            isActive = false;
         }
 
         private void ActivePortal()
         {
-            obstacleCd.enabled = false;
-            portalCd.enabled = true;
+            isActive = true;
         }
 
         private void OnEnable()
         {
             EventBus.Subscribe(EventType.AllCollectiblesCollected, ActivePortal);
-        
             DeactivePortal();
         }
 
@@ -48,7 +45,7 @@ namespace Objects
         private void OnPlayerEnterPortal(Collider other)
         {
             GameObject root = other.attachedRigidbody ? other.attachedRigidbody.gameObject : other.gameObject;
-            if (root.CompareTag(playerTag))
+            if (isActive && root.CompareTag(playerTag))
             {
                 StageManager.Instance.HandleCommand(StageCommandType.EnterPortal);
             }

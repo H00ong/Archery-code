@@ -4,21 +4,25 @@ using UnityEngine; // ★ Unity 필수
 
 public class Test : MonoBehaviour
 {
-    [SerializeField] private Rigidbody rb;
-    [SerializeField] private float rb1Speeds = 7f;
-    [SerializeField] private Rigidbody rb2;
-    [SerializeField] private float rb2Speeds = 9f;
-
-    private void FixedUpdate()
+    [ContextMenu("Remove Child Colliders")]
+    public void RemoveCollidersFromChildren()
     {
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.forward * rb1Speeds;
-        }
+        // 비활성화된 자식 객체(true)까지 포함하여 모든 3D 콜라이더를 가져옵니다.
+        Collider[] allColliders = GetComponentsInChildren<Collider>(true);
 
-        if (rb2 != null)
+        int removedCount = 0;
+
+        foreach (Collider col in allColliders)
         {
-            rb2.linearVelocity = Vector3.forward * rb2Speeds;
+            // 부모 객체(이 스크립트가 붙은 객체)의 콜라이더는 유지합니다.
+            if (col.gameObject != this.gameObject)
+            {
+                // 에디터(편집 모드)에서 컴포넌트를 삭제할 때는 DestroyImmediate를 사용합니다.
+                DestroyImmediate(col);
+                removedCount++;
+            }
         }
+        
+        Debug.Log($"자식 객체들의 콜라이더가 총 {removedCount}개 제거되었습니다.");
     }
 }
