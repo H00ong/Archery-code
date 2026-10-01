@@ -89,7 +89,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (_isDead)
             return;
-            
+
         if (_currentMoveDir == Vector3.zero)
         {
             playerRigidbody.linearVelocity = Vector3.zero;
@@ -97,6 +97,12 @@ public class PlayerMovement : MonoBehaviour
         }
 
         playerRigidbody.linearVelocity = _currentMoveDir.normalized * _stat.MoveSpeed;
+    }
+
+    public void StopMovement()
+    {
+        _currentMoveDir = Vector3.zero;
+        playerRigidbody.linearVelocity = Vector3.zero;
     }
     
     public void UpdateMoveSpeed(float modifier)

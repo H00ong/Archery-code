@@ -6,7 +6,6 @@ public class PlayerVisual : MonoBehaviour
     private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
 
     [SerializeField] private Material characterMaterial;
-    [SerializeField] private Material weaponMaterial;
 
     // MeshRenderer/SkinnedMeshRenderer 공용 베이스 타입(Renderer)으로 통일해서 둘 다 담을 수 있도록 함
     [SerializeField] private List<Renderer> characterMeshRenderers;
@@ -17,8 +16,7 @@ public class PlayerVisual : MonoBehaviour
     [SerializeField] private Color poisonEmissionColor    = new Color(15f / 255f,  0f / 255f, 39f / 255f, 1f);
     [SerializeField] private Color iceEmissionColor       = new Color( 0f / 255f, 16f / 255f, 39f / 255f, 1f);
     [SerializeField] private Color lightningEmissionColor = new Color(24f / 255f, 15f / 255f,  0f / 255f, 1f);
-    [SerializeField] private Color magmaEmissionColor     = new Color(39f / 255f, 12f / 255f,  1f / 255f, 1f);
-    [SerializeField] private Color darkEmissionColor      = new Color(24f / 255f, 24f / 255f, 24f / 255f, 1f);
+
     [SerializeField] private float intensity = 1f;
 
     private Health _health;
@@ -34,8 +32,6 @@ public class PlayerVisual : MonoBehaviour
             { EffectType.Poison,    poisonEmissionColor    },
             { EffectType.Ice,       iceEmissionColor       },
             { EffectType.Lightning, lightningEmissionColor },
-            { EffectType.Magma,     magmaEmissionColor     },
-            { EffectType.Dark,      darkEmissionColor      },
         };
     }
 

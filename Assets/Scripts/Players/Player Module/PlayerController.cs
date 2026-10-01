@@ -118,8 +118,12 @@ namespace Players
 
             IsStunned = true;
 
-            if (Movement != null) Movement.enabled = false;
-            if (Attack != null)   Attack.enabled = false;
+            if (Movement != null)
+            {
+                Movement.StopMovement();
+                Movement.enabled = false;
+            }
+            if (Attack != null) Attack.enabled = false;
 
             ChangePlayerAnimation(PlayerState.Idle);
         }
@@ -133,7 +137,67 @@ namespace Players
             if (IsPlayerDead) return;
 
             if (Movement != null) Movement.enabled = true;
-            if (Attack != null)   Attack.enabled = true;
+            if (Attack != null) Attack.enabled = true;
+        }
+
+        [ContextMenu("Setup Player Components")]
+        public void AddRequiredComponents()
+        {
+            // Rigidbody 확인 및 추가
+            if (GetComponent<Rigidbody>() == null)
+            {
+                gameObject.AddComponent<Rigidbody>();
+            }
+
+            // PlayerController 확인 및 추가
+            if (GetComponent<PlayerController>() == null)
+            {
+                gameObject.AddComponent<PlayerController>();
+            }
+
+            // PlayerAttack 확인 및 추가
+            if (GetComponent<PlayerAttack>() == null)
+            {
+                gameObject.AddComponent<PlayerAttack>();
+            }
+
+            // PlayerMovement 확인 및 추가
+            if (GetComponent<PlayerMovement>() == null)
+            {
+                gameObject.AddComponent<PlayerMovement>();
+            }
+
+            // PlayerHurt 확인 및 추가
+            if (GetComponent<PlayerHurt>() == null)
+            {
+                gameObject.AddComponent<PlayerHurt>();
+            }
+
+            // PlayerSkill 확인 및 추가
+            if (GetComponent<PlayerSkill>() == null)
+            {
+                gameObject.AddComponent<PlayerSkill>();
+            }
+
+            // Health 확인 및 추가
+            if (GetComponent<Health>() == null)
+            {
+                gameObject.AddComponent<Health>();
+            }
+
+            // PlayerStat 확인 및 추가
+            if (GetComponent<PlayerStat>() == null)
+            {
+                gameObject.AddComponent<PlayerStat>();
+            }
+
+            // PlayerVisual 확인 및 추가
+            if (GetComponent<PlayerVisual>() == null)
+            {
+                gameObject.AddComponent<PlayerVisual>();
+            }
+
+            Debug.Log("컴포넌트 확인 및 추가가 완료되었습니다.");
         }
     }
 }

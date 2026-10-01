@@ -9,7 +9,7 @@ namespace Players
         private void Start()
         {
             if(playerAttack == null) 
-                playerAttack = GetComponent<PlayerAttack>();
+                playerAttack = GetComponentInParent<PlayerAttack>();
         }
 
         public void Shoot()
@@ -26,7 +26,7 @@ namespace Players
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (playerAttack == null) playerAttack = GetComponent<PlayerAttack>();  
+            if (playerAttack == null) playerAttack = GetComponentInParent<PlayerAttack>();  
         }
 #endif
     }
