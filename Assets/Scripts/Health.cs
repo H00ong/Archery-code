@@ -204,7 +204,8 @@ public class Health : MonoBehaviour, IDamageable
         if (!isLive)
             return;
 
-        int finalDamage = Mathf.RoundToInt(damage);
+        // RoundToInt는 0.5 같은 값을 0으로 반올림할 수 있어(banker's rounding) 도트 데미지가 조용히 0으로 사라지는 것을 방지
+        int finalDamage = damage > 0f ? Mathf.Max(1, Mathf.RoundToInt(damage)) : 0;
 
         if (shield > 0)
         {

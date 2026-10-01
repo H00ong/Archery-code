@@ -27,7 +27,7 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 4;
+    private const int BossStageInterval = 5;
     private bool _initialized = false;
     private bool _allStageCleared = false;
     public bool WaitingForCollectibles { get; private set; }
@@ -236,7 +236,7 @@ public class StageManager : MonoBehaviour
         
         if (IsBossStage)
         {
-            var idx = CurrentStageIndex / BossStageInterval - 1;
+            var idx = Mathf.Clamp((CurrentStageIndex + 1) / BossStageInterval, 0, 2);
             await enemyManager.SpawnBossEnemyAsync(idx);
         }
         else
@@ -248,7 +248,7 @@ public class StageManager : MonoBehaviour
 
             // 랜덤 적 스폰
             // TODO : Enemy 생성 count 설정 필요
-            var count = 3;
+            var count = 4;
             await enemyManager.SpawnEnemyAsync(count);
         }
     }

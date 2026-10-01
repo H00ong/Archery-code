@@ -11,7 +11,7 @@ using UnityEngine;
 public class LightningEffectHandler : IEffectHandler
 {
     /// <summary> 플레이어에게 적용될 때 duration에 곱해질 계수 (짧게 만들기 위함) </summary>
-    private const float PlayerDurationScale = 0.4f;
+    private const float PlayerDurationScale = 0.8f;
 
     public EffectType Type => EffectType.Lightning;
 

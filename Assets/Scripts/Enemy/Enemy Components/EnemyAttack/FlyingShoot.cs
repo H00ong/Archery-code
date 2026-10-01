@@ -78,7 +78,8 @@ namespace Enemy
 
                 FlyingProjectile proj = go.GetComponent<FlyingProjectile>();
                 
-                var damageInfo = new DamageInfo(_flyingProjectileAtk, EffectType.Normal, _ctx.gameObject);
+                // 적/투사체가 모두 identity(EnemyStat.AttackEffectType)를 단일 소스로 사용한다
+                var damageInfo = new DamageInfo(_flyingProjectileAtk, _stat.AttackEffectType, _stat, _ctx.gameObject);
                 
                 var inst = new ShootingInstruction(
                     spawnPos,

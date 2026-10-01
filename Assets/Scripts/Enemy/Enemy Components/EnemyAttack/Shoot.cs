@@ -17,7 +17,6 @@ namespace Enemy
         private AssetReferenceGameObject _projectilePrefab;
         private List<Transform> _shootingPoints;
         private PoolManager _poolManager;
-        EffectType _effectType;
 
         public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
@@ -38,7 +37,6 @@ namespace Enemy
             _projectilePrefab = sData.projectilePrefab;
             _shootingPoints = sData.GetShootingPoint(ctx);
             _playerTargeting = sData.playerTargeting;
-            _effectType = sData.GetEffectType();
         }
 
         public override void OnEnter()
@@ -79,7 +77,8 @@ namespace Enemy
 
                 destroyCancellationToken.ThrowIfCancellationRequested();
 
-                var damageInfo = new DamageInfo(_projectileAtk, _effectType, _ctx.gameObject);
+                // 적/투사체가 모두 identity(EnemyStat.AttackEffectType)를 단일 소스로 사용해야 하므로 ShootData 자체의 targetTag가 아니라 _stat을 읽는다
+                var damageInfo = new DamageInfo(_projectileAtk, _stat.AttackEffectType, _stat, _ctx.gameObject);
 
                 ShootingInstruction inst = new ShootingInstruction(
                     spawnPos,

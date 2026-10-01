@@ -33,6 +33,12 @@ public class ParticleColorChange : MonoBehaviour
     [ContextMenu("Particle Color/Purple")]
     private void SetParticleColorPurple() => SetParticleStartColor(new Color(0.65f, 0.2f, 1f), "Set particle color to purple");
 
+    [ContextMenu("Particle Color/White")]
+    private void SetParticleColorWhite() => SetParticleStartColor(Color.white, "Set particle color to white");
+
+    [ContextMenu("Particle Color/Yellow")]
+    private void SetParticleColorYellow() => SetParticleStartColor(Color.yellow, "Set particle color to yellow");
+
     private void SetParticleStartColor(Color color, string undoName)
     {
         var particleSystems = GetComponentsInChildren<ParticleSystem>(true);
