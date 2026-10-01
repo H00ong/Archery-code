@@ -11,50 +11,74 @@ namespace Enemy
     {
         [SerializeField] private Slider hpSlider;
         [SerializeField] private Vector3 worldOffset = new Vector3(0f, 2f, 0f);
-        [SerializeField] private bool hideWhenFull = true;
+        [SerializeField] private bool hideWhenFull = false;
 
         private Health _health;
-        private Transform _followTarget;
         private Transform _cam;
+        private bool _isVisible;
+
+        // 체력바는 클릭 대상이 아니므로 입력 처리(Event Camera 필요)를 모두 끈다
+        private void Awake()
+        {
+            // 프리팹은 씬 오브젝트(Main Camera)를 참조할 수 없어서 코드로 채운다
+            var canvas = GetComponentInParent<Canvas>(true);
+            if (canvas != null && canvas.worldCamera == null)
+                canvas.worldCamera = Camera.main;
+
+            var raycaster = GetComponentInParent<GraphicRaycaster>(true);
+            if (raycaster != null) raycaster.enabled = false;
+
+            if (hpSlider == null) return;
+
+            hpSlider.interactable = false;
+            foreach (var graphic in hpSlider.GetComponentsInChildren<Graphic>(true))
+                graphic.raycastTarget = false;
+        }
 
         /// <summary> EnemyController가 Health 초기화 직후 호출한다. 풀에서 재사용될 때마다 다시 불린다. </summary>
         public void Initialize(Health health, Transform followTarget)
         {
             if (_health != null)
+            {
+                _health.OnHealthChanged -= RefreshValue;
                 _health.OnDie -= HandleDie;
+            }
 
             _health = health;
-            _followTarget = followTarget;
 
+            _health.OnHealthChanged += RefreshValue;
             _health.OnDie += HandleDie;
 
             gameObject.SetActive(true);
+            transform.localPosition = worldOffset;
             RefreshValue();
         }
 
         private void OnDisable()
         {
             if (_health != null)
+            {
+                _health.OnHealthChanged -= RefreshValue;
                 _health.OnDie -= HandleDie;
+            }
         }
 
         private void HandleDie()
         {
-            gameObject.SetActive(false);
+            SetVisible(false);
         }
 
         private void LateUpdate()
         {
-            if (_health == null || _followTarget == null) return;
+            if (!_isVisible) return;
 
             if (_cam == null)
                 _cam = CameraController.Instance != null ? CameraController.Instance.transform : null;
             if (_cam == null) return;
 
-            transform.position = _followTarget.position + worldOffset;
-            transform.rotation = _cam.rotation; // 빌보드: 적의 회전과 무관하게 항상 카메라를 향한다
-
-            RefreshValue();
+            // 빌보드: 적의 회전과 무관하게 카메라와 같은 방향 유지 (보이는 바만 갱신)
+            if (transform.rotation != _cam.rotation)
+                transform.rotation = _cam.rotation;
         }
 
         private void RefreshValue()
@@ -64,8 +88,15 @@ namespace Enemy
             float ratio = _health.MaxHealth > 0 ? (float)_health.CurrentHealth / _health.MaxHealth : 0f;
             hpSlider.value = ratio;
 
-            if (hideWhenFull)
-                gameObject.SetActive(ratio > 0f && ratio < 1f);
+            SetVisible(!hideWhenFull || (ratio > 0f && ratio < 1f));
+        }
+
+        private void SetVisible(bool visible)
+        {
+            _isVisible = visible;
+
+            if (hpSlider != null && hpSlider.gameObject.activeSelf != visible)
+                hpSlider.gameObject.SetActive(visible);
         }
     }
 }

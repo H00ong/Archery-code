@@ -35,6 +35,7 @@ public class Health : MonoBehaviour, IDamageable
 {
     public event Action OnDie;
     public event Action OnHit;
+    public event Action OnHealthChanged;
     public event Action<DamageInfo, bool> OnStatusChanged;
 
     private int maxHealth = 100;
@@ -93,6 +94,7 @@ public class Health : MonoBehaviour, IDamageable
         maxShield = 0;
 
         isLive = true;
+        OnHealthChanged?.Invoke();
     }
 
     /// <summary> 보호막을 부여한다 (기존 보호막에 누적). 실드 배럴에서 사용. </summary>
@@ -112,6 +114,7 @@ public class Health : MonoBehaviour, IDamageable
 
         maxHealth += amount;
         currentHealth += amount;
+        OnHealthChanged?.Invoke();
     }
 
     public bool IsDead()
@@ -158,12 +161,14 @@ public class Health : MonoBehaviour, IDamageable
 
         if (currentHealth > 0)
         {
+            OnHealthChanged?.Invoke();
             OnHit?.Invoke();
             return;
         }
 
         currentHealth = 0;
         isLive = false;
+        OnHealthChanged?.Invoke();
         ClearActiveEffectVisuals();
         OnDie?.Invoke();
     }
@@ -181,6 +186,7 @@ public class Health : MonoBehaviour, IDamageable
         if (currentHealth > maxHealth)
             currentHealth = maxHealth;
 
+        OnHealthChanged?.Invoke();
         return true;
     }
 
@@ -226,10 +232,13 @@ public class Health : MonoBehaviour, IDamageable
         {
             currentHealth = 0;
             isLive = false;
+            OnHealthChanged?.Invoke();
             ClearActiveEffectVisuals();
             OnDie?.Invoke();
             return;
         }
+
+        OnHealthChanged?.Invoke();
     }
 
     /// <summary>

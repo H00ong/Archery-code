@@ -27,7 +27,7 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 5;
+    private const int BossStageInterval = 1;
     private bool _initialized = false;
     private bool _allStageCleared = false;
     public bool WaitingForCollectibles { get; private set; }
@@ -50,7 +50,7 @@ public class StageManager : MonoBehaviour
     public int TotalStageCountOfMap { get; private set; }
     public List<int> EnemyCountList { get; private set; }
     private StageState CurrentState { get; set; }
-    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0) && (CurrentStageIndex != 0);
+    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0); //&& (CurrentStageIndex != 0);
     public bool IsInCombat => CurrentState == StageState.Combat;
     public bool IsInLoading => CurrentState == StageState.Loading;
 
@@ -236,7 +236,7 @@ public class StageManager : MonoBehaviour
         
         if (IsBossStage)
         {
-            var idx = Mathf.Clamp((CurrentStageIndex + 1) / BossStageInterval, 0, 2);
+            var idx = Mathf.Clamp((CurrentStageIndex + 1) / BossStageInterval - 1, 0, 2);
             await enemyManager.SpawnBossEnemyAsync(idx);
         }
         else
