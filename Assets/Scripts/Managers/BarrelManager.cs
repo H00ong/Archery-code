@@ -195,6 +195,8 @@ namespace Managers
                 return;
             }
 
+            SoundManager.Play(SfxType.BarrelPickup);
+
             switch (so.kind)
             {
                 case BarrelKind.Attack:

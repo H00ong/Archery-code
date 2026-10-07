@@ -31,6 +31,7 @@ public class Meteor : SceneObject
 
     DamageInfo _damageInfo;
     float _timer = 0f;
+    bool _impacted;
     
     private HashSet<IDamageable> _hitEnemies = new HashSet<IDamageable>();
 
@@ -54,12 +55,20 @@ public class Meteor : SceneObject
         _damageInfo = config.damageInfo;
         _damageInfo.attackSource = gameObject;
         _timer = 0f;
+        _impacted = false;
     }
 
     private void Update()
     {
         if (_timer >= timeDelayForMeteor)
+        {
+            if (!_impacted)
+            {
+                _impacted = true;
+                SoundManager.Play(SfxType.MeteorImpact);
+            }
             AttackCheck();
+        }
         else
             _timer += Time.deltaTime;
     }

@@ -15,12 +15,20 @@ public class MeleeAttack : EnemyAttack
         }
     }
 
+    // FollowMeleeAttack은 추격이 끝난 뒤 스윙하므로 진입 시점에 소리를 내지 않는다.
+    protected virtual bool PlaySwingSoundOnEnter => true;
+
     public override void OnEnter()
     {
         base.OnEnter();
 
         _ctx.SetAttackMoveTrigger(false);
+
+        if (PlaySwingSoundOnEnter)
+            PlaySwingSound();
     }
+
+    protected static void PlaySwingSound() => SoundManager.Play(SfxType.EnemyMelee);
     
     public override void Tick()
     {

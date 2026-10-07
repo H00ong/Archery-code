@@ -367,13 +367,19 @@ namespace Enemy
 
         private void OnHit()
         {
+            // Boss는 피격 리액션(Hurt)도 피격음도 없다.
             if (!IsBoss)
             {
+                SoundManager.Play(SfxType.EnemyHit);
                 ChangeState(EnemyState.Hurt);
             }
         }
 
-        private void OnDie() => ChangeState(EnemyState.Dead);
+        private void OnDie()
+        {
+            SoundManager.Play(IsBoss ? SfxType.BossDie : SfxType.EnemyDie);
+            ChangeState(EnemyState.Dead);
+        }
 
         // ================================================================
         //  IStunReceiver 구현 (Lightning 등)

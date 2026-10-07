@@ -17,6 +17,8 @@ namespace Enemy
         private float _moveSpeed;
 
         private bool _isChasing;
+
+        protected override bool PlaySwingSoundOnEnter => false;
         
         public override void Init(EnemyController ctx, BaseModuleData data = null)
         {
@@ -93,6 +95,7 @@ namespace Enemy
                 _ctx.rigidBody.angularVelocity = Vector3.zero;
 
                 _ctx.anim.SetInteger(AnimHashes.StateIndex, _animIndex);
+                PlaySwingSound();
                 return;
             }
             

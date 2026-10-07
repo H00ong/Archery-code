@@ -139,6 +139,9 @@ public class PlayerAttack : MonoBehaviour
             {
                 bullet.SetActive(true);
             }
+
+            if (bulletWave.Count > 0)
+                SoundManager.Play(SfxType.PlayerShoot);
             
             if (i < countOfMultiShot - 1 && multishotTimeInterval > 0f)
                 await Awaitable.WaitForSecondsAsync(multishotTimeInterval, destroyCancellationToken);
