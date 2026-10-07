@@ -12,6 +12,9 @@ namespace UI
     /// </summary>
     public static class LobbyStatFormatter
     {
+        // Magma/Dark는 현재 미사용이라 로비 표시 목록에서만 제외한다.
+        private static readonly EffectType[] DisplayEffectTypes =
+            { EffectType.Fire, EffectType.Poison, EffectType.Ice, EffectType.Lightning };
         /// <summary>
         /// 스탯 텍스트를 기본 스탯 블록과 Magic Effect 블록으로 분리해 담는 구조체.
         /// Magic Effect를 별도 TMP 필드에 배치하면 상세 버튼을 바로 옆에 붙일 수 있고,
@@ -87,7 +90,7 @@ namespace UI
             var sb = new StringBuilder();
             sb.AppendLine("<color=#FFD700>Effect Detail</color>");
 
-            var allTypes = new[] { EffectType.Fire, EffectType.Poison, EffectType.Ice, EffectType.Lightning, EffectType.Magma, EffectType.Dark };
+            var allTypes = DisplayEffectTypes;
             foreach (var effectType in allTypes)
             {
                 EffectData dRaw = null;
@@ -117,7 +120,7 @@ namespace UI
             var sb = new StringBuilder();
             sb.AppendLine("<color=#FFD700>Effect Detail</color>");
 
-            var allTypes = new[] { EffectType.Fire, EffectType.Poison, EffectType.Ice, EffectType.Lightning, EffectType.Magma, EffectType.Dark };
+            var allTypes = DisplayEffectTypes;
             foreach (var effectType in allTypes)
             {
                 EffectData vdRaw = null;
@@ -194,7 +197,7 @@ namespace UI
             var sb = new StringBuilder();
             sb.AppendLine("<color=#FFD700>Effect Growth Detail</color>");
 
-            var allTypes = new[] { EffectType.Fire, EffectType.Poison, EffectType.Ice, EffectType.Lightning, EffectType.Magma, EffectType.Dark };
+            var allTypes = DisplayEffectTypes;
             foreach (var effectType in allTypes)
             {
                 var vg = FindEffectGrowth(viewingEffects, effectType);
