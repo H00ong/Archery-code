@@ -161,7 +161,7 @@ namespace Managers
             }
             else
             {
-                playerData = new PlayerData(SaveData.DefaultCharacterName, "Normal Magic Staff", "Old Armor", "Old Shoes", 5000);
+                playerData = new PlayerData(SaveData.DefaultCharacterName, SaveData.DefaultWeaponName, SaveData.DefaultArmorName, SaveData.DefaultShoesName, 5000);
             }
         }
 

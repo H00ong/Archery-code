@@ -61,17 +61,21 @@ namespace Managers
 
                 var playerData = PlayerManager.Instance.PlayerData;
 
-                // 무료 기본 장비(purchasePrice <= 0)는 세이브 상태와 무관하게 항상 소유로 보정하고,
-                // 해당 종류에 유효한 장착 장비가 없으면 자동으로 장착한다.
-                foreach (var identity in _equipmentMap.Values)
+                // 기본 장비는 세이브 상태와 무관하게 항상 소유로 보정하고,
+                // 해당 종류에 유효한 장착 장비가 없으면 기본 장비를 장착한다.
+                foreach (var (type, defaultName) in SaveSystem.SaveData.DefaultEquipments)
                 {
-                    if (identity.purchasePrice > 0) continue;
+                    if (!_equipmentMap.ContainsKey(defaultName))
+                    {
+                        Debug.LogError($"[EquipmentManager] Default equipment not found: {defaultName}");
+                        continue;
+                    }
 
-                    playerData.AddOwnedEquipment(identity.equipmentName);
+                    playerData.AddOwnedEquipment(defaultName);
 
-                    string equippedName = playerData.GetEquippedItemName(identity.equipmentType);
+                    string equippedName = playerData.GetEquippedItemName(type);
                     if (string.IsNullOrEmpty(equippedName) || !_equipmentMap.ContainsKey(equippedName))
-                        playerData.SetEquippedItem(identity.equipmentType, identity.equipmentName);
+                        playerData.SetEquippedItem(type, defaultName);
                 }
 
                 // 현재 장착 장비 복원
