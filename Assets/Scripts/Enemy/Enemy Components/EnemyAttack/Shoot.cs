@@ -65,6 +65,7 @@ namespace Enemy
             }
 
             ShootAsync(cachedPoints).Forget();
+            SoundManager.Play(SfxType.EnemyShoot);
         }
 
         async Awaitable ShootAsync(List<(Vector3 pos, Vector3 dest)> cachedPoints)

@@ -57,6 +57,7 @@ namespace Enemy
                 cachedPoints.Add((point.position, playerPos));
 
             FlyingShootAsync(cachedPoints).Forget();
+            SoundManager.Play(SfxType.EnemyFlyingShoot);
         }
 
         // ReSharper disable Unity.PerformanceAnalysis

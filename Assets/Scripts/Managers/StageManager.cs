@@ -27,7 +27,8 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 1;
+    private const int BossStageInterval = 10;
+    private const int DefaultEnemyCount = 4;
     private bool _initialized = false;
     private bool _allStageCleared = false;
     public bool WaitingForCollectibles { get; private set; }
@@ -50,7 +51,7 @@ public class StageManager : MonoBehaviour
     public int TotalStageCountOfMap { get; private set; }
     public List<int> EnemyCountList { get; private set; }
     private StageState CurrentState { get; set; }
-    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0); //&& (CurrentStageIndex != 0);
+    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0) && (CurrentStageIndex != 0);
     public bool IsInCombat => CurrentState == StageState.Combat;
     public bool IsInLoading => CurrentState == StageState.Loading;
 
@@ -247,9 +248,20 @@ public class StageManager : MonoBehaviour
                 await enemyManager.SpawnPredefinedEnemiesAsync(predefined);
 
             // 랜덤 적 스폰
-            // TODO : Enemy 생성 count 설정 필요
-            var count = 4;
-            await enemyManager.SpawnEnemyAsync(count);
+            await enemyManager.SpawnEnemyAsync(GetEnemyCountForStage());
         }
+    }
+
+    // mapData.enemyCountGrid[스테이지 인덱스]. 그리드보다 스테이지가 많으면 마지막 값을 쓴다.
+    private int GetEnemyCountForStage()
+    {
+        if (EnemyCountList == null || EnemyCountList.Count == 0)
+        {
+            Debug.LogWarning("[StageManager] enemyCountGrid가 비어 있어 기본값 4를 사용합니다.");
+            return DefaultEnemyCount;
+        }
+
+        int idx = Mathf.Clamp(CurrentStageIndex, 0, EnemyCountList.Count - 1);
+        return Mathf.Max(0, EnemyCountList[idx]);
     }
 }

@@ -11,6 +11,7 @@ namespace Objects
         protected override void OnCollected()
         {
             LevelManager.Instance.AddExp(expAmount);
+            SoundManager.Play(SfxType.ExpPickup);
         }
     }
 }

@@ -236,6 +236,8 @@ namespace Objects
 
             _lifetimeTimer = 0f;
 
+            OnTerminate();
+
             if (HasExplosion)
             {
                 ExplosionAsync().Forget();
@@ -244,6 +246,9 @@ namespace Objects
 
             PoolManager.Instance.ReturnObject(gameObject);
         }
+
+        /// <summary> 소멸 직후(풀 반환/폭발 이펙트 전)에 호출된다. 폭발 피해 등 소멸 시 동작을 파생 클래스에서 구현한다. </summary>
+        protected virtual void OnTerminate() { }
 
         private void OnTriggerEnter(Collider other)
         {
@@ -449,7 +454,8 @@ namespace Objects
             PoolManager.Instance.ReturnObject(gameObject);
         }
 
-        private bool CheckHitObjects(IDamageable hitObject)
+        /// <summary> 이번 발사에서 아직 맞히지 않은 대상이면 기록하고 true. 이미 맞힌 대상이면 false(중복 피해 방지). </summary>
+        protected bool CheckHitObjects(IDamageable hitObject)
         {
             if (hitObjects.Contains(hitObject)) 
                 return false;

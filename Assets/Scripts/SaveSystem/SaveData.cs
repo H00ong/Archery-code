@@ -9,6 +9,18 @@ namespace SaveSystem
         public const int CurrentVersion = 1;
         public const string DefaultCharacterName = "BlueWizard";
 
+        // EquipmentIdentity.equipmentName 값 (에셋 파일명 아님)
+        public const string DefaultWeaponName = "Normal Magic Staff";
+        public const string DefaultArmorName = "Old Armor";
+        public const string DefaultShoesName = "Old Shoes";
+
+        public static readonly (EquipmentType type, string name)[] DefaultEquipments =
+        {
+            (EquipmentType.Weapon, DefaultWeaponName),
+            (EquipmentType.Armor, DefaultArmorName),
+            (EquipmentType.Shoes, DefaultShoesName),
+        };
+
         public int saveVersion = CurrentVersion;
         public string lastSavedAt;
 

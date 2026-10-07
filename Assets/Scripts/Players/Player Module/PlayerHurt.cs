@@ -94,6 +94,7 @@ namespace Players
 
         private void OnPlayerDie()
         {
+            SoundManager.Play(SfxType.PlayerDie);
             playerController.ChangePlayerAnimation(PlayerState.Dead);
 
             playerCollider.enabled = false;
@@ -103,7 +104,7 @@ namespace Players
 
         private void OnPlayerHit()
         {
-            Debug.Log("Player Hit!");
+            SoundManager.Play(SfxType.PlayerHit);
         }
 
         private void OnPlayerStatusChanged(DamageInfo damageInfo, bool isStart)

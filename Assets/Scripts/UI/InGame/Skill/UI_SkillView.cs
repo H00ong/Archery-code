@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,9 +18,12 @@ namespace UI.UI_Objects
 
         private UnityAction _onClicked;
     
+        // "OrbDamageIncrease" / "Orb_Damage_Increase" -> "Orb Damage Increase"
+        private static readonly Regex WordBoundary = new(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|_+", RegexOptions.Compiled);
+
         public void SetName(string s)
         {
-            skillName.text = s;
+            skillName.text = WordBoundary.Replace(s ?? string.Empty, " ").Trim();
             skillName.enableAutoSizing = true; // 긴 스킬 이름이 박스 밖으로 넘치지 않도록 폰트 크기를 자동 축소
         }
         public void SetIcon(Sprite icon)

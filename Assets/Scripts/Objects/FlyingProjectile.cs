@@ -6,6 +6,39 @@ namespace Objects
 {
     public class FlyingProjectile : Projectile
     {
+        [Header("Overlap Gizmo")]
+        [SerializeField] private bool isBoss;
+        // Ranged Default Variant(scale 0.75)의 충돌 반경 0.67 x 0.75
+        [SerializeField] private float radius = 0.5f;
+        // Boss Default 프리팹의 충돌 반경 0.67 x scale 1.04
+        [SerializeField] private float bossRadius = 0.7f;
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = isBoss ? Color.red : Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, ExplosionRadius);
+        }
+
+        private float ExplosionRadius => isBoss ? bossRadius : radius;
+
+        // 직격으로 이미 맞은 플레이어는 CheckHitObjects가 걸러내므로 폭발 피해가 중복되지 않는다.
+        protected override void OnTerminate()
+        {
+            var playerTag = Utils.ToString(TagType.Player);
+            var colliders = Physics.OverlapSphere(transform.position, ExplosionRadius, ~0, QueryTriggerInteraction.Ignore);
+
+            foreach (var col in colliders)
+            {
+                GameObject root = col.attachedRigidbody ? col.attachedRigidbody.gameObject : col.gameObject;
+                if (!root.CompareTag(playerTag)) continue;
+
+                var damageable = col.GetComponentInParent<IDamageable>();
+                if (damageable == null || !CheckHitObjects(damageable)) continue;
+
+                damageable.TakeDamage(DamageInfo);
+            }
+        }
+
         public override void InitProjectile(ShootingInstruction instruction)
         {
             // 부모 초기화를 거쳐야 DamageInfo/hitObjects/피어스·반사·유도 상태가 정상적으로 세팅된다 (누락 시 OnTriggerEnter에서 DamageInfo null 참조).

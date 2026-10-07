@@ -11,6 +11,7 @@ namespace Objects
         protected override void OnCollected()
         {
             PlayerManager.Instance.EarnGold(goldAmount);
+            SoundManager.Play(SfxType.GoldPickup);
         }
     }
 }
