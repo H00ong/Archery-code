@@ -282,6 +282,15 @@ namespace Managers
 
             _settingPresenter = new SettingPopupPresenter(popup, camera);
 
+            var enterGameHint = lobbyCanvas.EnterGameHint;
+            if (enterGameHint != null)
+            {
+                _settingPresenter.OnPopupToggled += isOpen =>
+                {
+                    if (isOpen) enterGameHint.Hide();
+                    else enterGameHint.Show(GameKeys.LobbyToInGame);
+                };
+            }
             var openBtn = lobbyCanvas.SettingsButton;
             if (openBtn != null)
                 openBtn.onClick.AddListener(() => _settingPresenter.Show());

@@ -62,10 +62,15 @@ namespace Managers
 
         void Update()
         {
-            if(Input.GetKeyDown(KeyCode.F3))
-            {
-                SelectFocusedMap();
-            }
+            if (!Input.GetKeyDown(GameKeys.LobbyToInGame)) return;
+
+            // 로딩 씬에서 같은 키로 로비에 진입한 프레임 등에 인게임으로 바로 넘어가지 않도록,
+            // 로비 씬이 실제로 로드되어 카메라가 준비된 경우에만 허용한다.
+            var gm = GameManager.Instance;
+            if (gm == null || gm.CurrentState != SceneState.Lobby) return;
+            if (_lobbyCameraController == null || _lobbyCameraController.MapSelectInputBlocked) return;
+
+            SelectFocusedMap();
         }
 
         private void OnLobbySceneLoaded()

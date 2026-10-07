@@ -9,6 +9,8 @@ public class InitManager : MonoBehaviour
 
     [Header("Loading UI")]
     [SerializeField] private UI_ProgressBar progressBar;
+    [Tooltip("로딩 완료 시 로비 진입 키를 안내하는 팝업. 비어 있으면 상태 텍스트로 대체한다.")]
+    [SerializeField] private UI_KeyHintPopup startHintPopup;
 
     private void Awake()
     {
@@ -30,12 +32,12 @@ public class InitManager : MonoBehaviour
     private void Update()
     {
         bool canTransition = IsLoaded
-                             && Input.GetKeyDown(KeyCode.Space)
+                             && Input.GetKeyDown(GameKeys.LoadingToLobby)
                              && GameManager.Instance.CurrentState == SceneState.Loading;
 
         if (canTransition)
         {
-            Debug.Log("[InitManager] Space key pressed — Transitioning to Lobby scene.");
+            Debug.Log($"[InitManager] {GameKeys.LoadingToLobby} key pressed — Transitioning to Lobby scene.");
             GameManager.Instance.ChangeScene(SceneState.Lobby);
         }
     }
@@ -43,6 +45,7 @@ public class InitManager : MonoBehaviour
     private async Awaitable InitAsync()
     {
         IsLoaded = false;
+        if (startHintPopup) startHintPopup.Hide();
         SetProgress(0f, "Initializing...");
 
         // Phase 1 — DataManager & PoolManager (싱글톤 Awake로 이미 준비됨, 참조만 확보)
@@ -128,7 +131,16 @@ public class InitManager : MonoBehaviour
         }
 
         SaveSystem.SaveManager.Instance?.Save();
-        SetProgress(1f, "Loading complete!");
+        if (startHintPopup)
+        {
+            SetProgress(1f, "Loading complete!");
+            startHintPopup.Show(GameKeys.LoadingToLobby);
+        }
+        else
+        {
+            SetProgress(1f, $"Loading complete! Press [{GameKeys.GetDisplayName(GameKeys.LoadingToLobby)}] to start");
+        }
+
         IsLoaded = true;
     }
 
