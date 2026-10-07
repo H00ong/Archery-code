@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class UI_MapClearView : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI mapClearText;
     [SerializeField] TextMeshProUGUI goldText;
     [SerializeField] Button lobbyButton;
 

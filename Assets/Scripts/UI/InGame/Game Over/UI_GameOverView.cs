@@ -5,16 +5,9 @@ using UnityEngine.UI;
 
 public class UI_GameOverView : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI gameOverText;
     [SerializeField] TextMeshProUGUI goldText;
     [SerializeField] Button retryButton;
     [SerializeField] Button lobbyButton;
-
-    void Awake()
-    {
-        retryButton.GetComponentInChildren<TextMeshProUGUI>().text = "Retry";
-        lobbyButton.GetComponentInChildren<TextMeshProUGUI>().text = "Lobby";
-    }
 
     public void Init(UnityAction onRetry, UnityAction onLobby)
     {
