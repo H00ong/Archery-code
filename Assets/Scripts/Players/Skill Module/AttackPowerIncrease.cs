@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AttackPowerIncrease : PlayerSkillModuleBase, IPlayerUpgrader
 {
-    [SerializeField, Min(1)] private int attackPowerPerLevel = 1;
+    [SerializeField, Min(1)] private int attackPowerPerLevel = 5;
 
     public override void Init(PlayerSkill skill)
     {
