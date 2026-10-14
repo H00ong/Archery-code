@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Game.Player.Attack;
 using Players.SkillModule;
 using UnityEngine;
-using static UnityEditorInternal.ReorderableList;
 
 public class HorizontalShot : PlayerSkillModuleBase, IShootContributor
 {
