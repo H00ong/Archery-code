@@ -27,7 +27,7 @@ public class StageManager : MonoBehaviour
 {
     
     public static StageManager Instance;
-    private const int BossStageInterval = 10;
+    private const int BossStageInterval = 5;
     private const int DefaultEnemyCount = 4;
     private bool _initialized = false;
     private bool _allStageCleared = false;
@@ -51,7 +51,7 @@ public class StageManager : MonoBehaviour
     public int TotalStageCountOfMap { get; private set; }
     public List<int> EnemyCountList { get; private set; }
     private StageState CurrentState { get; set; }
-    public bool IsBossStage => (CurrentStageIndex % BossStageInterval == 0) && (CurrentStageIndex != 0);
+    public bool IsBossStage => ((CurrentStageIndex + 1) % BossStageInterval == 0) && (CurrentStageIndex != 0);
     public bool IsInCombat => CurrentState == StageState.Combat;
     public bool IsInLoading => CurrentState == StageState.Loading;
 
