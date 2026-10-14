@@ -14,6 +14,9 @@ namespace SaveSystem
         public const string DefaultArmorName = "Old Armor";
         public const string DefaultShoesName = "Old Shoes";
 
+        // 신규 세이브 시작 골드
+        public const int DefaultStartGold = 2000;
+
         public static readonly (EquipmentType type, string name)[] DefaultEquipments =
         {
             (EquipmentType.Weapon, DefaultWeaponName),
