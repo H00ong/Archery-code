@@ -11,7 +11,7 @@ namespace Enemy
     {
         [SerializeField] private Slider hpSlider;
         [SerializeField] private Vector3 worldOffset = new Vector3(0f, 2f, 0f);
-        
+
         private Health _health;
         private Transform _cam;
         private bool _isVisible;
