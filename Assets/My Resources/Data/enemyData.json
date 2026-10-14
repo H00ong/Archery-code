@@ -1,0 +1,1520 @@
+[
+  {
+    "enemyName": "Slime",
+    "base": {
+      "hp": 50,
+      "atk": 8,
+      "moveSpeed": 3.5,
+      "armor": 0,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Bird",
+    "base": {
+      "hp": 45,
+      "atk": 8,
+      "moveSpeed": 3.5,
+      "armor": 0,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Octopus",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 4,
+      "armor": 3,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Octopus",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 4,
+      "armor": 3,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Box",
+    "base": {
+      "hp": 80,
+      "atk": 12,
+      "moveSpeed": 3,
+      "armor": 5,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Box",
+    "base": {
+      "hp": 200,
+      "atk": 13,
+      "moveSpeed": 3.5,
+      "armor": 6,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "FlyingShoot",
+      "RandomMove"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Melee Golem",
+    "base": {
+      "hp": 130,
+      "atk": 13,
+      "moveSpeed": 3,
+      "armor": 8,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Octopus",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 4,
+      "armor": 3,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Octopus",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 3,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Bloom",
+    "base": {
+      "hp": 50,
+      "atk": 6,
+      "moveSpeed": 3,
+      "armor": 0,
+      "magicResistance": 3
+    },
+    "enemyTags": [
+      "Ranged",
+      "FlyingShoot",
+      "RandomMove",
+      "Poison",
+      "Fire"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 10,
+      "flyingProjectileSpeed": 6
+    }
+  },
+  {
+    "enemyName": "Bud",
+    "base": {
+      "hp": 50,
+      "atk": 8,
+      "moveSpeed": 3,
+      "armor": 0,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison",
+      "Fire"
+    ]
+  },
+  {
+    "enemyName": "Dummy",
+    "base": {
+      "hp": 40,
+      "atk": 5,
+      "moveSpeed": 3.5,
+      "armor": 0,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Shell",
+    "base": {
+      "hp": 85,
+      "atk": 10,
+      "moveSpeed": 3,
+      "armor": 10,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Target Dummy",
+    "base": {
+      "hp": 30,
+      "atk": 3,
+      "moveSpeed": 3.5,
+      "armor": 0,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Dragon Spark",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Poison Bomb",
+    "base": {
+      "hp": 55,
+      "atk": 12,
+      "moveSpeed": 3,
+      "armor": 2,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Snakelet",
+    "base": {
+      "hp": 50,
+      "atk": 9,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Snow Bomb",
+    "base": {
+      "hp": 60,
+      "atk": 12,
+      "moveSpeed": 3.3,
+      "armor": 3,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Spike",
+    "base": {
+      "hp": 80,
+      "atk": 11,
+      "moveSpeed": 3.3,
+      "armor": 12,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Snake",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.3,
+      "armor": 3,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wolf",
+    "base": {
+      "hp": 65,
+      "atk": 8,
+      "moveSpeed": 4,
+      "armor": 2,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Ranged",
+      "FlyingShoot",
+      "PatternMove",
+      "Lightning"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 11,
+      "flyingProjectileSpeed": 7
+    }
+  },
+  {
+    "enemyName": "Sun Blossom",
+    "base": {
+      "hp": 70,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 11
+    }
+  },
+  {
+    "enemyName": "Sunflower Fairy",
+    "base": {
+      "hp": 70,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 13
+    }
+  },
+  {
+    "enemyName": "Training Dummy Boss",
+    "base": {
+      "hp": 220,
+      "atk": 12,
+      "moveSpeed": 3.5,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "FlyingShoot",
+      "RandomMove"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Dragon Inferno Boss",
+    "base": {
+      "hp": 220,
+      "atk": 14,
+      "moveSpeed": 3.5,
+      "armor": 9,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "FlyingShoot",
+      "RandomMove",
+      "Fire"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 13,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Dragon Fire Boss",
+    "base": {
+      "hp": 200,
+      "atk": 13,
+      "moveSpeed": 3.8,
+      "armor": 8,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "Shoot",
+      "RandomMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Hermit King Boss",
+    "base": {
+      "hp": 225,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 10,
+      "magicResistance": 18
+    },
+    "enemyTags": [
+      "Boss",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 13,
+      "projectileSpeed": 11
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Snake",
+    "base": {
+      "hp": 200,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 8,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Boss",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 11
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 11,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Snake Naga Boss",
+    "base": {
+      "hp": 220,
+      "atk": 13,
+      "moveSpeed": 3.5,
+      "armor": 10,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "FlyingShoot",
+      "RandomMove",
+      "Poison"
+    ],
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wolf",
+    "base": {
+      "hp": 210,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 8,
+      "magicResistance": 18
+    },
+    "enemyTags": [
+      "Boss",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 12
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Sunflower Fairy",
+    "base": {
+      "hp": 200,
+      "atk": 6,
+      "moveSpeed": 3.4,
+      "armor": 8,
+      "magicResistance": 18
+    },
+    "enemyTags": [
+      "Boss",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 12
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Werewolf Boss",
+    "base": {
+      "hp": 235,
+      "atk": 14,
+      "moveSpeed": 3.5,
+      "armor": 12,
+      "magicResistance": 20
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 13,
+      "projectileSpeed": 12
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 13,
+      "flyingProjectileSpeed": 13
+    }
+  },
+  {
+    "enemyName": "Sunflora Pixie Boss",
+    "base": {
+      "hp": 225,
+      "atk": 13,
+      "moveSpeed": 3.5,
+      "armor": 10,
+      "magicResistance": 20
+    },
+    "enemyTags": [
+      "Boss",
+      "FollowMeleeAttack",
+      "Shoot",
+      "FlyingShoot",
+      "RandomMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 13,
+      "projectileSpeed": 10
+    },
+    "flyingShooter": {
+      "flyingProjectileAtk": 12,
+      "flyingProjectileSpeed": 9
+    }
+  },
+  {
+    "enemyName": "Cactus",
+    "base": {
+      "hp": 80,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 10,
+      "magicResistance": 5
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Mushroom",
+    "base": {
+      "hp": 60,
+      "atk": 9,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Orc",
+    "base": {
+      "hp": 100,
+      "atk": 13,
+      "moveSpeed": 3.5,
+      "armor": 6,
+      "magicResistance": 4
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove"
+    ]
+  },
+  {
+    "enemyName": "Stingray",
+    "base": {
+      "hp": 60,
+      "atk": 10,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Fire"
+    ]
+  },
+  {
+    "enemyName": "Turtle Shell",
+    "base": {
+      "hp": 90,
+      "atk": 9,
+      "moveSpeed": 3.5,
+      "armor": 15,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Turtle Shell",
+    "base": {
+      "hp": 210,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 14,
+      "magicResistance": 8
+    },
+    "enemyTags": [
+      "Boss",
+      "RandomMove",
+      "FollowMeleeAttack",
+      "Shoot",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Stone Monster",
+    "base": {
+      "hp": 115,
+      "atk": 9,
+      "moveSpeed": 3.2,
+      "armor": 12,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 7
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Skeleton Rogue",
+    "base": {
+      "hp": 60,
+      "atk": 7,
+      "moveSpeed": 3.5,
+      "armor": 2,
+      "magicResistance": 6
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Fire"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Lightning"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Warrior",
+    "base": {
+      "hp": 75,
+      "atk": 11,
+      "moveSpeed": 3.5,
+      "armor": 4,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Fire",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Fire"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Ice"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Lightning"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Minion",
+    "base": {
+      "hp": 45,
+      "atk": 7,
+      "moveSpeed": 3,
+      "armor": 1,
+      "magicResistance": 0
+    },
+    "enemyTags": [
+      "Melee",
+      "MeleeAttack",
+      "FollowMove",
+      "Fire",
+      "Poison"
+    ]
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Skeleton Mage",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 3.5,
+      "armor": 1,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "FollowMove",
+      "Poison",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 12
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Ranged Golem",
+    "base": {
+      "hp": 110,
+      "atk": 8,
+      "moveSpeed": 3.1,
+      "armor": 8,
+      "magicResistance": 10
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 12,
+      "projectileSpeed": 8
+    }
+  },
+  {
+    "enemyName": "Octopus",
+    "base": {
+      "hp": 55,
+      "atk": 6,
+      "moveSpeed": 4,
+      "armor": 3,
+      "magicResistance": 2
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 10,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Fire"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Wizard",
+    "base": {
+      "hp": 60,
+      "atk": 6,
+      "moveSpeed": 3.3,
+      "armor": 2,
+      "magicResistance": 15
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "RandomMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 10
+    }
+  },
+  {
+    "enemyName": "Stone Monster",
+    "base": {
+      "hp": 115,
+      "atk": 9,
+      "moveSpeed": 3.2,
+      "armor": 12,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Ice"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 7
+    }
+  },
+  {
+    "enemyName": "Stone Monster",
+    "base": {
+      "hp": 115,
+      "atk": 9,
+      "moveSpeed": 3.2,
+      "armor": 12,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Lightning"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 7
+    }
+  },
+  {
+    "enemyName": "Stone Monster",
+    "base": {
+      "hp": 115,
+      "atk": 9,
+      "moveSpeed": 3.2,
+      "armor": 12,
+      "magicResistance": 12
+    },
+    "enemyTags": [
+      "Ranged",
+      "Shoot",
+      "PatternMove",
+      "Fire",
+      "Poison"
+    ],
+    "shooter": {
+      "projectileAtk": 11,
+      "projectileSpeed": 7
+    }
+  }
+]

@@ -78,10 +78,11 @@ namespace Enemy
 
             if (isBoss)
             {
-                // 보스 몬스터: 요청하신 [bossHpMulPerStage * Stage] 공식 적용
+                // 보스 몬스터도 일반 몬스터와 동일하게 거듭제곱(복리) 적용
+                // (선형 곱 [mul * stage]은 1.05만 넣어도 5스테이지 보스가 x4.2가 되어 사용 불가)
                 // (기본 스탯과 bossMapHp는 ComputeBaseStats에서 곱해집니다)
-                p.bossHpStage = sg.bossHpMulPerStage > 1f ? sg.bossHpMulPerStage * stage : 1f;
-                p.bossAtkStage = sg.bossAtkMulPerStage > 1f ? sg.bossAtkMulPerStage * stage : 1f;
+                p.bossHpStage = sg.bossHpMulPerStage > 1f ? Mathf.Pow(sg.bossHpMulPerStage, stage) : 1f;
+                p.bossAtkStage = sg.bossAtkMulPerStage > 1f ? Mathf.Pow(sg.bossAtkMulPerStage, stage) : 1f;
             }
             return p;
         }
@@ -130,7 +131,7 @@ namespace Enemy
             float hpStage = isBoss ? st.bossHpStage : st.hpStage;
             float atkStage = isBoss ? st.bossAtkStage : st.atkStage;
 
-            // 보스 최종 HP = b.hp(기본) * st.bossHpStage(보스배율 x Stage) * mp.mapHp(맵배율)
+            // 보스 최종 HP = b.hp(기본) * st.bossHpStage(보스배율 ^ Stage) * mp.mapHp(맵배율)
             float hp = b.hp * hpStage * mp.mapHp;
             float atk = b.atk * atkStage * (isBoss ? mp.bossMapAtk : mp.mapAtk);
             float ms = b.moveSpeed * (isBoss ? mp.bossMove : mp.move);
