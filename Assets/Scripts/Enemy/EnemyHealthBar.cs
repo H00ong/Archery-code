@@ -11,8 +11,7 @@ namespace Enemy
     {
         [SerializeField] private Slider hpSlider;
         [SerializeField] private Vector3 worldOffset = new Vector3(0f, 2f, 0f);
-        [SerializeField] private bool hideWhenFull = false;
-
+        
         private Health _health;
         private Transform _cam;
         private bool _isVisible;
@@ -52,6 +51,7 @@ namespace Enemy
             gameObject.SetActive(true);
             transform.localPosition = worldOffset;
             RefreshValue();
+            SetVisible(true);
         }
 
         private void OnDisable()
@@ -87,8 +87,6 @@ namespace Enemy
 
             float ratio = _health.MaxHealth > 0 ? (float)_health.CurrentHealth / _health.MaxHealth : 0f;
             hpSlider.value = ratio;
-
-            SetVisible(!hideWhenFull || (ratio > 0f && ratio < 1f));
         }
 
         private void SetVisible(bool visible)
@@ -98,5 +96,42 @@ namespace Enemy
             if (hpSlider != null && hpSlider.gameObject.activeSelf != visible)
                 hpSlider.gameObject.SetActive(visible);
         }
+
+#if UNITY_EDITOR
+        // 인게임 카메라(InGame 씬 Main Camera)의 기울기. 씬/프리팹 모드에 카메라가 없을 때 쓴다
+        private static readonly Quaternion FallbackCameraRotation = Quaternion.Euler(55f, 0f, 0f);
+
+        /// <summary> 인게임에서 보이는 그대로 슬라이더를 배치한다 (worldOffset 위치 + 카메라 방향 빌보드). </summary>
+        [ContextMenu("Preview In-Game Placement")]
+        private void PreviewInGamePlacement()
+        {
+            UnityEditor.Undo.RecordObject(transform, "Preview HP Slider Placement");
+
+            transform.localPosition = worldOffset;
+            transform.rotation = GetEditorCameraRotation();
+
+            UnityEditor.EditorUtility.SetDirty(transform);
+        }
+
+        /// <summary> 직접 옮겨 둔 슬라이더의 현재 위치를 worldOffset에 저장한다. 값을 조정한 뒤 이걸 실행하면 인게임에도 반영된다. </summary>
+        [ContextMenu("Save Current Position To Offset")]
+        private void SaveCurrentPositionToOffset()
+        {
+            UnityEditor.Undo.RecordObject(this, "Save HP Slider Offset");
+
+            worldOffset = transform.localPosition;
+
+            UnityEditor.EditorUtility.SetDirty(this);
+            Debug.Log($"[EnemyHealthBar] {name} worldOffset = {worldOffset}", this);
+        }
+
+        private static Quaternion GetEditorCameraRotation()
+        {
+            var controller = FindFirstObjectByType<CameraController>();
+            if (controller != null) return controller.transform.rotation;
+
+            return Camera.main != null ? Camera.main.transform.rotation : FallbackCameraRotation;
+        }
+#endif
     }
 }

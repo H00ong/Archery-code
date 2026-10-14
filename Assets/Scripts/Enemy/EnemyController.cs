@@ -23,6 +23,13 @@ namespace Enemy
 
         private const float EnemyReturnDelay = .25f;
 
+        // 장애물에 파고들며 생기는 겹침을 Unity가 한 번에 밀어내면 뒤로 튕겨 보이므로 천천히 밀어내게 한다.
+        private const float MaxDepenetrationVelocity = 2f;
+
+        // 직전 물리 스텝에서 닿은 장애물의 수평 법선(적 쪽을 향함). FixedUpdate에서 소비 후 비운다.
+        private readonly List<Vector3> _wallNormals = new List<Vector3>();
+        private bool _obstacleFilterApplied;
+
         [Header("Identity")] 
         [SerializeField, RegistryKey("enemyNames")] public string enemyName;
         [SerializeField] public EnemyTag enemyTags;
@@ -48,6 +55,8 @@ namespace Enemy
         public Animator anim;
         public Rigidbody rigidBody;
         public List<Collider> enemyColliders = new List<Collider>();
+        [Tooltip("Obstacle(기둥/벽)과 충돌하는 유일한 콜라이더. 비워두면 enemyColliders의 첫 번째를 쓴다. 나머지 콜라이더는 플레이어 등과의 충돌만 담당한다.")]
+        [SerializeField] private Collider obstacleCollider;
         public EnemyReferenceHub enemyReference;
         public EnemyVisual enemyVisual;
         public EnemyHealthBar healthBar;
@@ -86,10 +95,12 @@ namespace Enemy
         private void FixedUpdate()
         {
             OnTick?.Invoke();
+            SlideAlongWalls();
         }
 
         private void OnDisable()
         {
+            _wallNormals.Clear();
             ClearAction();
         }
         #endregion
@@ -112,6 +123,7 @@ namespace Enemy
 
             RigidbodyActive(true);
             ColliderActive(true);
+            ApplyObstacleColliderFilter();
             SetStat();
             Debug.Log($"[Enemy Speed] {enemyName} | Tags: {enemyTags} | Final MoveSpeed: {_stat.MoveSpeed}", this);
             InitModule(_identity);
@@ -162,11 +174,45 @@ namespace Enemy
         [ContextMenu("Find All Colliders")]
         private void FindAllColliders() => enemyColliders = new List<Collider>(GetComponentsInChildren<Collider>());
 
+        /// <summary>
+        /// 몸통 외 콜라이더(무기, 손 등)는 애니메이션에 따라 움직이며 기둥에 닿으면 Rigidbody 전체를 밀어낸다.
+        /// Obstacle 레이어와는 obstacleCollider 하나만 충돌하게 하고 나머지는 제외한다 (플레이어 등과의 충돌은 그대로).
+        /// </summary>
+        private void ApplyObstacleColliderFilter()
+        {
+            if (_obstacleFilterApplied) return;
+
+            int obstacleLayer = LayerMask.NameToLayer("Obstacle");
+            if (obstacleLayer < 0) return;
+
+            var body = obstacleCollider;
+            if (!body)
+            {
+                foreach (var col in enemyColliders)
+                {
+                    if (!col || col.isTrigger) continue;
+                    body = col;
+                    break;
+                }
+            }
+
+            if (!body) return;
+
+            foreach (var col in enemyColliders)
+            {
+                if (!col || col.isTrigger || col == body) continue;
+                col.excludeLayers |= 1 << obstacleLayer;
+            }
+
+            _obstacleFilterApplied = true;
+        }
+
         public void RigidbodyActive(bool active)
         {
             if (rigidBody)
             {
                 rigidBody.isKinematic = !active;
+                rigidBody.maxDepenetrationVelocity = MaxDepenetrationVelocity;
                 rigidBody.constraints = RigidbodyConstraints.FreezeRotation |
                                         RigidbodyConstraints.FreezePositionY;
             }
@@ -422,10 +468,57 @@ namespace Enemy
         /// <summary> Boss는 Ice/Lightning(군중제어형 상태이상)에 완전히 면역이다. </summary>
         public bool IsImmuneTo(EffectType type) => IsBoss && Utils.HasEffectType(type, EffectType.Ice | EffectType.Lightning);
 
+        void OnCollisionStay(Collision collision)
+        {
+            if (collision.gameObject.CompareTag("Obstacle"))
+                CollectWallNormals(collision);
+        }
+
+        private void CollectWallNormals(Collision collision)
+        {
+            for (int i = 0; i < collision.contactCount; i++)
+            {
+                var contact = collision.GetContact(i);
+
+                Vector3 normal = contact.normal;
+                normal.y = 0f;
+                if (normal.sqrMagnitude < 0.0001f) continue;
+                normal.Normalize();
+
+                // contact.normal의 부호가 어느 쪽을 향하는지에 의존하지 않도록 항상 적 쪽을 향하게 맞춘다.
+                if (Vector3.Dot(normal, transform.position - contact.point) < 0f)
+                    normal = -normal;
+
+                _wallNormals.Add(normal);
+            }
+        }
+
+        /// <summary> 벽 안쪽으로 향하는 속도 성분을 제거해, 벽을 밀고 들어가는 대신 벽을 따라 미끄러지게 한다. </summary>
+        private void SlideAlongWalls()
+        {
+            if (_wallNormals.Count == 0) return;
+
+            if (rigidBody != null && !rigidBody.isKinematic)
+            {
+                Vector3 velocity = rigidBody.linearVelocity;
+
+                foreach (var normal in _wallNormals)
+                {
+                    float into = Vector3.Dot(velocity, normal);
+                    if (into < 0f) velocity -= normal * into;
+                }
+
+                rigidBody.linearVelocity = velocity;
+            }
+
+            _wallNormals.Clear();
+        }
+
         void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.CompareTag("Obstacle"))
             {
+                CollectWallNormals(collision);
                 rigidBody.linearVelocity = Vector3.zero;
 
                 if (CurrentState != EnemyState.Move)
