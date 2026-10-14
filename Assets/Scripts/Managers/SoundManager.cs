@@ -34,8 +34,11 @@ public class SoundManager : MonoBehaviour
     private const string SfxPath = "Sounds/SFX/";
     private const string LoadingBgm = "Loading";
     private const string LobbyBgm = "Lobby";
+    private const string GameClearBgm = "GameClear";
+    private const string GameOverBgm = "GameOver";
     private const string MapBgmPrefix = "Map_";
     private const float BgmFadeDuration = 0.6f;
+    private const float DeathBgmFadeDuration = 0.15f;
 
     [Range(0f, 1f)] [SerializeField] private float bgmVolume = 1f;
     [Range(0f, 1f)] [SerializeField] private float sfxVolume = 1f;
@@ -71,6 +74,8 @@ public class SoundManager : MonoBehaviour
     private AudioSource _sfxSource;
     private Coroutine _bgmRoutine;
     private float _bgmFade = 1f;
+    private bool _playerDeathStarted;
+    private bool _resultMusicStarted;
 
     private void Awake()
     {
@@ -89,14 +94,19 @@ public class SoundManager : MonoBehaviour
 
     private void OnEnable()
     {
+        if (Instance != this) return;
         SceneManager.sceneLoaded += OnSceneLoaded;
         EventBus.Subscribe(EventType.LevelUp, OnLevelUp);
+        EventBus.Subscribe(EventType.MapCleared, OnMapCleared);
+        EventBus.Subscribe(EventType.PlayerDied, OnPlayerDied);
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
         EventBus.Unsubscribe(EventType.LevelUp, OnLevelUp);
+        EventBus.Unsubscribe(EventType.MapCleared, OnMapCleared);
+        EventBus.Unsubscribe(EventType.PlayerDied, OnPlayerDied);
     }
 
     private void OnDestroy()
@@ -156,11 +166,65 @@ public class SoundManager : MonoBehaviour
 
     private void OnLevelUp() => PlaySfx(SfxType.LevelUp);
 
+    public void PlayPlayerDeath()
+    {
+        if (_playerDeathStarted || _resultMusicStarted) return;
+        _playerDeathStarted = true;
+        PlaySfx(SfxType.PlayerDie);
+        if (_bgmRoutine != null) StopCoroutine(_bgmRoutine);
+        _bgmRoutine = StartCoroutine(FadeOutForDeath());
+    }
+
+    private IEnumerator FadeOutForDeath()
+    {
+        yield return FadeBgm(0f, DeathBgmFadeDuration);
+        _bgmSource.Stop();
+        _bgmRoutine = null;
+    }
+
+    private void OnMapCleared() => PlayResultBgm(GameClearBgm);
+    private void OnPlayerDied() => PlayResultBgm(GameOverBgm);
+
+    private void PlayResultBgm(string clipName)
+    {
+        if (_resultMusicStarted) return;
+        _resultMusicStarted = true;
+        if (_bgmRoutine != null) StopCoroutine(_bgmRoutine);
+        _bgmRoutine = null;
+        _bgmSource.Stop();
+
+        var clip = Resources.Load<AudioClip>(BgmPath + clipName);
+        if (clip == null)
+        {
+            Debug.LogWarning($"[SoundManager] 결과 BGM 클립 없음: Resources/{BgmPath}{clipName}");
+            return;
+        }
+
+        // 팡파르의 첫 음을 페이드인으로 지우지 않고, 결과 곡은 한 번만 재생한다.
+        _bgmFade = 1f;
+        ApplyVolumes();
+        StartBgmClip(clip, false);
+    }
+
     // ─────────────────────────────────────────────────────
     // BGM
     // ─────────────────────────────────────────────────────
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlayBgmForScene(scene.name);
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (_playerDeathStarted || _resultMusicStarted)
+        {
+            if (_bgmRoutine != null) StopCoroutine(_bgmRoutine);
+            _bgmRoutine = null;
+            _bgmSource.Stop();
+            _bgmFade = 0f;
+        }
+        _playerDeathStarted = false;
+        _resultMusicStarted = false;
+        _lastPlayTime.Clear();
+        _sfxSource.Stop();
+        PlayBgmForScene(scene.name);
+    }
 
     private void PlayBgmForScene(string sceneName)
     {
@@ -217,26 +281,31 @@ public class SoundManager : MonoBehaviour
         if (_bgmSource.isPlaying)
             yield return FadeBgm(0f);
 
-        var prev = _bgmSource.clip;
-        _bgmSource.clip = next;
-        _bgmSource.Play();
-
-        if (prev != null && prev != next)
-            Resources.UnloadAsset(prev);
+        StartBgmClip(next, true);
 
         yield return FadeBgm(1f);
         _bgmRoutine = null;
     }
 
+    private void StartBgmClip(AudioClip next, bool loop)
+    {
+        var prev = _bgmSource.clip;
+        _bgmSource.clip = next;
+        _bgmSource.loop = loop;
+        _bgmSource.Play();
+        if (prev != null && prev != next)
+            Resources.UnloadAsset(prev);
+    }
+
     // timeScale=0(일시정지/레벨업) 중에도 진행되도록 unscaled 시간을 쓴다.
-    private IEnumerator FadeBgm(float target)
+    private IEnumerator FadeBgm(float target, float duration = BgmFadeDuration)
     {
         float start = _bgmFade;
         float t = 0f;
-        while (t < BgmFadeDuration)
+        while (t < duration)
         {
             t += Time.unscaledDeltaTime;
-            _bgmFade = Mathf.Lerp(start, target, t / BgmFadeDuration);
+            _bgmFade = Mathf.Lerp(start, target, t / duration);
             ApplyVolumes();
             yield return null;
         }

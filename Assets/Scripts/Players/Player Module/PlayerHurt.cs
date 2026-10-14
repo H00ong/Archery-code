@@ -94,7 +94,7 @@ namespace Players
 
         private void OnPlayerDie()
         {
-            SoundManager.Play(SfxType.PlayerDie);
+            SoundManager.Instance?.PlayPlayerDeath();
             playerController.ChangePlayerAnimation(PlayerState.Dead);
 
             playerCollider.enabled = false;

@@ -149,9 +149,31 @@ InitManager
 | `PoolManager` | 오브젝트 풀링, Addressable 에셋 관리 |
 | `UIManager` | UI 팝업 생성/관리, Presenter 소유 |
 | `InputManager` | New Input System 래핑 |
-| `SoundManager` | 오디오 관리 (미구현) |
+| `SoundManager` | 씬/맵 BGM, 전투 SFX, 클리어·게임오버 전용 음악 및 볼륨 저장 |
 | `SaveManager` | 세이브/로드 (미구현) |
 
+#### 결과 화면 사운드
+
+캐주얼 판타지 콘셉트의 오리지널 절차 합성 사운드를 사용합니다.
+
+| 상황 | 클립 | 재생 방식 |
+|------|------|-----------|
+| 플레이어 사망 시작 | `Assets/Resources/Sounds/SFX/PlayerDie.wav` | 1.2초 마법 소멸음. 맵 BGM을 0.15초에 걸쳐 끕니다. |
+| 맵 전체 클리어 (`MapCleared`) | `Assets/Resources/Sounds/BGM/GameClear.wav` | 7.4초 하프·셀레스타·플루트 팡파르. 기존 BGM 대신 한 번 재생합니다. |
+| 사망 애니메이션 종료 (`PlayerDied`) | `Assets/Resources/Sounds/BGM/GameOver.wav` | 6.8초 차분한 단조 선율. 기존 BGM 대신 한 번 재생합니다. |
+
+결과 음악 종료 후에는 무음으로 유지하며, 재도전/로비 이동 시 해당 씬의 반복 BGM으로 복귀합니다.
+음악은 BGM 볼륨, 사망 효과음은 SFX 볼륨을 따릅니다. 일시정지(`timeScale = 0`) 중에도 전환됩니다.
+일반 스테이지 클리어/레벨업에서는 기존 맵 음악을 유지합니다.
+
+저장소 루트에서 .NET 10 SDK로 신규 결과 음악과 사망 효과음만 재생성/검증할 수 있습니다.
+다른 맵 음악과 효과음은 덮어쓰지 않습니다.
+
+```powershell
+$sounds = (Resolve-Path Assets\Resources\Sounds).Path
+dotnet run --file Tools\SoundGen\SoundGen.cs -- --outcomes $sounds
+dotnet run --file Tools\SoundGen\SoundGen.cs -- --verify $sounds
+```
 ### 📡 EventBus
 
 **우선순위 기반 Pub/Sub** 이벤트 시스템. 매니저 간 결합도를 낮추는 핵심 인프라.

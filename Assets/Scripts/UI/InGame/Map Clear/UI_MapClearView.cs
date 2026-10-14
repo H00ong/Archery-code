@@ -10,7 +10,9 @@ public class UI_MapClearView : MonoBehaviour
 
     void Awake()
     {
-        lobbyButton.GetComponentInChildren<TextMeshProUGUI>().text = "Lobby";
+        var label = lobbyButton.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+            label.text = "Lobby";
     }
 
     public void Init(UnityAction onLobby)

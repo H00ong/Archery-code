@@ -97,6 +97,18 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
-/Assets/Resources
+/Assets/Resources/*
+!/Assets/Resources/Sounds/
+/Assets/Resources/Sounds/*
+!/Assets/Resources/Sounds/BGM/
+!/Assets/Resources/Sounds/SFX/
+/Assets/Resources/Sounds/BGM/*
+/Assets/Resources/Sounds/SFX/*
+!/Assets/Resources/Sounds/BGM/GameClear.wav
+!/Assets/Resources/Sounds/BGM/GameClear.wav.meta
+!/Assets/Resources/Sounds/BGM/GameOver.wav
+!/Assets/Resources/Sounds/BGM/GameOver.wav.meta
+!/Assets/Resources/Sounds/SFX/PlayerDie.wav
+!/Assets/Resources/Sounds/SFX/PlayerDie.wav.meta
 /Assets/My Resources
 /Assets/My Resources.meta
