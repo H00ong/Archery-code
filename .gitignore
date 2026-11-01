@@ -112,3 +112,6 @@ InitTestScene*.unity*
 !/Assets/Resources/Sounds/SFX/PlayerDie.wav.meta
 /Assets/My Resources
 /Assets/My Resources.meta
+
+# 개인정보가 포함된 발표·보고서 자료
+/Presentation/
