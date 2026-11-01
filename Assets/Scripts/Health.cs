@@ -37,6 +37,11 @@ public class Health : MonoBehaviour, IDamageable
     public event Action OnHit;
     public event Action OnHealthChanged;
     public event Action<DamageInfo, bool> OnStatusChanged;
+    /// <summary>
+    /// 속성별 비주얼용 이벤트. 효과가 새로 시작되거나 이미 활성인 같은 속성이 재적용(타이머 초기화)될 때 true,
+    /// 종료될 때 false. damageInfo.type은 복합 플래그일 수 있어 개별 속성을 명시적으로 전달한다.
+    /// </summary>
+    public event Action<EffectType, bool> OnEffectVisualChanged;
 
     private int maxHealth = 100;
     private int currentHealth;
@@ -129,9 +134,18 @@ public class Health : MonoBehaviour, IDamageable
 
         foreach (var handler in _effectHandlers)
         {
-            if (effectStates.TryGetValue(handler.Type, out var state))
-                handler.Tick(state, Time.deltaTime, _stat, OnStatusChanged, dmg => ApplyDotDamage(handler.Type, dmg));
+            if (!effectStates.TryGetValue(handler.Type, out var state) || !state.isActive)
+                continue;
+
+            var type = handler.Type;
+            handler.Tick(state, Time.deltaTime, _stat, (info, isStart) => NotifyStatus(type, info, isStart), dmg => ApplyDotDamage(type, dmg));
         }
+    }
+
+    private void NotifyStatus(EffectType type, DamageInfo info, bool isStart)
+    {
+        OnStatusChanged?.Invoke(info, isStart);
+        OnEffectVisualChanged?.Invoke(type, isStart);
     }
 
     public void TakeDamage(DamageInfo damageInfo)
@@ -200,8 +214,16 @@ public class Health : MonoBehaviour, IDamageable
             if (_ccImmune != null && _ccImmune.IsImmuneTo(handler.Type))
                 continue;
 
-            if (effectStates.TryGetValue(handler.Type, out var state))
-                handler.Apply(state, damageInfo, _stat, OnStatusChanged);
+            if (!effectStates.TryGetValue(handler.Type, out var state))
+                continue;
+
+            var type = handler.Type;
+            bool wasActive = state.isActive;
+            handler.Apply(state, damageInfo, _stat, (info, isStart) => NotifyStatus(type, info, isStart));
+
+            // 이미 활성인 같은 속성이 재적용된 경우: 타이머는 핸들러가 초기화했고, 비주얼도 새 공격 기준으로 다시 적용한다.
+            if (wasActive && state.isActive)
+                OnEffectVisualChanged?.Invoke(type, true);
         }
     }
 
@@ -247,12 +269,13 @@ public class Health : MonoBehaviour, IDamageable
     /// </summary>
     private void ClearActiveEffectVisuals()
     {
-        foreach (var state in effectStates.Values)
+        foreach (var kvp in effectStates)
         {
+            var state = kvp.Value;
             if (!state.isActive)
                 continue;
             state.isActive = false;
-            OnStatusChanged?.Invoke(state.damageInfo, false);
+            NotifyStatus(kvp.Key, state.damageInfo, false);
         }
     }
 }

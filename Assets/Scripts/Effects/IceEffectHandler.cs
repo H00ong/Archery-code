@@ -15,6 +15,13 @@ public class IceEffectHandler : IEffectHandler
             state.damageInfo = GetCalculatedDamgeInfo(damageInfo, stat);
             onStatusChanged?.Invoke(state.damageInfo, true);
         }
+        else
+        {
+            // 재적용 시 새 공격의 수치/duration으로 갱신하고, 구독자(이동속도 감속 등)에게도 새 수치를 다시 알린다.
+            // 감속 적용은 누적이 아닌 절대값 대입이라 중복 호출해도 안전하다.
+            state.damageInfo = GetCalculatedDamgeInfo(damageInfo, stat);
+            onStatusChanged?.Invoke(state.damageInfo, true);
+        }
 
         state.timer = 0f;
     }

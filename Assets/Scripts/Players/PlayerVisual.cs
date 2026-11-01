@@ -48,8 +48,8 @@ public class PlayerVisual : MonoBehaviour
         if (characterMeshRenderers == null || characterMeshRenderers.Count == 0)
             FindMeshRenderers();
 
-        _health.OnStatusChanged -= VisualizeEffect;
-        _health.OnStatusChanged += VisualizeEffect;
+        _health.OnEffectVisualChanged -= VisualizeEffect;
+        _health.OnEffectVisualChanged += VisualizeEffect;
 
         CacheOriginalEmissionColors();
 
@@ -60,7 +60,7 @@ public class PlayerVisual : MonoBehaviour
     private void OnDestroy()
     {
         if (_health != null)
-            _health.OnStatusChanged -= VisualizeEffect;
+            _health.OnEffectVisualChanged -= VisualizeEffect;
 
         EventBus.Unsubscribe(EventType.Retry, ResetVisual);
         EventBus.Unsubscribe(EventType.TransitionToLobby, ResetVisual);
@@ -80,18 +80,22 @@ public class PlayerVisual : MonoBehaviour
         }
     }
 
-    private void VisualizeEffect(DamageInfo damageInfo, bool isStart)
+    // 가장 최근에 (재)적용된 속성이 리스트 끝에 오며, 그 속성의 색이 표시된다.
+    private readonly List<EffectType> _activeEffectTypes = new();
+
+    private void VisualizeEffect(EffectType type, bool isStart)
     {
-        foreach (var kvp in _effectColorMap)
-        {
-            if (Utils.HasEffectType(damageInfo.type, kvp.Key))
-            {
-                if (isStart)
-                    SetEmissionColor(kvp.Value);
-                else
-                    RestoreOriginalEmissionColors();
-            }
-        }
+        if (!_effectColorMap.ContainsKey(type))
+            return;
+
+        _activeEffectTypes.Remove(type);
+        if (isStart)
+            _activeEffectTypes.Add(type);
+
+        if (_activeEffectTypes.Count == 0)
+            RestoreOriginalEmissionColors();
+        else
+            SetEmissionColor(_effectColorMap[_activeEffectTypes[_activeEffectTypes.Count - 1]]);
     }
 
     private void SetEmissionColor(Color color)
@@ -118,6 +122,7 @@ public class PlayerVisual : MonoBehaviour
 
     private void ResetVisual()
     {
+        _activeEffectTypes.Clear();
         RestoreOriginalEmissionColors();
     }
 

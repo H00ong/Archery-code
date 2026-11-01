@@ -31,7 +31,8 @@ public class LightningEffectHandler : IEffectHandler
             receiver?.BeginStun();
         }
 
-        // 중첩 시 duration 재갱신
+        // 중첩 시 새 공격의 duration으로 재갱신
+        state.damageInfo = damageInfo;
         state.timer = 0f;
     }
 
