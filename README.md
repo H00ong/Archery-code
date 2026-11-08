@@ -11,7 +11,7 @@
 
 ## 🎬 플레이 영상
 
-![플레이 영상](https://youtu.be/Zv6jX6VHy7M)
+[![플레이 영상](https://img.youtube.com/vi/Zv6jX6VHy7M/hqdefault.jpg)](https://youtu.be/Zv6jX6VHy7M)
 
 ---
 
